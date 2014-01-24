@@ -1,0 +1,280 @@
+diff -ru vlc-2.1.2.orig/src/libvlc.h vlc-2.1.2/src/libvlc.h
+--- vlc-2.1.2.orig/src/libvlc.h	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.2/src/libvlc.h	2014-01-16 13:29:50.287263802 +0200
+@@ -173,6 +173,9 @@
+ 
+     /* Exit callback */
+     vlc_exit_t       exit;
++
++    /* p2p object */
++    p2p_object_t* p_p2p;
+ } libvlc_priv_t;
+ 
+ static inline libvlc_priv_t *libvlc_priv (libvlc_int_t *libvlc)
+diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
+--- vlc-2.1.2.orig/src/libvlc.c	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.2/src/libvlc.c	2014-01-16 18:19:18.484674252 +0200
+@@ -57,6 +57,7 @@
+ 
+ #include <vlc_playlist.h>
+ #include <vlc_interface.h>
++#include <p2p_object.h>
+ 
+ #include <vlc_charset.h>
+ #include <vlc_fs.h>
+@@ -66,6 +67,7 @@
+ 
+ #include "libvlc.h"
+ #include "playlist/playlist_internal.h"
++#include "p2p_object/p2p_object_internal.h"
+ #include "misc/variables.h"
+ 
+ #include <vlc_vlm.h>
+@@ -110,6 +112,7 @@
+     priv->p_playlist = NULL;
+     priv->p_dialog_provider = NULL;
+     priv->p_vlm = NULL;
++    priv->p_p2p = NULL;
+ 
+     vlc_ExitInit( &priv->exit );
+ 
+@@ -131,6 +134,8 @@
+     char *       psz_modules = NULL;
+     char *       psz_parser = NULL;
+     char *       psz_control = NULL;
++    playlist_t* p_playlist = NULL;
++    p2p_object_t* p_p2p = NULL;
+     char        *psz_val;
+ 
+     /* System specific initialization code */
+@@ -185,7 +190,7 @@
+      */
+ #if defined( ENABLE_NLS ) \
+      && ( defined( HAVE_GETTEXT ) || defined( HAVE_INCLUDED_GETTEXT ) )
+-    vlc_bindtextdomain (PACKAGE_NAME);
++    vlc_bindtextdomain (PACKAGE);
+ #endif
+     /*xgettext: Translate "C" to the language code: "fr", "en_GB", "nl", "ru"... */
+     msg_Dbg( p_libvlc, "translation test: code is \"%s\"", _("C") );
+@@ -402,6 +407,46 @@
+     var_Create( p_libvlc, "app-version", VLC_VAR_STRING );
+     var_SetString( p_libvlc, "app-version", PACKAGE_VERSION );
+ 
++    var_Create( p_libvlc, "p2p-logfile", VLC_VAR_STRING );
++    bool p2p_log_enable = var_InheritBool( p_libvlc, "p2p-log-enable" );
++    if( p2p_log_enable ) {
++        char *psz_datadir = config_GetUserDir( VLC_DATA_DIR );
++        
++        struct stat st;
++        // check if dir exists
++        if( vlc_stat( psz_datadir, &st ) != 0 ) {
++            // create it if not
++            if( vlc_mkdir( psz_datadir, 0700 ) != 0 ) {
++                msg_Warn( p_libvlc, "Cannot create data directory" );
++            }
++        }
++
++        char *psz_file;
++        if( asprintf( &psz_file, "%s" DIR_SEP "player.log", psz_datadir ) == -1 )
++            psz_file = NULL;
++
++        if( psz_file != NULL ) {
++            // check if file exists and size > 2Mb
++            if( vlc_stat( psz_file, &st ) == 0 && st.st_size > 2*1024*1024 )
++                vlc_unlink( psz_file );
++
++            var_SetString( p_libvlc, "p2p-logfile", psz_file );
++            free( psz_file );
++        }
++        free( psz_datadir );
++    }
++    
++    // Initialize p2p_access plugin
++    msg_P2PLog(p_libvlc, "=== Starting p2p ===");
++    p_p2p = p2p_Create( VLC_OBJECT(p_libvlc) );
++    if( !p_p2p ) {
++        msg_P2PLog(p_libvlc, "[libvlc.c]: p2p starting error");
++        msg_Err( p_libvlc, "p2p initialization failed" );
++
++        module_EndBank (true);
++        vlc_LogDeinit (p_libvlc);
++        return VLC_EGENERIC;
++    }
+     /* System specific configuration */
+     system_Configure( p_libvlc, i_argc - vlc_optind, ppsz_argv + vlc_optind );
+ 
+@@ -515,8 +560,25 @@
+     psz_val = var_InheritString( p_libvlc, "open" );
+     if ( psz_val != NULL )
+     {
+-        playlist_AddExt( pl_Get(p_libvlc), psz_val, NULL, PLAYLIST_INSERT, 0,
++        p2p_uri_id_type_t p2p_uri_type = p2p_GetIdTypeWithOptString(psz_val, NULL);
++        if( p2p_uri_type == P2P_TYPE_UNSUPPORT ) {
++            playlist_AddExt( pl_Get(p_libvlc), psz_val, NULL, PLAYLIST_INSERT, 0,
+                          -1, 0, NULL, 0, true, pl_Unlocked );
++        }
++        else {
++            char *id;
++            if(p2p_uri_type != P2P_TYPE_PLAYER && p2p_uri_type != P2P_TYPE_RAW)
++                id = ( strstr(psz_val, "://") == NULL ) ? vlc_path2uri( psz_val, NULL ) : strdup(psz_val);
++            else
++                id = strdup(psz_val);
++
++            p2p_LoadWithOptString( p2p_Get(p_playlist), id, NULL,
++                            p2p_uri_type, p2p_LoadAsync, NULL,
++                            PLAYLIST_INSERT, p2p_LoadAddInput, NULL,
++                            true, false, 
++                            P2P_DEV, P2P_AFF, P2P_ZONE, pl_Unlocked );
++            free(id);
++        }
+         free( psz_val );
+     }
+ 
+@@ -549,6 +611,12 @@
+     if( p_playlist != NULL )
+         playlist_Destroy( p_playlist );
+ 
++    /* Deactivate the p2p */
++    p2p_object_t *p_p2p = libvlc_priv (p_libvlc)->p_p2p;
++    if( p_p2p != NULL ) {
++        msg_P2PLog(p_libvlc, "=== deactivating p2p ===");
++        p2p_Destroy( p_p2p );
++    }
+     msg_Dbg( p_libvlc, "removing stats" );
+ 
+ #if !defined( _WIN32 ) && !defined( __OS2__ )
+@@ -662,17 +730,37 @@
+         }
+ 
+         char *mrl = NULL;
+-        if( strstr( args[n], "://" ) == NULL )
+-        {
+-            mrl = vlc_path2uri( args[n], NULL );
+-            if( !mrl )
+-                continue;
+-        }
+-
+-        playlist_AddExt( pl_Get( p_vlc ), (mrl != NULL) ? mrl : args[n], NULL,
++        
++        p2p_uri_id_type_t p2p_uri_type = p2p_GetIdTypeWithOptArray(args[n], i_options, &args[n + 1]);
++        if( p2p_uri_type == P2P_TYPE_UNSUPPORT ) {
++            if( strstr( args[n], "://" ) == NULL )
++            {
++                mrl = vlc_path2uri( args[n], NULL );
++                if( !mrl )
++                    continue;
++            }
++            playlist_AddExt( pl_Get( p_vlc ), (mrl != NULL) ? mrl : args[n], NULL,
+                          PLAYLIST_INSERT, 0, -1, i_options,
+                          ( i_options ? &args[n + 1] : NULL ),
+                          VLC_INPUT_OPTION_TRUSTED, true, pl_Unlocked );
+-        free( mrl );
++        }
++        else {
++            var_SetBool( pl_Get( p_vlc ), "playlist-autostart", false );
++
++            char *id;
++            if(p2p_uri_type != P2P_TYPE_PLAYER && p2p_uri_type != P2P_TYPE_RAW)
++                id = ( strstr(args[n], "://") == NULL ) ? vlc_path2uri( args[n], NULL ) : strdup(args[n]);
++            else
++                id = strdup(args[n]);
++
++            p2p_LoadWithOptArray( p2p_Get(p_vlc), id, NULL,
++                            p2p_uri_type, p2p_LoadAsync, i_options, ( i_options ? &args[n + 1] : NULL ),
++                            PLAYLIST_INSERT, p2p_LoadAddInput, NULL,
++                            true, true, 
++                            P2P_DEV, P2P_AFF, P2P_ZONE, pl_Unlocked );
++            free(id);
++        }
++        if(mrl)
++            free(mrl);
+     }
+ }
+diff -ru vlc-2.1.2.orig/include/vlc_plugin.h vlc-2.1.2/include/vlc_plugin.h
+--- vlc-2.1.2.orig/include/vlc_plugin.h	2013-09-12 18:18:33.000000000 +0300
++++ vlc-2.1.2/include/vlc_plugin.h	2014-01-16 13:52:02.371232972 +0200
+@@ -177,12 +177,15 @@
+ #define CAT_ADVANCED 6
+ #define SUBCAT_ADVANCED_MISC 602
+ #define SUBCAT_ADVANCED_NETWORK 603
++#define SUBCAT_ADVANCED_P2P 604
+ 
+ #define CAT_PLAYLIST 7
+ #define SUBCAT_PLAYLIST_GENERAL 701
+ #define SUBCAT_PLAYLIST_SD 702
+ #define SUBCAT_PLAYLIST_EXPORT 703
+ 
++#define CAT_WEB_PLUGIN 8
++#define SUBCAT_WEB_PLUGIN_INTERFACE 801
+ 
+ /**
+  * Current plugin ABI version
+diff -ru vlc-2.1.2.orig/include/vlc_config_cat.h vlc-2.1.2/include/vlc_config_cat.h
+--- vlc-2.1.2.orig/include/vlc_config_cat.h	2013-06-24 21:00:38.000000000 +0300
++++ vlc-2.1.2/include/vlc_config_cat.h	2014-01-16 16:16:00.003340736 +0200
+@@ -254,6 +254,10 @@
+ 
+     { CAT_ADVANCED, AADVANCED_TITLE, AADVANCED_HELP },
+     { SUBCAT_ADVANCED_MISC, MISC_TITLE, AADVANCED_HELP },
++    { SUBCAT_ADVANCED_P2P, N_( "p2p access settings" ), N_( "p2p access settings") },
++    
++    { CAT_WEB_PLUGIN, N_( "Browser plugin settings" ) , N_( "There are general settings for web plugin.") },
++    { SUBCAT_WEB_PLUGIN_INTERFACE, N_( "Browser plugin interface settings" ), N_( "There are interface settings for web plugin.") },
+ 
+     { -1, NULL, NULL }
+ };
+diff -ru vlc-2.1.2.orig/src/libvlc-module.c vlc-2.1.2/src/libvlc-module.c
+--- vlc-2.1.2.orig/src/libvlc-module.c	2013-12-05 18:39:06.000000000 +0200
++++ vlc-2.1.2/src/libvlc-module.c	2014-01-16 17:28:07.626412547 +0200
+@@ -634,6 +634,10 @@
+ #define RUN_TIME_LONGTEXT N_( \
+     "The stream will run this duration (in seconds)." )
+ 
++#define START_POSITION_TEXT N_("Start position")
++#define START_POSITION_LONGTEXT N_( \
++    "The stream will start at this position (in percents)." )
++
+ #define INPUT_FAST_SEEK_TEXT N_("Fast seek")
+ #define INPUT_FAST_SEEK_LONGTEXT N_( \
+     "Favor speed over precision while seeking" )
+@@ -1712,6 +1716,9 @@
+     add_float( "run-time", 0,
+                RUN_TIME_TEXT, RUN_TIME_LONGTEXT, true )
+         change_safe ()
++    add_float( "start-position", 0,
++               START_POSITION_TEXT, START_POSITION_LONGTEXT, true )
++        change_safe ()
+     add_bool( "input-fast-seek", false,
+               INPUT_FAST_SEEK_TEXT, INPUT_FAST_SEEK_LONGTEXT, false )
+         change_safe ()
+@@ -2098,6 +2105,21 @@
+     add_module_list_cat( "control", SUBCAT_INTERFACE_CONTROL, NULL,
+                          CONTROL_TEXT, CONTROL_LONGTEXT, false )
+ 
++    add_string( "p2p-logfile", "", N_( "Path to p2p logfile" ), N_( "Path to p2p logfile" ), false )
++    add_bool ( "p2p-log-enable", false, N_( "Enable p2p logfile" ), N_( "Enable p2p logfile" ), false )
++    
++    /* Web plugin options */
++	set_category( CAT_WEB_PLUGIN )
++	set_subcategory( SUBCAT_WEB_PLUGIN_INTERFACE )
++	add_bool( "fs-controller-enable", 1, N_( "Show a controller in fullscreen mode" ), N_( "Show a controller in fullscreen mode" ), false )
++    change_safe ()
++    add_bool( "play-on-click", 0, N_( "Perform play/pause action on plugin's area single click" ), N_( "Perform play/pause action on plugin's area single click" ), false )
++    change_safe ()
++    add_bool("fs-controller-min-view", 0, N_( "Show a controller in fullscreen mode in minimal view" ), N_( "Show a controller in fullscreen mode in minimal view" ), false)
++    change_safe()
++    add_string("video-bgcolor", "#000000", N_("Video background color"), N_("Set color of video holder window."), true)
++    change_safe()
++
+ /* Hotkey options*/
+     set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
+     add_category_hint( N_("Hot keys"), HOTKEY_CAT_LONGTEXT , false )
+@@ -2685,6 +2707,8 @@
+         change_volatile ()
+     add_string( "config", NULL, CONFIG_TEXT, "", false )
+         change_volatile ()
++    add_bool( "no-p2p-access", false, N_( "Dont start p2p access module" ), "", false )
++        change_volatile ()
+ 
+    /* Usage (mainly useful for cmd line stuff) */
+     /* add_usage_hint( PLAYLIST_USAGE ) */

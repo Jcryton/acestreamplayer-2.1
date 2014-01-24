@@ -1,0 +1,155 @@
+diff -ru vlc-2.1.2.orig/bin/cachegen.c vlc-2.1.2/bin/cachegen.c
+--- vlc-2.1.2.orig/bin/cachegen.c	2013-06-24 21:00:37.000000000 +0300
++++ vlc-2.1.2/bin/cachegen.c	2014-01-16 18:20:48.000000000 +0200
+@@ -82,9 +82,10 @@
+         if (setenv ("VLC_PLUGIN_PATH", path, 1))
+             abort ();
+ 
+-        const char *vlc_argv[4];
++        const char *vlc_argv[5];
+         int vlc_argc = 0;
+ 
++        vlc_argv[vlc_argc++] = "--no-p2p-access";
+         vlc_argv[vlc_argc++] = "--quiet";
+         if (force)
+             vlc_argv[vlc_argc++] = "--reset-plugins-cache";
+diff -ru vlc-2.1.2.orig/bin/vlc_win32_rc.rc.in vlc-2.1.2/bin/vlc_win32_rc.rc.in
+--- vlc-2.1.2.orig/bin/vlc_win32_rc.rc.in	2013-06-24 21:00:37.000000000 +0300
++++ vlc-2.1.2/bin/vlc_win32_rc.rc.in	2014-01-17 12:34:29.000000000 +0200
+@@ -1,25 +1,22 @@
+-#define VERSION_NUMBER @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_REVISION@,@VERSION_EXTRA@
+-#define VERSION_NUMBER_STR "@VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_REVISION@,@VERSION_EXTRA@"
+-
+-VLC_ICON ICON "vlc.ico"
++VLC_ICON ICON "appicon.ico"
+ 
+ 1 VERSIONINFO
+ FILETYPE 1
+ FILEOS 4
+-PRODUCTVERSION VERSION_NUMBER
+-FILEVERSION VERSION_NUMBER
++PRODUCTVERSION 3,0,0,0
++FILEVERSION 3,0,0,0
+ BEGIN
+   BLOCK "StringFileInfo"
+   BEGIN
+     BLOCK "040904E4"
+     BEGIN
+-      VALUE "CompanyName", "VideoLAN"
+-      VALUE "ProductName", "VLC media player"
+-      VALUE "ProductVersion", VERSION_NUMBER_STR
+-      VALUE "InternalName", "vlc"
+-      VALUE "OriginalFilename", "vlc.exe"
+-      VALUE "FileVersion", "@VERSION@"
+-      VALUE "FileDescription", "VLC media player @VERSION@"
++      VALUE "CompanyName", "Innovative Digital Technologies"
++      VALUE "ProductName", "Ace Player"
++      VALUE "ProductVersion", "3.0.0.0"
++      VALUE "InternalName", "ace_player"
++      VALUE "OriginalFilename", "ace_player.exe"
++      VALUE "FileVersion", "3.0.0.0"
++      VALUE "FileDescription", "Ace Player HD"
+       VALUE "LegalCopyright", "Copyright \251 @COPYRIGHT_YEARS@ VideoLAN and VLC Authors"
+       VALUE "LegalTrademarks", "VLC media player, VideoLAN and x264 are registered trademarks from VideoLAN"
+     END
+@@ -29,5 +26,3 @@
+     VALUE "Translation", 0x409, 1252
+   END
+ END
+-
+-2 RT_MANIFEST "vlc.exe.manifest"
+diff -ru vlc-2.1.2.orig/bin/winvlc.c vlc-2.1.2/bin/winvlc.c
+--- vlc-2.1.2.orig/bin/winvlc.c	2013-09-12 18:18:33.000000000 +0300
++++ vlc-2.1.2/bin/winvlc.c	2014-01-20 10:13:41.000000000 +0200
+@@ -47,6 +47,45 @@
+ LONG WINAPI vlc_exception_filter(struct _EXCEPTION_POINTERS *lpExceptionInfo);
+ static const wchar_t *crashdump_path;
+ 
++static const short kk[] = {
++    0x7a,0x7a,0x56,0x56,
++    0x3a,0x35,0x3b,0x6d,
++    0x5d,0x71,0x73,0x54,
++    0x64,0x5c,0x55,0x32,
++    0x35,0x49,0x89,0xbd,
++    0xd0,0x84,0xa1,0xb2,
++    0xca,0xb9,0xc6,0xce,
++    0x86,0x9e,0xc6,0x90,
++    0xc0,0xa4,0x89,0xdd,
++    0xa4,0xc1,0xa1,0xdf,
++    0xb1,0xbe,0xb4,0xd7,
++    0x9d,0x97,0x89,0xcf,
++    0x8b,0xd0,0xe8,0xe7,
++    0xea,0x97,0xac,0xa2,
++    0xa1,0x94,0xa7,0x94,
++    0xb9,0xe6,0xe5,0x9a,
++    0x81,0xa6,0x98,0x83,
++    0xa0
++};
++
++static char *developer_key_to_string( const short *arr, size_t *len ) 
++{
++    char *str;
++    if( *len == 1 && arr[0] == 0) {
++        str = (char*)malloc(1);
++        str[0] = 0;
++        *len = 0;
++        return str;
++    }
++    
++    str = (char*)malloc( *len+1 );
++    for( size_t i = 0; i < *len; ++i ) {
++        str[i] = (char)(arr[i] ^ (((i<<8) * 14 + 17 -i) % 256));
++    }
++    str[*len] = 0;
++    return str;
++}
++
+ static char *FromWide (const wchar_t *wide)
+ {
+     size_t len;
+@@ -106,7 +141,7 @@
+         return 1;
+ 
+     char *argv[argc + 3];
+-    BOOL crash_handling = TRUE;
++    BOOL crash_handling = FALSE; //TRUE;
+     int j = 0;
+     char *lang = NULL;
+ 
+@@ -129,6 +164,14 @@
+         argv[j++] = FromWide (wargv[i]);
+     }
+ 
++    // developer key staff
++    size_t dev_len = sizeof(kk) / sizeof(short);
++    char *dev_kk = developer_key_to_string( kk, &dev_len );
++    char* psz_keyopt = (char *)malloc((dev_len + 21)*sizeof(char));
++    strcpy(psz_keyopt, "--ace-developer-key=");
++    strcat(psz_keyopt, dev_kk);
++    argv[j++] = psz_keyopt;
++
+     argc = j;
+     argv[argc] = NULL;
+     LocalFree (wargv);
+@@ -152,8 +195,11 @@
+     if (!lang)
+     {
+         HKEY h_key;
+-        if( RegOpenKeyEx( HKEY_CURRENT_USER, TEXT("Software\\VideoLAN\\VLC\\"), 0, KEY_READ, &h_key )
+-                == ERROR_SUCCESS )
++#ifdef TORRENT_STREAM
++        if( RegOpenKeyEx( HKEY_CURRENT_USER, TEXT("Software\\TorrentStream\\"), 0, KEY_READ, &h_key ) == ERROR_SUCCESS )
++#else
++        if( RegOpenKeyEx( HKEY_CURRENT_USER, TEXT("Software\\AceStream\\"), 0, KEY_READ, &h_key ) == ERROR_SUCCESS )
++#endif
+         {
+             TCHAR szData[256];
+             DWORD len = 256;
+@@ -191,6 +237,7 @@
+                     TEXT("VLC media player"),
+                     MB_OK|MB_ICONERROR);
+ 
++    free(dev_kk);
+ 
+     for (int i = 0; i < argc; i++)
+         free (argv[i]);
