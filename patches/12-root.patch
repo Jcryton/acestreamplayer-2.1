@@ -156,7 +156,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
    ], [
      AS_IF([test -n "${enable_ncurses}"], [
        AC_MSG_ERROR([${NCURSES_PKG_ERRORS}.])
-@@ -4006,11 +4008,59 @@
+@@ -4006,11 +4008,70 @@
    then
      AC_MSG_ERROR([libgcrypt is required for update checking system])
    fi
@@ -199,6 +199,17 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
 +else
 +  CODENAME="Ace Stream"
 +  AM_CONDITIONAL(TORRENT_STREAM, 0)
++fi
++
++dnl ---------------------------------------------------------------------------------------
++dnl   Key header
++dnl ---------------------------------------------------------------------------------------
++if test -f "${srcdir}/bin/key.h"
++then
++  AC_DEFINE([KEY_HEADER], 1, [Define to 1 for use key from key.h])
++  AM_CONDITIONAL(KEY_HEADER, 1)
++else
++  AM_CONDITIONAL(KEY_HEADER, 0)
 +fi
 +
 +dnl ---------------------------------------------------------------------------------------

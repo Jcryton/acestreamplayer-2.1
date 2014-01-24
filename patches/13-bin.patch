@@ -61,10 +61,13 @@ diff -ru vlc-2.1.2.orig/bin/vlc_win32_rc.rc.in vlc-2.1.2/bin/vlc_win32_rc.rc.in
 diff -ru vlc-2.1.2.orig/bin/winvlc.c vlc-2.1.2/bin/winvlc.c
 --- vlc-2.1.2.orig/bin/winvlc.c	2013-09-12 18:18:33.000000000 +0300
 +++ vlc-2.1.2/bin/winvlc.c	2014-01-20 10:13:41.000000000 +0200
-@@ -47,6 +47,45 @@
+@@ -47,6 +47,49 @@
  LONG WINAPI vlc_exception_filter(struct _EXCEPTION_POINTERS *lpExceptionInfo);
  static const wchar_t *crashdump_path;
  
++#ifdef KEY_HEADER
++#include "key.h"
++#else
 +static const short kk[] = {
 +    0x7a,0x7a,0x56,0x56,
 +    0x3a,0x35,0x3b,0x6d,
@@ -103,6 +106,7 @@ diff -ru vlc-2.1.2.orig/bin/winvlc.c vlc-2.1.2/bin/winvlc.c
 +    str[*len] = 0;
 +    return str;
 +}
++#endif
 +
  static char *FromWide (const wchar_t *wide)
  {
