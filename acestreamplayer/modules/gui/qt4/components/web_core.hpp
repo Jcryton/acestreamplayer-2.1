@@ -184,6 +184,7 @@ public:
     
     void setLoadingUrl(QUrl val) { m_loading_url = val; }
     const QUrl loadingUrl() const { return m_loading_url; }
+    int getResponseStatus() const { return m_response_code; }
 
 protected:
     QWebView *createWindow(QWebPage::WebWindowType type);
@@ -201,6 +202,7 @@ private:
     int m_type;
     QUrl m_loading_url;
     QString m_embed_script;
+    int m_response_code;
 
 signals:
     void internalNavigation();

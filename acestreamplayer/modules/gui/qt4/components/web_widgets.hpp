@@ -27,6 +27,7 @@ public:
     void setEmbedScript(const QString&);
     void setCookiesPolicy(int);
     void setFlashEnable(bool);
+    bool isLoaded();
     
     virtual void load(QString strurl);
 

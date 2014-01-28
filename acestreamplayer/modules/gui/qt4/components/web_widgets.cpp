@@ -14,7 +14,6 @@
 #include <QToolButton>
 #include <QWebHistory>
 
-
 AbstractBrowser::AbstractBrowser(intf_thread_t *intf, QWidget *parent) :
     QWidget(parent)
   , m_intf(intf)
@@ -202,8 +201,13 @@ void AbstractBrowser::setFlashEnable(bool val)
 
 void AbstractBrowser::load(QString strurl)
 {
-    msg_P2PLog(m_intf, "Open page: %s", qtu(strurl));
+    msg_P2PLog(m_intf, "[Browser] Open page: %s", qtu(strurl));
     m_wv->loadAdPage(strurl);
+}
+
+bool AbstractBrowser::isLoaded() 
+{
+    return m_wv->getResponseStatus() > 0 && m_wv->getResponseStatus() < 400;
 }
 
 QString AbstractBrowser::navigationBarButtonStyle(const QString &name, int width, int height, QString horalign, bool hasDisableState) {
@@ -334,7 +338,7 @@ void AbstractBrowser::resizeAndEnableToolbar()
 void AbstractBrowser::pageLoaded(bool loaded)
 {
     if(!loaded) {
-        msg_P2PLog(m_intf, "Browser page not loaded");
+        msg_P2PLog(m_intf, "[Browser] Page not loaded");
     }
     enableHistory(m_backward, m_wv->history()->canGoBack());
     enableHistory(m_forward, m_wv->history()->canGoForward());
@@ -396,7 +400,9 @@ bool CommonInTimeBrowser::enabled()
 
 void CommonInTimeBrowser::showBrowser()
 {
-    AbstractBrowser::showBrowser();
+    if(isLoaded()) {
+        AbstractBrowser::showBrowser();
+    }
 }
 
 void CommonInTimeBrowser::hideBrowser()
@@ -410,7 +416,7 @@ void CommonInTimeBrowser::hideBrowser()
 void CommonInTimeBrowser::pageLoaded(bool loaded)
 {
     AbstractBrowser::pageLoaded(loaded);
-    if(loaded) {
+    if(isLoaded() && loaded) {
         if(m_enabled) {
             AbstractBrowser::showBrowser();
         }
@@ -457,7 +463,7 @@ bool InteractivePausePreloadBrowser::ready() const
 
 void InteractivePausePreloadBrowser::showBrowser()
 {
-    if(m_has_page && m_preload_id != "") {
+    if(isLoaded() && m_has_page && m_preload_id != "") {
         AbstractBrowser::showBrowser();
         emit registerShowing(m_preload_id);
     }
@@ -525,7 +531,7 @@ bool OverlayPreloadAdBrowser::ready() const
 
 void OverlayPreloadAdBrowser::showBrowser()
 {
-    if(m_has_page && m_preload_id != "" && !m_closed) {
+    if(isLoaded() && m_has_page && m_preload_id != "" && !m_closed) {
         AbstractBrowser::showBrowser();
         emit registerShowing(m_preload_id);
     }
