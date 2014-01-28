@@ -1213,15 +1213,21 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/info_panels.hpp vlc-2.1.2/mod
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.cpp vlc-2.1.2/modules/gui/qt4/components/interface_widgets.cpp
 --- vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.cpp	2013-12-05 18:39:06.000000000 +0200
 +++ vlc-2.1.2/modules/gui/qt4/components/interface_widgets.cpp	2014-01-21 17:03:22.902922186 +0200
-@@ -51,6 +51,7 @@
+@@ -51,6 +51,8 @@
  #include <QSlider>
  #include <QBitmap>
  #include <QUrl>
 +#include <QStackedLayout>
++#include <QShowEvent>
  
  #ifdef Q_WS_X11
  #   include <X11/Xlib.h>
-@@ -71,16 +72,175 @@
+@@ -67,20 +69,189 @@
+ 
+ VideoWidget::VideoWidget( intf_thread_t *_p_i )
+             : QFrame( NULL ) , p_intf( _p_i )
++            , m_overlay_already_loaded(false)
+ {
      /* Set the policy to expand in both directions */
      // setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
  
@@ -1388,6 +1394,15 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.cpp vlc-2.1
 +    event->accept();
 +}
 +
++void VideoWidget::showEvent(QShowEvent *event)
++{
++    if(m_overlay_already_loaded) {
++        showPreloadedOverlayUrl();
++        m_overlay_already_loaded = false;
++    }
++    event->ignore();
++}
++
 +void VideoWidget::mouseDoubleClickEvent(QMouseEvent *event)
 +{
 +    if( layout->currentWidget() == background ) {
@@ -1449,7 +1464,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.cpp vlc-2.1
          layout->removeWidget( stable );
          stable->deleteLater();
          stable = NULL;
-@@ -181,6 +370,208 @@
+@@ -181,6 +381,213 @@
      updateGeometry();
  }
  
@@ -1564,14 +1579,19 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.cpp vlc-2.1
 +void VideoWidget::showPreloadedOverlayUrl()
 +{
 +    if(m_overlay_browser && m_overlay_browser->ready()) {
-+        bool is_fullscreen = isInFullscreen();
-+        m_overlay_browser->setDelegateLinks(!is_fullscreen);
-+        m_overlay_browser->updateViewSize();
-+        m_overlay_browser->showBrowser();
-+        m_overlay_browser->updateViewSize();
-+        
-+        if(is_fullscreen)
-+            emit placeFsControls(m_overlay_browser->y(), m_overlay_browser->height());
++        if(isVisible()) {
++            bool is_fullscreen = isInFullscreen();
++            m_overlay_browser->setDelegateLinks(!is_fullscreen);
++            m_overlay_browser->updateViewSize();
++            m_overlay_browser->showBrowser();
++            m_overlay_browser->updateViewSize();
++            
++            if(is_fullscreen)
++                emit placeFsControls(m_overlay_browser->y(), m_overlay_browser->height());
++        }
++        else {
++            m_overlay_already_loaded = true;
++        }
 +    }
 +}
 +
@@ -1677,7 +1697,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.hpp vlc-2.1
  
  /******************** Video Widget ****************/
  class VideoWidget : public QFrame
-@@ -68,17 +70,66 @@
+@@ -68,17 +69,68 @@
      {
          return NULL;
      }
@@ -1687,6 +1707,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.hpp vlc-2.1
 +    void wheelEvent(QWheelEvent *event);
 +    void mouseDoubleClickEvent(QMouseEvent *event);
 +    void resizeEvent(QResizeEvent * event);
++    void showEvent(QShowEvent *event);
  
  private:
      intf_thread_t *p_intf;
@@ -1700,6 +1721,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/interface_widgets.hpp vlc-2.1
 +    CommonInTimeBrowser *m_common_browser;
 +    InteractivePausePreloadBrowser *m_pause_browser;
 +    OverlayPreloadAdBrowser *m_overlay_browser;
++    bool m_overlay_already_loaded;
 +    
 +    bool isInFullscreen();
 +    bool isAd();
@@ -2043,6 +2065,20 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/playlist_model.hpp v
  private slots:
      void processInputItemUpdate( input_item_t *);
      void processInputItemUpdate( input_thread_t* p_input );
+diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/selector.cpp vlc-2.1.2/modules/gui/qt4/components/playlist/selector.cpp
+--- vlc-2.1.2.orig/modules/gui/qt4/components/playlist/selector.cpp	2013-07-19 13:48:42.000000000 +0300
++++ vlc-2.1.2/modules/gui/qt4/components/playlist/selector.cpp	2014-01-27 16:27:35.149152848 +0200
+@@ -147,8 +147,8 @@
+     setRootIsDecorated( false );
+     setIndentation( 5 );
+     /* Expand at least to show level 2 */
+-    for ( int i = 0; i < topLevelItemCount(); i++ )
+-        expandItem( topLevelItem( i ) );
++    //for ( int i = 0; i < topLevelItemCount(); i++ )
++    //    expandItem( topLevelItem( i ) );
+ 
+     /***
+      * We need to react to both clicks and activation (enter-key) here.
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/sorting.h vlc-2.1.2/modules/gui/qt4/components/playlist/sorting.h
 --- vlc-2.1.2.orig/modules/gui/qt4/components/playlist/sorting.h	2013-06-24 21:00:38.000000000 +0300
 +++ vlc-2.1.2/modules/gui/qt4/components/playlist/sorting.h	2014-01-20 10:55:53.187006180 +0200
@@ -3603,10 +3639,10 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  
 +    CONNECT(this, setAdParams(QString, QString, int, QString, bool), 
 +            im, setAdParams(QString, QString, int, QString, bool));
-+    CONNECT(this, setPreloadPauseUrl(QString, QString, bool, int, int, int, int, int, int, bool), 
-+            im, setPreloadPauseUrl(QString, QString, bool, int, int, int, int, int, int, bool));
-+    CONNECT(this, setPreloadOverlayUrl(QString, QString, int, int, int, int, int, int, bool), 
-+            im, setPreloadOverlayUrl(QString, QString, int, int, int, int, int, int, bool));
++    CONNECT(this, setPreloadPauseUrl(QString, QString, bool, int, int, int, int, int, int, bool, bool, int, QString), 
++            im, setPreloadPauseUrl(QString, QString, bool, int, int, int, int, int, int, bool, bool, int, QString));
++    CONNECT(this, setPreloadOverlayUrl(QString, QString, int, int, int, int, int, int, bool, bool, int, QString), 
++            im, setPreloadOverlayUrl(QString, QString, int, int, int, int, int, int, bool, bool, int, QString));
 +    CONNECT(this, clearPreloadedUrl(int), im, clearPreloadedUrl(int));
 +
      var_AddCallback( THEPL, "item-change", ItemChanged, im );
@@ -3897,7 +3933,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
 +        }
 +    }
 +    else {
-+        ClearPreloadUrlEvent *event = new ClearPreloadUrlEvent( OtherClearPreloadUrl_Type, P2P_URL_OVERLAY);
++        ClearPreloadUrlEvent *event = new ClearPreloadUrlEvent( OtherClearPreloadUrl_Type, P2P_URL_AD);
 +        QApplication::postEvent( mim, event );
 +    }
 +    return VLC_SUCCESS;

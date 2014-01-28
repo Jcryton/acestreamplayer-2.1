@@ -413,6 +413,7 @@ bool BrowserPage::javaScriptConfirm(QWebFrame *originatingFrame, const QString &
     "jsref.setAttribute('type','text/javascript');" \
     "jsref.setAttribute('src', '%SCRIPT_URL%');" \
     "document.getElementsByTagName('head')[0].appendChild(jsref);"
+
 BrowserWebView::BrowserWebView(intf_thread_t *intf, QWidget *parent)
     : QWebView(parent)
     , m_intf(intf)
@@ -423,6 +424,7 @@ BrowserWebView::BrowserWebView(intf_thread_t *intf, QWidget *parent)
     , m_type(-1)
     , m_loading_url("about:blank")
     , m_embed_script("")
+    , m_response_code(0)
 {
     setObjectName("BrowserWebView");
    
@@ -496,6 +498,7 @@ void BrowserWebView::loadAdPage(QString url)
     }
 
     m_loading_url = url_str;
+    m_response_code = 0;
     load( url_str );
     //page()->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
     //page()->mainFrame()->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOff);
@@ -569,34 +572,36 @@ void BrowserWebView::close()
 
 void BrowserWebView::namFinished(QNetworkReply *reply)
 {
+    int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if(reply->error() != QNetworkReply::NoError) {
-        int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         QString httpStatusMessage = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
 
-        msg_P2PLog(m_intf, "NAM errors: %s Status: %d Message: %s", qtu(reply->url().toString()), httpStatus, qtu(httpStatusMessage));
+        msg_P2PLog(m_intf, "[Browser] NAM errors: %s Status: %d Message: %s", qtu(reply->url().toString()), httpStatus, qtu(httpStatusMessage));
     }
 
-    if( reply->url() == url() ) {
-        msg_P2PLog(m_intf, "NAM finished loading %s", qtu(reply->url().toString()));
+    if(m_response_code == 0 || httpStatus >= 400)
+        m_response_code = httpStatus;
+
+    
+    if( reply->url() == loadingUrl() ) {
+        msg_P2PLog(m_intf, "[Browser] NAM finished loading %s", qtu(reply->url().toString()));
     }
 }
 
 void BrowserWebView::pageFinished(bool val)
 {
     emit loadingFinished(val);
+    msg_P2PLog(m_intf, "[Browser] Page %s loading status %d", qtu(loadingUrl().toString()), m_response_code);
     if(val) {
         page()->currentFrame()->addToJavaScriptWindowObject("AceStreamBrowser", m_jso);
         if(m_embed_script != "") {
             QString js = QString(ADD_JS_SCRIPT_JS).replace("%SCRIPT_URL%", m_embed_script);
             page()->currentFrame()->evaluateJavaScript(js);
         }
-        msg_P2PLog(m_intf, "Page %s successfully loaded", qtu(loadingUrl().toString()));
-        if(m_type == P2P_URL_NOTIFICATION || m_type == P2P_URL_SERVICE
-                || m_type == P2P_URL_OVERLAY) {
-        }
+        //if(m_type == P2P_URL_NOTIFICATION || m_type == P2P_URL_SERVICE || m_type == P2P_URL_OVERLAY) {
+        //}
     }
     else {
-        msg_P2PLog(m_intf, "Page %s loading error", qtu(loadingUrl().toString()));
         m_loading_url = QUrl("about:blank");
         emit showMessageDialog();
     }
@@ -636,11 +641,11 @@ void BrowserWebView::namSslErrors(QNetworkReply *reply, QList<QSslError> error)
         errorStrings += error.at(i).errorString();
     QString errors = errorStrings.join(QLatin1String("\n"));
 
-    msg_P2PLog(m_intf, "SSL error: %s %s %s", qtu(replyHost), qtu(reply->url().toString()), qtu(errors));
+    msg_P2PLog(m_intf, "[Browser] SSL error: %s %s %s", qtu(replyHost), qtu(reply->url().toString()), qtu(errors));
 
     foreach( QString s, m_sslTrustedHostList ) {
         if(replyHost.indexOf(s) != -1) {
-            msg_P2PLog(m_intf, "Ignore ssl errors fro this domain");
+            msg_P2PLog(m_intf, "[Browser] Ignore ssl errors fro this domain");
             reply->ignoreSslErrors();
             break;
         }

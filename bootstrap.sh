@@ -90,5 +90,5 @@ fi
 # bootstraping vlc
 ${PWD_DIR}/vlc-${VLC_VERSION}/bootstrap
 
-echo "Ok"
-echo "To use your developer key, put key.h in vlc-${VLC_VERSION}/bin"
+info "Ok"
+info "To use your developer key, put key.h in vlc-${VLC_VERSION}/bin"
