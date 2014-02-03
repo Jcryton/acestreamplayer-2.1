@@ -474,7 +474,7 @@ static p2p_uri_id_type_t get_uri_id( const char *id )
 {
     char *acestream_proto = strstr( id, "acestream://" );
     if( acestream_proto )
-		return P2P_TYPE_PLAYER;
+        return ( strlen(id) == 52 ) ? P2P_TYPE_PLAYER : P2P_TYPE_UNSUPPORT;
     
     char *last_point = strrchr( id, '.' );
 	if( !last_point ) {

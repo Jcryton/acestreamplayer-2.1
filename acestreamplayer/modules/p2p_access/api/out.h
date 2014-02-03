@@ -9,8 +9,6 @@ public:
     static std::string Build( base_out_message *msg );
 
 private:
-    static int extra_spaces(char ch);
-
     static std::string hello( hello_out_msg* );
     static std::string ready( ready_out_msg* );
     static std::string load( load_out_msg* );

@@ -429,7 +429,6 @@ bool Start( p2p_object_t *vlc_obj, const char *id, const char *indexes, p2p_uri_
             var_SetAddress( vlc_obj, "preload-pause-url", NULL );
             var_SetAddress( vlc_obj, "preload-nonlinear-url", NULL );
             var_SetAddress( vlc_obj, "preload-stop-url", NULL );
-            _msg.support_spaces = p_sys->p_control->supportedExtraSpaces();
             _send = p_sys->p_control->send( &_msg );
         }
         if( !_send ) {

@@ -110,7 +110,6 @@ void Control::ready()
 {
     ready_out_msg msg;
     msg.key = m_ready_key;
-    msg.support_spaces = m_version_options.support_extra_spaces;
     if( send( &msg ) ) {
         m_ready = true;
         m_vlcobj->p_sys->state = P2P_STATE_IDLE;
@@ -714,7 +713,6 @@ bool Control::helloEngine()
             versionProcess( hello->major, hello->minor, hello->build, hello->revision );
             msg_P2PLog( m_vlcobj, "[control.cpp::helloEngine]:  Support statistics events: %d", m_version_options.support_stat_events );
             msg_P2PLog( m_vlcobj, "[control.cpp::helloEngine]:  Support new format and ages start : %d", m_version_options.support_ten_ages_userinfo );
-            //msg_P2PLog( m_vlcobj, "[control.cpp::helloEngine]:  Support extra spaces : %d", m_version_options.support_extra_spaces );
             
             if( hello->hello_key != "" ) {
                 string dev_key_str = "";
@@ -847,7 +845,6 @@ void Control::versionProcess( int major, int minor, int build, int revision )
 {
     m_version_options.support_stat_events = false;
     m_version_options.support_ten_ages_userinfo = false;
-    m_version_options.support_extra_spaces = false;
     
     if( major == 0 && minor == 0 && build == 0 && revision == 0)
         return;
@@ -859,10 +856,6 @@ void Control::versionProcess( int major, int minor, int build, int revision )
     if( major < 2 && minor < 0 && build < 8 && revision < 5 ) 
         return;
     m_version_options.support_ten_ages_userinfo = true;
-    // extra spasec only in >= 2.1.8.0
-    if( major < 2 && minor < 1 && build < 8 && revision < 0 ) 
-        return;
-    m_version_options.support_extra_spaces = true;
 }
 
 void Control::preparePauseItems() {

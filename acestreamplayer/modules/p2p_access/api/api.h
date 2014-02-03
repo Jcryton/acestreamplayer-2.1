@@ -46,11 +46,9 @@ struct hello_out_msg : base_out_message {
 
 struct ready_out_msg : base_out_message {
     std::string key;
-    bool support_spaces;
     
     ready_out_msg() : base_out_message() {
         type = OUT_MSG_READY;
-        support_spaces = false;
     }
 };
 
@@ -88,11 +86,9 @@ struct start_out_msg : base_out_message {
     int zone_id;
     int quality;
     int position;
-    bool support_spaces;
     
     start_out_msg() : base_out_message() {
         type = OUT_MSG_START;
-        support_spaces = false;
     }
 };
 

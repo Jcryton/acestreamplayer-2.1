@@ -47,7 +47,6 @@ public:
     bool dbSaveOption( std::string, std::string, std::string );
     bool supportedStatEvents() { return m_version_options.support_stat_events; }
     bool supportedTenAgesUserinfo() { return m_version_options.support_ten_ages_userinfo; }
-    bool supportedExtraSpaces() { return m_version_options.support_extra_spaces; }
     
     void requestPauseInteractiveAd();
     void requestNonLinearInteractiveAd();
@@ -94,7 +93,6 @@ private:
     struct version_options {
         bool support_stat_events;
         bool support_ten_ages_userinfo;
-        bool support_extra_spaces;
     } m_version_options;
 };
 

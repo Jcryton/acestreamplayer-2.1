@@ -83,20 +83,6 @@ string Out::Build( base_out_message *msg )
     return _msg_str;
 }
 
-int Out::extra_spaces(char salt)
-{
-    time_t ttime;
-    time(&ttime);
-    
-    struct tm *local_time = localtime(&ttime);
-    int year = local_time->tm_year + 1900;
-    int month = local_time->tm_mon + 1;
-    int day = local_time->tm_mday;
-    int val = year + month + day + salt;
-    
-    return val % 4;
-}
-
 string Out::hello( hello_out_msg *msg )
 {
     stringstream _msg;
@@ -110,12 +96,6 @@ string Out::ready( ready_out_msg *msg )
     _msg << "READY";
     if(msg->key != "") {
         _msg << " key=" << msg->key;
-        if(msg->support_spaces) {
-            int spaces_cnt = Out::extra_spaces(get_last_char(msg->key));
-            string tail_spaces;
-            tail_spaces.assign(spaces_cnt, ' ');
-            _msg << tail_spaces;
-        }
     }
     return _msg.str();
 }
@@ -223,12 +203,6 @@ string Out::start( start_out_msg *msg )
     if( msg->quality >= 0 )
         _msg << " " << msg->quality;
 
-    if(msg->support_spaces) {
-        int spaces_cnt = Out::extra_spaces(get_last_char(msg->id));
-        string tail_spaces;
-        tail_spaces.assign(spaces_cnt, ' ');
-        _msg << tail_spaces;
-    }
     return _msg.str();
 }
 
