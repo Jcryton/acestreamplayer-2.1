@@ -602,13 +602,15 @@ bool Control::readPortFromFile()
         RegCloseKey( _hKey );
         
         char* _installpath = FromWide(_installpathW);
+        char* _portfile = FromWide(PORT_FILE);
         if( _installpath ) {
             _port_file.assign( _installpath );
-            _port_file.append( PORT_FILE );
+            _port_file.append( _portfile );
             
             msg_P2PLog(m_vlcobj, "[control.cpp::readPortFromFile]: portfile = %s", _port_file.c_str());
 
             free(_installpath);
+            free(_portfile);
         }
     }
     
@@ -633,7 +635,11 @@ bool Control::readPortFromFile()
 int Control::readFile( string filepath )
 {
     int _dataint = -1;
-    FILE* _file = fopen( filepath.c_str(), "r" );
+    wchar_t *wide_filepath = ToWide(filepath.c_str());
+    if(!wide_filepath)
+        return _dataint;
+    
+    FILE* _file = _wfopen( wide_filepath, L"r" );
     if( _file ) {
         long _file_size; 
          fseek( _file , 0 , SEEK_END );
@@ -644,6 +650,7 @@ int Control::readFile( string filepath )
         }
         fclose( _file );
     }
+    free(wide_filepath);
     return _dataint;
 }
 #endif

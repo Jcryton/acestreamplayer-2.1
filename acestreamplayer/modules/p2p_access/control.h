@@ -17,7 +17,7 @@ const wchar_t REG_SECTION[] = L"Software\\ACEStream";
 #endif
 const wchar_t REG_ENGINE_KEY[] = L"EnginePath";
 const wchar_t REG_INSTALL_KEY[] = L"InstallDir";
-const char PORT_FILE[] = "\\engine\\acestream.port";
+const wchar_t PORT_FILE[] = L"\\engine\\acestream.port";
 #else
 const char UNIX_PATH[] = "/usr/bin/acestreamengine-client-gtk";
 #endif
