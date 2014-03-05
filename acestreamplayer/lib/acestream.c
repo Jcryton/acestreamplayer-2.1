@@ -120,7 +120,6 @@ static int acestream_showplaylist( vlc_object_t * p_this, char const * psz_cmd, 
     return VLC_SUCCESS;
 }
 
-
 static int acestream_showerror_dialog( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
 {
     VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
@@ -137,107 +136,50 @@ static int acestream_showerror_dialog( vlc_object_t * p_this, char const * psz_c
     return VLC_SUCCESS;
 }
 
-static int acestream_preloadpauseurl( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
+static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
 {
     VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
-    libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
-    libvlc_event_t event;
-
-    if(newval.p_address) {
-        event.type = libvlc_AcestreamPreloadPauseUrl;
-    
-        p2p_preload_pause_url_item_t *p_preloadpause = (p2p_preload_pause_url_item_t *)newval.p_address;
-
-        event.u.acestream_preloadpauseurl.url = p_preloadpause->url;
-        event.u.acestream_preloadpauseurl.id = p_preloadpause->id;
-        event.u.acestream_preloadpauseurl.preload = p_preloadpause->preload;
-        event.u.acestream_preloadpauseurl.width = p_preloadpause->width;
-        event.u.acestream_preloadpauseurl.height = p_preloadpause->height;
-        event.u.acestream_preloadpauseurl.left = p_preloadpause->left;
-        event.u.acestream_preloadpauseurl.top = p_preloadpause->top;
-        event.u.acestream_preloadpauseurl.right = p_preloadpause->right;
-        event.u.acestream_preloadpauseurl.bottom = p_preloadpause->bottom;
-        event.u.acestream_preloadpauseurl.allow_dialogs = p_preloadpause->allow_dialogs;
-        event.u.acestream_preloadpauseurl.enable_flash = p_preloadpause->enable_flash;
-        event.u.acestream_preloadpauseurl.cookies = p_preloadpause->cookies;
-        event.u.acestream_preloadpauseurl.embed_script = p_preloadpause->embed_script;
-    }
-    else {
-        event.type = libvlc_AcestreamClearPreloadUrl;
-        event.u.acestream_clearpreloadurl.type = libvlc_ace_showurl_Ad;
-    }
-    
-    libvlc_event_send( p_ace->p_event_manager, &event );
-    return VLC_SUCCESS;
-}
-
-static int acestream_preloadnonlinearurl( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
-{
-    VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
-    libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
-    libvlc_event_t event;
     
     if(newval.p_address) {
-        event.type = libvlc_AcestreamPreloadNonLinearUrl;
-       
-        p2p_preload_nonlinear_url_item_t *p_preloadnonlinear = (p2p_preload_nonlinear_url_item_t *)newval.p_address;
-
-        event.u.acestream_preloadnonlinearurl.url = p_preloadnonlinear->url;
-        event.u.acestream_preloadnonlinearurl.id = p_preloadnonlinear->id;
-        event.u.acestream_preloadnonlinearurl.type = p_preloadnonlinear->type;
-        event.u.acestream_preloadnonlinearurl.creative_type = p_preloadnonlinear->creative_type;
-        event.u.acestream_preloadnonlinearurl.click_url = p_preloadnonlinear->click_url;
-        event.u.acestream_preloadnonlinearurl.width = p_preloadnonlinear->width;
-        event.u.acestream_preloadnonlinearurl.height = p_preloadnonlinear->height;
-        event.u.acestream_preloadnonlinearurl.left = p_preloadnonlinear->left;
-        event.u.acestream_preloadnonlinearurl.top = p_preloadnonlinear->top;
-        event.u.acestream_preloadnonlinearurl.right = p_preloadnonlinear->right;
-        event.u.acestream_preloadnonlinearurl.bottom = p_preloadnonlinear->bottom;
-        event.u.acestream_preloadnonlinearurl.allow_dialogs = p_preloadnonlinear->allow_dialogs;
-        event.u.acestream_preloadnonlinearurl.enable_flash = p_preloadnonlinear->enable_flash;
-        event.u.acestream_preloadnonlinearurl.cookies = p_preloadnonlinear->cookies;
-        event.u.acestream_preloadnonlinearurl.embed_script = p_preloadnonlinear->embed_script;
-    }
-    else {
-        event.type = libvlc_AcestreamClearPreloadUrl;
-        event.u.acestream_clearpreloadurl.type = libvlc_ace_showurl_Overlay;
+        libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
+        libvlc_event_t event;
+    
+        p2p_load_url_item_t *p_loadurl = (p2p_load_url_item_t *)newval.p_address;
+        
+        if(p_loadurl->clear) {
+            event.type = libvlc_AcestreamClearLoadUrl;
+            event.u.acestream_clearloadurl.type = p_loadurl->type;
+        }
+        else {
+            event.type = libvlc_AcestreamLoadUrl;
+            event.u.acestream_loadurl.type = p_loadurl->type;
+            event.u.acestream_loadurl.id = p_loadurl->id;
+            event.u.acestream_loadurl.url = p_loadurl->url;
+            event.u.acestream_loadurl.width = p_loadurl->width;
+            event.u.acestream_loadurl.height = p_loadurl->height;
+            event.u.acestream_loadurl.left = p_loadurl->left;
+            event.u.acestream_loadurl.top = p_loadurl->top;
+            event.u.acestream_loadurl.right = p_loadurl->right;
+            event.u.acestream_loadurl.bottom = p_loadurl->bottom;
+            event.u.acestream_loadurl.allow_dialogs = p_loadurl->allow_dialogs;
+            event.u.acestream_loadurl.enable_flash = p_loadurl->enable_flash;
+            event.u.acestream_loadurl.cookies = p_loadurl->cookies;
+            event.u.acestream_loadurl.embed_scripts = p_loadurl->embed_scripts;
+            event.u.acestream_loadurl.embed_code = p_loadurl->embed_code;
+            
+            event.u.acestream_loadurl.preload = p_loadurl->preload;
+            event.u.acestream_loadurl.fullscreen = p_loadurl->fullscreen;
+            
+            event.u.acestream_loadurl.content_type = p_loadurl->content_type;
+            event.u.acestream_loadurl.creative_type = p_loadurl->creative_type;
+            event.u.acestream_loadurl.click_url = p_loadurl->click_url;
+            
+            event.u.acestream_loadurl.user_agent = p_loadurl->user_agent;
+            event.u.acestream_loadurl.close_after_seconds = p_loadurl->close_after_seconds;
+        }
+        libvlc_event_send( p_ace->p_event_manager, &event );
     }
     
-    libvlc_event_send( p_ace->p_event_manager, &event );
-    return VLC_SUCCESS;
-}
-
-static int acestream_preloadstopurl( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
-{
-    VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
-    libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
-    libvlc_event_t event;
-    
-    if(newval.p_address) {
-        event.type = libvlc_AcestreamPreloadStopUrl;
-
-        p2p_preload_stop_url_item_t *p_preloadstop = (p2p_preload_stop_url_item_t *)newval.p_address;
-        event.u.acestream_preloadstopurl.url = p_preloadstop->url;
-        event.u.acestream_preloadstopurl.id = p_preloadstop->id;
-        event.u.acestream_preloadstopurl.preload = p_preloadstop->preload;
-        event.u.acestream_preloadstopurl.fullscreen = p_preloadstop->fullscreen;
-        event.u.acestream_preloadstopurl.width = p_preloadstop->width;
-        event.u.acestream_preloadstopurl.height = p_preloadstop->height;
-        event.u.acestream_preloadstopurl.left = p_preloadstop->left;
-        event.u.acestream_preloadstopurl.top = p_preloadstop->top;
-        event.u.acestream_preloadstopurl.right = p_preloadstop->right;
-        event.u.acestream_preloadstopurl.bottom = p_preloadstop->bottom;
-        event.u.acestream_preloadstopurl.allow_dialogs = p_preloadstop->allow_dialogs;
-        event.u.acestream_preloadstopurl.enable_flash = p_preloadstop->enable_flash;
-        event.u.acestream_preloadstopurl.cookies = p_preloadstop->cookies;
-        event.u.acestream_preloadstopurl.embed_script = p_preloadstop->embed_script;
-    }
-    else {
-        event.type = libvlc_AcestreamClearPreloadUrl;
-        event.u.acestream_clearpreloadurl.type = libvlc_ace_showurl_StopAd;
-    }
-
-    libvlc_event_send( p_ace->p_event_manager, &event );
     return VLC_SUCCESS;
 }
 
@@ -367,8 +309,6 @@ static int acestream_cansave_callback( p2p_object_t *p_p2p, void *p_callback_ite
     
     return VLC_SUCCESS;
 }
-
-
 static void bind_callbacks( libvlc_acestream_object_t *p_ace )
 {
     p2p_object_t *p_p2p = getP2P( p_ace->p_libvlc_instance );
@@ -384,9 +324,7 @@ static void bind_callbacks( libvlc_acestream_object_t *p_ace )
         var_AddCallback( p_p2p, "showdialog", acestream_showerror_dialog, p_ace );
         var_AddCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_AddCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
-        var_AddCallback( p_p2p, "preload-pause-url", acestream_preloadpauseurl, p_ace );
-        var_AddCallback( p_p2p, "preload-nonlinear-url", acestream_preloadnonlinearurl, p_ace );
-        var_AddCallback( p_p2p, "preload-stop-url", acestream_preloadstopurl, p_ace );
+        var_AddCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
         
         p2p_SetCallback( p_p2p, P2P_LOAD_CALLBACK, acestream_load_callback, p_ace );
         p2p_SetCallback( p_p2p, P2P_PLAY_CALLBACK, acestream_play_callback, p_ace );
@@ -410,9 +348,7 @@ static void unbind_callbacks( libvlc_acestream_object_t *p_ace )
         var_DelCallback( p_p2p, "showdialog", acestream_showerror_dialog, p_ace );
         var_DelCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_DelCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
-        var_DelCallback( p_p2p, "preload-pause-url", acestream_preloadpauseurl, p_ace );
-        var_DelCallback( p_p2p, "preload-nonlinear-url", acestream_preloadnonlinearurl, p_ace );
-        var_DelCallback( p_p2p, "preload-stop-url", acestream_preloadstopurl, p_ace );
+        var_DelCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
     }
 }
 
@@ -460,16 +396,13 @@ libvlc_acestream_object_t *libvlc_acestream_object_new( libvlc_instance_t *p_ins
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamStatus );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamStatusRaw );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamError );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowUrl );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowUserDataDialog );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowPlaylist );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowErrorDialog );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamForceExitFullscreen );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamAdParams );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamPreloadPauseUrl );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamPreloadNonLinearUrl );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamPreloadStopUrl );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamClearPreloadUrl );
+    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamLoadUrl );
+    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamClearLoadUrl );
     bind_callbacks( p_ace );
     
     emit_events(p_ace);
@@ -518,6 +451,11 @@ void libvlc_acestream_object_retain( libvlc_acestream_object_t *p_ace )
 libvlc_event_manager_t *libvlc_acestream_object_event_manager( libvlc_acestream_object_t *p_ace )
 {
     return p_ace->p_event_manager;
+}
+
+void libvlc_acestream_object_ready( libvlc_acestream_object_t *p_ace )
+{
+    emit_events(p_ace);
 }
 
 void libvlc_acestream_object_set_media_list_player( libvlc_acestream_object_t *p_ace, libvlc_media_list_player_t *p_mlist_player )
@@ -709,31 +647,27 @@ void libvlc_acestream_object_skip( libvlc_acestream_object_t *p_ace )
     vlc_mutex_unlock( &p_ace->object_lock );
 }
 
-void libvlc_acestream_object_register_ad_shown( libvlc_acestream_object_t *p_ace, const char *id )
-{
-    vlc_mutex_lock( &p_ace->object_lock );
-    p2p_RegisterAdShown( getP2P( p_ace->p_libvlc_instance ), id );
-    vlc_mutex_unlock( &p_ace->object_lock );
-}
-
-void libvlc_acestream_object_request_pause_ad( libvlc_acestream_object_t *p_ace)
-{
-    vlc_mutex_lock( &p_ace->object_lock );
-    p2p_RequestPauseAd( getP2P( p_ace->p_libvlc_instance ));
-    vlc_mutex_unlock( &p_ace->object_lock );
-}
-
-void libvlc_acestream_object_register_ad_closed( libvlc_acestream_object_t *p_ace, const char *id )
-{
-    vlc_mutex_lock( &p_ace->object_lock );
-    p2p_RegisterAdClosed( getP2P( p_ace->p_libvlc_instance ), id );
-    vlc_mutex_unlock( &p_ace->object_lock );
-}
-
 int libvlc_acestream_object_get_ad_volume( libvlc_acestream_object_t *p_ace )
 {
     vlc_mutex_lock( &p_ace->object_lock );
     int vol = var_GetInteger( getP2P( p_ace->p_libvlc_instance ), "advolume" );
     vlc_mutex_unlock( &p_ace->object_lock );
     return vol;
+}
+
+void libvlc_acestream_object_request_loadurl(libvlc_acestream_object_t *p_ace, libvlc_acestream_loadurl_type_t type)
+{
+    vlc_mutex_lock( &p_ace->object_lock );
+    p2p_RequestLoadUrlAd( getP2P(p_ace->p_libvlc_instance), type );
+    vlc_mutex_unlock( &p_ace->object_lock );
+}
+
+void libvlc_acestream_object_register_loadurl_statistics(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type,
+                                            libvlc_acestream_loadurl_event_type_t event_type,
+                                            const char *id)
+{
+    vlc_mutex_lock( &p_ace->object_lock );
+    p2p_RegisterLoadUrlAdStatistics( getP2P(p_ace->p_libvlc_instance), type, event_type, id );
+    vlc_mutex_unlock( &p_ace->object_lock );
 }

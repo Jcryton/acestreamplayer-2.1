@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 
-#define API_VERSION 4
+#define API_VERSION 5
 
 enum outcome_message_type {
     OUT_MSG_UNDF = -1,
@@ -26,7 +26,7 @@ enum outcome_message_type {
     OUT_MSG_USER_DATA,
     OUT_MSG_SHUTDOWN,
     OUT_MSG_STAT_EVENT,
-    OUT_MSG_NONLINEAR_AD_EVENT,
+    OUT_MSG_LOAD_URL_EVENT,
     OUT_MSG_MAX = 17
 };
 
@@ -192,19 +192,20 @@ struct stat_event_out_msg : base_out_message {
     }
 };
 
-struct nonlinear_ad_event_out_msg : base_out_message {
+struct load_url_event_out_msg : base_out_message {
     std::string id;
     std::string event_type;
+    std::string event_name;
     
-    nonlinear_ad_event_out_msg() : base_out_message() { 
-        type = OUT_MSG_NONLINEAR_AD_EVENT; 
+    load_url_event_out_msg() : base_out_message() { 
+        type = OUT_MSG_LOAD_URL_EVENT;
+        event_type = event_name = id = "";
     }
 };
 
 enum income_event_message_type {
     IN_EVENT_MSG_UNDF = -1,
     IN_EVENT_MSG_CANSAVE,
-    IN_EVENT_MSG_SHOW_URL,
     IN_EVENT_MSG_LIVE_POS,
     IN_EVENT_MSG_GET_USER_DATA,
     IN_EVENT_MSG_SHOW_DIALOG
@@ -223,22 +224,6 @@ struct cansave_in_event_msg : base_in_event_message {
 
     cansave_in_event_msg() : base_in_event_message() { 
         event_type = IN_EVENT_MSG_CANSAVE; 
-    }
-};
-
-struct show_url_in_event_msg: base_in_event_message {
-    std::string url;
-    int width;
-    int height;
-    int left;
-    int top;
-    int right;
-    int bottom;
-    p2p_show_url_type type;
-    std::string text;
-
-    show_url_in_event_msg() : base_in_event_message() { 
-        event_type = IN_EVENT_MSG_SHOW_URL; 
     }
 };
 
@@ -289,11 +274,9 @@ enum income_message_type {
     IN_MSG_STOP,
     IN_MSG_LOAD,
     IN_MSG_EVENT,
+    IN_MSG_LOAD_URL,
     IN_MSG_GET_PID_RESP,
     IN_MSG_GET_CID_RESP,
-    IN_MSG_PRELOAD_PAUSE_ADS,
-    IN_MSG_PRELOAD_NONLINEAR_ADS,
-    IN_MSG_PRELOAD_STOP_ADS,
     IN_MSG_NOTREADY
 };
 
@@ -418,7 +401,6 @@ struct shutdown_in_msg : base_in_message {
 struct event_in_msg : base_in_message {
     union {
         cansave_in_event_msg *cansave_event;
-        show_url_in_event_msg *url_event;
         live_pos_in_event_msg *live_pos_event;
         user_data_in_event_msg *user_data_event;
         show_dialog_in_event_msg *dialog_event;
@@ -453,90 +435,47 @@ struct notready_in_msg : base_in_message {
     }
 };
 
-struct preload_pause_ad_item {
-    std::string id;
-    std::string url;
-    bool require_flash;
-    bool preload;
-    int max_impressions;
-    int impressions;
-    int fullscreen;
+struct load_url_item {
+    int type;                   // url type p2p_load_url_type_t
+    
+    std::string id;             // id for statistics
+    std::string url;            // url to show
+    bool require_flash;         // show only if flash enabled
     int width;
     int height;
     int left;
     int top;
     int right;
     int bottom;
-    int min_width;
-    int min_height;
-    bool allow_dialogs;
-    bool enable_flash;
-    int cookies;
-    std::string embed_script;
-};
-
-struct preload_pause_ads_in_msg : base_in_message {
-    std::vector<preload_pause_ad_item> items;
+    int min_width;              // min allowed width
+    int min_height;             // min allowed height
+    bool allow_dialogs;         // allow dialogs for browser
+    bool enable_flash;          // disable flash if false
+    int cookies;                // 1 - own, 2 - all, 3 - none
+    std::vector<std::string> embed_scripts;   // scripts to be append to head
+    std::string embed_code;     // code to be append to body
     
-    preload_pause_ads_in_msg() : base_in_message() { 
-        type = IN_MSG_PRELOAD_PAUSE_ADS; 
-    }
+    // pause+stop
+    bool preload;               // preload or no
+    int fullscreen;             // only if in fullscreen
+    // pause
+    int max_impressions;        // how many times to show
+    int impressions;            // impressions counter
+    // overlay
+    std::string content_type;   // iframe, html
+    std::string creative_type;  // mime
+    std::string click_url;      // url to redirect if not html
+    // preroll
+    int user_agent;
+    // hidden
+    int close_after_seconds;
 };
 
-struct preload_nonlinear_ad_item {
-    std::string id;
-    std::string url;
-    std::string ad_type;
-    std::string creative_type;
-    std::string click_url;
-    bool require_flash;
-    int width;
-    int height;
-    int left;
-    int top;
-    int right;
-    int bottom;
-    int min_width;
-    int min_height;
-    bool allow_dialogs;
-    bool enable_flash;
-    int cookies;
-    std::string embed_script;
-};
-
-struct preload_nonlinear_ads_in_msg : base_in_message {
-    std::vector<preload_nonlinear_ad_item> items;
+struct load_url_msg : base_in_message {
+    std::vector<load_url_item> items;
     
-    preload_nonlinear_ads_in_msg() : base_in_message() { 
-        type = IN_MSG_PRELOAD_NONLINEAR_ADS; 
-    }
-};
-
-struct preload_stop_ad_item {
-    std::string id;
-    std::string url;
-    bool require_flash;
-    bool preload;
-    int fullscreen;
-    int width;
-    int height;
-    int left;
-    int top;
-    int right;
-    int bottom;
-    int min_width;
-    int min_height;
-    bool allow_dialogs;
-    bool enable_flash;
-    int cookies;
-    std::string embed_script;
-};
-
-struct preload_stop_ads_in_msg : base_in_message {
-    std::vector<preload_stop_ad_item> items;
-    
-    preload_stop_ads_in_msg() : base_in_message() { 
-        type = IN_MSG_PRELOAD_STOP_ADS; 
+    load_url_msg() : base_in_message() {
+        type = IN_MSG_LOAD_URL;
     }
 };
 

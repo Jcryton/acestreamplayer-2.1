@@ -45,12 +45,8 @@ base_in_message *In::Parse( const string &msg )
         _msg = static_cast<base_in_message *>( In::shutdown( msg ) );
     else if( !msg.compare( 0, 5, "EVENT" ) )
         _msg = static_cast<base_in_message*>( In::event( msg ) );
-    else if( !msg.compare( 0, 17, "PRELOAD_PAUSE_ADS" ) )
-        _msg = static_cast<base_in_message*>( In::preload_pause_ads( msg ) );
-    else if( !msg.compare( 0, 21, "PRELOAD_NONLINEAR_ADS" ) )
-        _msg = static_cast<base_in_message*>( In::preload_nonlinear_ads( msg ) );
-    else if( !msg.compare( 0, 16, "PRELOAD_STOP_ADS" ) )
-        _msg = static_cast<base_in_message*>( In::preload_stop_ads( msg ) );
+    else if( !msg.compare( 0, 8, "LOAD_URL" ) )
+        _msg = static_cast<base_in_message*>( In::load_url( msg ) );
     else {
         _msg = new base_in_message;
         _msg->type = IN_MSG_UNDF;
@@ -511,7 +507,7 @@ event_in_msg *In::event( const string &msg )
     _msg->raw = msg;
     _msg->event_type = IN_EVENT_MSG_UNDF;
     _msg->event.cansave_event = NULL;
-    _msg->event.url_event = NULL;
+    _msg->event.dialog_event = NULL;
     _msg->event.live_pos_event = NULL;
     _msg->event.user_data_event = NULL;
     
@@ -536,45 +532,6 @@ event_in_msg *In::event( const string &msg )
                     _msg->event.cansave_event->format = P2P_SAVE_PLAIN;
                 else if( !_format.compare("encrypted") )
                     _msg->event.cansave_event->format = P2P_SAVE_ENCRYPTED;
-            }
-        }
-    }
-    else if( !_options[0].compare( "showurl" ) ) {
-        _msg->event_type = IN_EVENT_MSG_SHOW_URL;
-        _msg->event.url_event = new show_url_in_event_msg;
-        _msg->event.url_event->url = "";
-        _msg->event.url_event->width = 0;
-        _msg->event.url_event->height = 0;
-        _msg->event.url_event->left = -1;
-        _msg->event.url_event->top = -1;
-        _msg->event.url_event->right = -1;
-        _msg->event.url_event->bottom = -1;
-        _msg->event.url_event->text = "";
-        _msg->event.url_event->type = P2P_URL_UNDF;
-        
-        for( size_t _i = 1; _i < _options.size(); ++_i ) {
-            if( !_options[_i].compare(0, 3, "url") )
-                _msg->event.url_event->url = decode_url(_options[_i].substr(4));
-            else if( !_options[_i].compare(0, 5, "width") )
-                _msg->event.url_event->width = atoi(_options[_i].substr(6).c_str());
-            else if( !_options[_i].compare(0, 6, "height") )
-                _msg->event.url_event->height = atoi(_options[_i].substr(7).c_str());
-            else if( !_options[_i].compare(0, 4, "left") )
-                _msg->event.url_event->left = atoi(_options[_i].substr(5).c_str());
-            else if( !_options[_i].compare(0, 3, "top") )
-                _msg->event.url_event->top = atoi(_options[_i].substr(4).c_str());
-            else if( !_options[_i].compare(0, 5, "right") )
-                _msg->event.url_event->right = atoi(_options[_i].substr(6).c_str());
-            else if( !_options[_i].compare(0, 6, "bottom") )
-                _msg->event.url_event->bottom = atoi(_options[_i].substr(7).c_str());
-            else if( !_options[_i].compare(0, 4, "text") )
-                _msg->event.url_event->text = decode_url(_options[_i].substr(5));
-            else if( !_options[_i].compare(0, 4, "type") ) {
-                string _type_str = _options[_i].substr(5);
-                if( !_type_str.compare("ad") )
-                    _msg->event.url_event->type = P2P_URL_AD;
-                else if( !_type_str.compare("notification") )
-                    _msg->event.url_event->type = P2P_URL_NOTIFICATION;
             }
         }
     }
@@ -638,30 +595,28 @@ event_in_msg *In::event( const string &msg )
     return _msg;
 }
 
-preload_pause_ads_in_msg *In::preload_pause_ads( const string &msg ) {
-    preload_pause_ads_in_msg *_msg = new preload_pause_ads_in_msg;
+load_url_msg *In::load_url( const string &msg )
+{
+    load_url_msg *_msg = new load_url_msg;
     _msg->raw = msg;
     
     string _base = decode_url(msg);
     size_t _pos;
-    _pos = _base.find( "items=[{" );
+    _pos = _base.find("items=[{");
+    
     if( _pos != string::npos ) {
         _base = _base.substr(_pos + 8, _base.rfind("}]") - _pos - 8);
-
         do {
             _pos = _base.find("}, {");
             string _item_str = ( _pos == string::npos ) ? _base : _base.substr( 0, _pos );
             _base.erase( 0, _pos + 4 );
             
             size_t _delim_pos;
-            preload_pause_ad_item item;
+            load_url_item item;
+            item.type = P2P_LOAD_URL_UNDF;
             item.id = "";
             item.url = "";
             item.require_flash = false;
-            item.preload = true;
-            item.max_impressions = 0;
-            item.impressions = 0;
-            item.fullscreen = 0;
             item.width = 0;
             item.height = 0;
             item.left = -1;
@@ -673,13 +628,49 @@ preload_pause_ads_in_msg *In::preload_pause_ads( const string &msg ) {
             item.allow_dialogs = false;
             item.enable_flash = true;
             item.cookies = 1;
-            item.embed_script = "";
-            do {
-                _delim_pos = _item_str.find(", ");
-                string _param_str = ( _delim_pos == string::npos ) ? _item_str : _item_str.substr( 0, _delim_pos );
-                _item_str.erase( 0, _delim_pos + 2 );
+            //item.embed_scripts; -> vector
+            item.embed_code = "";
+            
+            item.preload = true;
+            item.fullscreen = 0;
 
-                if( !_param_str.compare( 0, 6, "\"id\": " ) )
+            item.max_impressions = 0;
+            item.impressions = 0;
+
+            item.content_type = "";
+            item.creative_type = "";
+            item.click_url = "";
+            
+            item.user_agent = 1;
+            item.close_after_seconds = 0;
+            
+            do {
+                bool _isArray = false;
+                if( !_item_str.compare(0, 16, "embedScripts\": [") ) {
+                    _delim_pos = _item_str.find("], \"");
+                    _isArray = true;
+                }
+                else
+                    _delim_pos = _item_str.find(", \"");
+                string _param_str = ( _delim_pos == string::npos ) ? _item_str : _item_str.substr( 0, _delim_pos );
+                _item_str.erase( 0, _isArray ? _delim_pos + 3 : _delim_pos + 2 );
+                
+                if( !_param_str.compare( 0, 8, "\"type\": " ) ) {
+                    string val = _param_str.substr(9, _param_str.length() - 10);
+                    if( !val.compare("overlay") )
+                        item.type = P2P_LOAD_URL_OVERLAY;
+                    else if( !val.compare("interactive-pause") )
+                        item.type = P2P_LOAD_URL_PAUSE;
+                    else if( !val.compare("interactive-stop") )
+                        item.type = P2P_LOAD_URL_STOP;
+                    else if( !val.compare("interactive-preroll") )
+                        item.type = P2P_LOAD_URL_PREROLL;
+                    else if( !val.compare("slider") )
+                        item.type = P2P_LOAD_URL_SLIDER;
+                    else if( !val.compare("interactive-hidden") )
+                        item.type = P2P_LOAD_URL_HIDDEN;
+                }
+                else if( !_param_str.compare( 0, 6, "\"id\": " ) )
                     item.id = _param_str.substr(7, _param_str.length() - 8);
                 else if( !_param_str.compare( 0, 7, "\"url\": " ) )
                     item.url = _param_str.substr(8, _param_str.length() - 9);
@@ -687,7 +678,23 @@ preload_pause_ads_in_msg *In::preload_pause_ads( const string &msg ) {
                     string val = _param_str.substr(16, _param_str.length() - 16);
                     item.require_flash = !val.compare("true");
                 }
-                else if( !_param_str.compare( 0, 16, "\"allowDialogs\": " ) ) {
+                else if( !_param_str.compare( 0, 9, "\"width\": " ) )
+                    item.width = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
+                else if( !_param_str.compare( 0, 10, "\"height\": " ) )
+                    item.height = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
+                else if( !_param_str.compare( 0, 8, "\"left\": " ) )
+                    item.left = atoi(_param_str.substr(8, _param_str.length() - 8).c_str());
+                else if( !_param_str.compare( 0, 7, "\"top\": " ) )
+                    item.top = atoi(_param_str.substr(7, _param_str.length() - 7).c_str());
+                else if( !_param_str.compare( 0, 9, "\"right\": " ) )
+                    item.right = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
+                else if( !_param_str.compare( 0, 10, "\"bottom\": " ) )
+                    item.bottom = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
+                else if( !_param_str.compare( 0, 12, "\"minWidth\": " ) )
+                    item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
+                else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
+                    item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
+                else if( !_param_str.compare( 0, 16, "a\"llowDialogs\": " ) ) {
                     string val = _param_str.substr(16, _param_str.length() - 16);
                     item.allow_dialogs = !val.compare("true");
                 }
@@ -697,222 +704,40 @@ preload_pause_ads_in_msg *In::preload_pause_ads( const string &msg ) {
                 }
                 else if( !_param_str.compare( 0, 11, "\"cookies\": " ) )
                     item.cookies = atoi(_param_str.substr(11, _param_str.length() - 11).c_str());
-                else if( !_param_str.compare( 0, 15, "\"embedScript\": " ) )
-                    item.embed_script = _param_str.substr(16, _param_str.length() - 17);
+                else if( !_param_str.compare( 0, 17, "\"embedScripts\": [" ) ) {
+                    if( _delim_pos == 17 ) continue;
+                    string _arr_str = _param_str.substr(18, _param_str.length() - 19);
+                    size_t _arr_delim_pos;
+                    do {
+                        _arr_delim_pos = _arr_str.find("\", \"");
+                        string _arr_item_str = ( _arr_delim_pos == string::npos ) ? _arr_str.substr(0, _arr_str.length()-1) : _arr_str.substr( 0, _arr_delim_pos );
+                        _arr_str.erase( 0, _arr_delim_pos + 4 );
+                        item.embed_scripts.push_back(_arr_item_str);
+                    }
+                    while( _arr_delim_pos != string::npos );
+                }
+                else if( !_param_str.compare( 0, 13, "\"embedCode\": " ) )
+                    item.embed_code = _param_str.substr(14, _param_str.length() - 15);
                 else if( !_param_str.compare( 0, 11, "\"preload\": " ) ) {
                     string val = _param_str.substr(11, _param_str.length() - 11);
                     item.preload = !val.compare("true");
                 }
+                else if( !_param_str.compare( 0, 14, "\"fullscreen\": " ) )
+                    item.fullscreen = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
                 else if( !_param_str.compare( 0, 18, "\"maxImpressions\": " ) ) {
                     int val = atoi(_param_str.substr(18, _param_str.length() - 18).c_str());
                     item.max_impressions = val == 0 ? 9999 : val;
                 }
-                else if( !_param_str.compare( 0, 14, "\"fullscreen\": " ) )
-                    item.fullscreen = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
-                else if( !_param_str.compare( 0, 9, "\"width\": " ) )
-                    item.width = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"height\": " ) )
-                    item.height = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 8, "\"left\": " ) )
-                    item.left = atoi(_param_str.substr(8, _param_str.length() - 8).c_str());
-                else if( !_param_str.compare( 0, 7, "\"top\": " ) )
-                    item.top = atoi(_param_str.substr(7, _param_str.length() - 7).c_str());
-                else if( !_param_str.compare( 0, 9, "\"right\": " ) )
-                    item.right = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"bottom\": " ) )
-                    item.bottom = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 12, "\"minWidth\": " ) )
-                    item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
-                else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
-                    item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
-            }
-            while( _delim_pos != string::npos );
-            
-            if(item.max_impressions > 0)
-                _msg->items.push_back(item);
-        }
-        while( _pos != string::npos );
-    }
-    
-    return _msg;
-}
-
-preload_nonlinear_ads_in_msg *In::preload_nonlinear_ads( const string &msg )
-{
-    preload_nonlinear_ads_in_msg *_msg = new preload_nonlinear_ads_in_msg;
-    _msg->raw = msg;
-    
-    string _base = decode_url(msg);
-    size_t _pos;
-    _pos = _base.find( "items=[{" );
-    if( _pos != string::npos ) {
-        _base = _base.substr(_pos + 8, _base.rfind("}]") - _pos - 8);
-
-        do {
-            _pos = _base.find("}, {");
-            string _item_str = ( _pos == string::npos ) ? _base : _base.substr( 0, _pos );
-            _base.erase( 0, _pos + 4 );
-            
-            size_t _delim_pos;
-            preload_nonlinear_ad_item item;
-            item.id = "";
-            item.url = "";
-            item.ad_type = "";
-            item.creative_type = "";
-            item.click_url = "";
-            item.require_flash = true;
-            item.width = 0;
-            item.height = 0;
-            item.left = -1;
-            item.top = -1;
-            item.right = -1;
-            item.bottom = -1;
-            item.min_width = 0;
-            item.min_height = 0;
-            item.allow_dialogs = false;
-            item.enable_flash = true;
-            item.cookies = 1;
-            item.embed_script = "";
-            do {
-                _delim_pos = _item_str.find(", ");
-                string _param_str = ( _delim_pos == string::npos ) ? _item_str : _item_str.substr( 0, _delim_pos );
-                _item_str.erase( 0, _delim_pos + 2 );
-
-                if( !_param_str.compare( 0, 6, "\"id\": " ) )
-                    item.id = _param_str.substr(7, _param_str.length() - 8);
-                else if( !_param_str.compare( 0, 7, "\"url\": " ) )
-                    item.url = _param_str.substr(8, _param_str.length() - 9);
-                else if( !_param_str.compare( 0, 8, "\"type\": " ) )
-                    item.ad_type = _param_str.substr(9, _param_str.length() - 10);
+                else if( !_param_str.compare( 0, 15, "\"contentType\": " ) )
+                    item.content_type = _param_str.substr(16, _param_str.length() - 17);
                 else if( !_param_str.compare( 0, 16, "\"creativeType\": " ) )
                     item.creative_type = _param_str.substr(17, _param_str.length() - 18);
                 else if( !_param_str.compare( 0, 12, "\"clickUrl\": " ) )
                     item.click_url = _param_str.substr(13, _param_str.length() - 14);
-                else if( !_param_str.compare( 0, 16, "\"requireFlash\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.require_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 16, "\"allowDialogs\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.allow_dialogs = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 15, "\"enableFlash\": " ) ) {
-                    string val = _param_str.substr(15, _param_str.length() - 15);
-                    item.enable_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 11, "\"cookies\": " ) )
-                    item.cookies = atoi(_param_str.substr(11, _param_str.length() - 11).c_str());
-                else if( !_param_str.compare( 0, 15, "\"embedScript\": " ) )
-                    item.embed_script = _param_str.substr(16, _param_str.length() - 17);
-                else if( !_param_str.compare( 0, 9, "\"width\": " ) ) 
-                    item.width = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"height\": " ) ) 
-                    item.height = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 8, "\"left\": " ) )
-                    item.left = atoi(_param_str.substr(8, _param_str.length() - 8).c_str());
-                else if( !_param_str.compare( 0, 7, "\"top\": " ) )
-                    item.top = atoi(_param_str.substr(7, _param_str.length() - 7).c_str());
-                else if( !_param_str.compare( 0, 9, "\"right\": " ) )
-                    item.right = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"bottom\": " ) )
-                    item.bottom = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 12, "\"minWidth\": " ) )
-                    item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
-                else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
-                    item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
-            }
-            while( _delim_pos != string::npos );
-            
-            _msg->items.push_back(item);
-        }
-        while( _pos != string::npos );
-    }
-    
-    return _msg;
-}
-
-preload_stop_ads_in_msg *In::preload_stop_ads( const string &msg )
-{
-    preload_stop_ads_in_msg *_msg = new preload_stop_ads_in_msg;
-    _msg->raw = msg;
-    
-    string _base = decode_url(msg);
-    size_t _pos;
-    _pos = _base.find( "items=[{" );
-    if( _pos != string::npos ) {
-        _base = _base.substr(_pos + 8, _base.rfind("}]") - _pos - 8);
-
-        do {
-            _pos = _base.find("}, {");
-            string _item_str = ( _pos == string::npos ) ? _base : _base.substr( 0, _pos );
-            _base.erase( 0, _pos + 4 );
-            
-            size_t _delim_pos;
-            preload_stop_ad_item item;
-            item.id = "";
-            item.url = "";
-            item.require_flash = false;
-            item.preload = true;
-            item.fullscreen = 0;
-            item.width = 0;
-            item.height = 0;
-            item.left = -1;
-            item.top = -1;
-            item.right = -1;
-            item.bottom = -1;
-            item.min_width = 0;
-            item.min_height = 0;
-            item.allow_dialogs = false;
-            item.enable_flash = true;
-            item.cookies = 1;
-            item.embed_script = "";
-            do {
-                _delim_pos = _item_str.find(", ");
-                string _param_str = ( _delim_pos == string::npos ) ? _item_str : _item_str.substr( 0, _delim_pos );
-                _item_str.erase( 0, _delim_pos + 2 );
-
-                if( !_param_str.compare( 0, 6, "\"id\": " ) )
-                    item.id = _param_str.substr(7, _param_str.length() - 8);
-                else if( !_param_str.compare( 0, 7, "\"url\": " ) )
-                    item.url = _param_str.substr(8, _param_str.length() - 9);
-                else if( !_param_str.compare( 0, 16, "\"requireFlash\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.require_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 16, "\"allowDialogs\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.allow_dialogs = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 15, "\"enableFlash\": " ) ) {
-                    string val = _param_str.substr(15, _param_str.length() - 15);
-                    item.enable_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 11, "\"cookies\": " ) )
-                    item.cookies = atoi(_param_str.substr(11, _param_str.length() - 11).c_str());
-                else if( !_param_str.compare( 0, 15, "\"embedScript\": " ) )
-                    item.embed_script = _param_str.substr(16, _param_str.length() - 17);
-                else if( !_param_str.compare( 0, 11, "\"preload\": " ) ) {
-                    string val = _param_str.substr(11, _param_str.length() - 11);
-                    item.preload = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 14, "\"fullscreen\": " ) )
-                    item.fullscreen = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
-                else if( !_param_str.compare( 0, 9, "\"width\": " ) )
-                    item.width = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"height\": " ) )
-                    item.height = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 8, "\"left\": " ) )
-                    item.left = atoi(_param_str.substr(8, _param_str.length() - 8).c_str());
-                else if( !_param_str.compare( 0, 7, "\"top\": " ) )
-                    item.top = atoi(_param_str.substr(7, _param_str.length() - 7).c_str());
-                else if( !_param_str.compare( 0, 9, "\"right\": " ) )
-                    item.right = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"bottom\": " ) )
-                    item.bottom = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 12, "\"minWidth\": " ) )
-                    item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
-                else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
-                    item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
+                else if( !_param_str.compare( 0, 13, "\"userAgent\": " ) )
+                    item.user_agent = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
+                else if( !_param_str.compare( 0, 14, "\"closeAfter\": " ) )
+                    item.close_after_seconds = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
             }
             while( _delim_pos != string::npos );
             

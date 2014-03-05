@@ -74,8 +74,8 @@ string Out::Build( base_out_message *msg )
     case OUT_MSG_STAT_EVENT :
         _msg_str = Out::stat_event( static_cast<stat_event_out_msg *>(msg) );
         break;
-    case OUT_MSG_NONLINEAR_AD_EVENT :
-        _msg_str = Out::nonlinear_ad_event( static_cast<nonlinear_ad_event_out_msg *>(msg) );
+    case OUT_MSG_LOAD_URL_EVENT :
+        _msg_str = Out::load_url_event( static_cast<load_url_event_out_msg *>(msg) );
         break;
     default:
         break;
@@ -311,9 +311,9 @@ string Out::stat_event( stat_event_out_msg *msg )
     return _msg.str();
 }
 
-string Out::nonlinear_ad_event( nonlinear_ad_event_out_msg *msg )
+string Out::load_url_event( load_url_event_out_msg *msg )
 {
     stringstream _msg;
-    _msg << "EVENT nonlinear_ad_event type=" << msg->event_type << " id=" << msg->id;
+    _msg << "EVENT " << msg->event_name << " type=" << msg->event_type << " id=" << msg->id;
     return _msg.str();
 }

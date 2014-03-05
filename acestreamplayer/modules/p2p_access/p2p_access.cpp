@@ -76,11 +76,8 @@ static int Create( vlc_object_t *p_this )
     vlc_obj->pf_stat_event = StatisticsEvent;
     vlc_obj->pf_save_option = SaveOption;
     vlc_obj->pf_set_callback = SetCallback;
-    vlc_obj->pf_request_pause_ad = RequestPauseAd;
-    vlc_obj->pf_request_non_linear_ad = RequestNonLinearAd;
-    vlc_obj->pf_request_stop_ad = RequestStopAd;
-    vlc_obj->pf_register_ad_shown = RegisterAdImpression;
-    vlc_obj->pf_register_ad_closed = RegisterAdClosed;
+    vlc_obj->pf_register_load_url_ad_stat = RegistedLoadUrlAdStatistics;
+    vlc_obj->pf_request_load_url_ad = RequestLoadUrlAd;
     
     srand(time(NULL)); 
     
@@ -412,9 +409,7 @@ bool Start( p2p_object_t *vlc_obj, const char *id, const char *indexes, p2p_uri_
     _msg.position = position;
     
     if( p_sys->p_control ) {
-        p_sys->p_control->clearPauseItems();
-        p_sys->p_control->clearNonLinearItems();
-        p_sys->p_control->clearStopItems();
+        p_sys->p_control->clearLoadUrl();
     }
     std::string _start_msg_str = Out::Build( &_msg );
     p_sys->last_start_cmd_string = _start_msg_str;
@@ -429,6 +424,7 @@ bool Start( p2p_object_t *vlc_obj, const char *id, const char *indexes, p2p_uri_
             var_SetAddress( vlc_obj, "preload-pause-url", NULL );
             var_SetAddress( vlc_obj, "preload-nonlinear-url", NULL );
             var_SetAddress( vlc_obj, "preload-stop-url", NULL );
+            _msg.support_spaces = p_sys->p_control->supportedExtraSpaces();
             _send = p_sys->p_control->send( &_msg );
         }
         if( !_send ) {
@@ -715,45 +711,20 @@ void SetCallback(p2p_object_t *vlc_obj, p2p_command_callback_type type, p2p_comm
     }
 }
 
-void RequestPauseAd(p2p_object_t *vlc_obj) {
-    p2p_object_sys_t* p_sys = vlc_obj->p_sys;
-    if( !p_sys->p_control )
-        return;
-    p_sys->p_control->requestPauseInteractiveAd();
-}
-
-void RequestNonLinearAd(p2p_object_t *vlc_obj) {
-    p2p_object_sys_t* p_sys = vlc_obj->p_sys;
-    if( !p_sys->p_control )
-        return;
-    p_sys->p_control->requestNonLinearInteractiveAd();
-}
-
-void RequestStopAd(p2p_object_t *vlc_obj) {
-    p2p_object_sys_t* p_sys = vlc_obj->p_sys;
-    if( !p_sys->p_control )
-        return;
-    p_sys->p_control->requestStopInteractiveAd();
-}
-
-void RegisterAdImpression(p2p_object_t *vlc_obj, const char *id)
+void RequestLoadUrlAd(p2p_object_t *vlc_obj, p2p_load_url_type_t type)
 {
     p2p_object_sys_t* p_sys = vlc_obj->p_sys;
-    if( !p_sys->p_control )
-        return;
-    std::string _id = std::string(id);
-    p_sys->p_control->registerShowInteractiveAd(_id);
+    if( !p_sys->p_control ) return;
+    p_sys->p_control->requestLoadUrl(type);
 }
 
-void RegisterAdClosed(p2p_object_t *vlc_obj, const char *id)
+void RegistedLoadUrlAdStatistics(p2p_object_t *vlc_obj, p2p_load_url_type_t type, p2p_load_url_statistics_event_type_t event_type, const char *id)
 {
     p2p_object_sys_t* p_sys = vlc_obj->p_sys;
-    if( !p_sys->p_control )
-        return;
+    if( !p_sys->p_control ) return;
     std::string _id = std::string(id);
-    p_sys->p_control->registerCloseInteractiveAd(_id);
+    p_sys->p_control->registerLoadUrlStatistics(type, event_type, _id);
 }
-
 int generate_new_async_id( p2p_object_t *vlc_obj )
 {
     p2p_object_sys_t* p_sys = vlc_obj->p_sys;
@@ -822,7 +793,6 @@ void set_message_for_error_dialog( p2p_object_t *p_p2p, std::string title, const
         p_item.text = msg;
         p_item.title = title.c_str();
         var_SetAddress( p_p2p, "showdialog", &p_item );
-        //var_SetString( p_p2p, "show-error-dialog", msg );
         free(msg);
     }
     va_end(ap);

@@ -29,7 +29,6 @@ Control::Control( p2p_object_t *vlc_obj )
     , m_db_enabled(false)
     , m_ready_key("")
     , m_remote_engine(false)
-    , m_nonlinear_requested(false)
 {
     versionProcess( 0, 0, 0, 0 );
     
@@ -161,9 +160,6 @@ void Control::processEngineMessage( base_in_message *in_msg )
         if( play->play_type != P2P_PLAY_UNDF ) {
             std::map<p2p_command_callback_type, std::pair<p2p_common_callback, void*> >::iterator it = m_vlcobj->p_sys->callbacks->find(P2P_PLAY_CALLBACK);
             if( it != m_vlcobj->p_sys->callbacks->end() ) {
-                //if( play->play_type != P2P_PLAY_INTERRUPTABLE_AD && play->play_type != P2P_PLAY_AD )
-                //    m_nonlinear_requested = false;
-            
                 p2p_play_item_t p_item;
 
                 p_item.url = play->url.c_str();
@@ -173,8 +169,6 @@ void Control::processEngineMessage( base_in_message *in_msg )
                 var_SetString( m_vlcobj, "clickurl", play->clickurl.c_str() );
                 var_SetInteger( m_vlcobj, "advolume", play->volume );
 
-                //var_SetString( m_vlcobj, "skipoffset", decodedskipoffset.c_str() );
-                
                 p2p_ad_params_t p_ad_params;
                 p_ad_params.url = play->clickurl.c_str();
                 p_ad_params.text = play->clicktext.c_str();
@@ -330,22 +324,6 @@ void Control::processEngineMessage( base_in_message *in_msg )
                 delete live_pos;
             }
             break;
-        case IN_EVENT_MSG_SHOW_URL : {
-                show_url_in_event_msg *show_url = event->event.url_event;
-                p2p_showurl_item_t p_item;
-                p_item.url = show_url->url.c_str();
-                p_item.text = show_url->text.c_str();
-                p_item.type = show_url->type;
-                p_item.width = show_url->width;
-                p_item.height = show_url->height;
-                p_item.left = show_url->left;
-                p_item.top = show_url->top;
-                p_item.right = show_url->right;
-                p_item.bottom = show_url->bottom;
-                var_SetAddress( m_vlcobj, "showurl", &p_item );
-                delete show_url;
-            }
-            break;
         case IN_EVENT_MSG_SHOW_DIALOG : {
                 show_dialog_in_event_msg *show_dialog = event->event.dialog_event;
                 p2p_showdialog_item_t p_item;
@@ -373,31 +351,10 @@ void Control::processEngineMessage( base_in_message *in_msg )
         msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_EVENT: type: %d", event->event_type );
         break;
     }
-    case IN_MSG_PRELOAD_PAUSE_ADS : {
-        preload_pause_ads_in_msg *pause_ads = static_cast<preload_pause_ads_in_msg *>(in_msg);
-        m_pause_items.clear();
-        m_pause_items = pause_ads->items;
-        preparePauseItems();
-        requestPauseInteractiveAd();
-        msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_PRELOAD_PAUSE_ADS: items_count=%d", pause_ads->items.size() );
-        break;
-    }
-    case IN_MSG_PRELOAD_NONLINEAR_ADS : {
-        preload_nonlinear_ads_in_msg *nonlinear_ads = static_cast<preload_nonlinear_ads_in_msg *>(in_msg);
-        m_nonlinear_items.clear();
-        m_nonlinear_items = nonlinear_ads->items;
-        prepareNonLinearItems();
-        requestNonLinearInteractiveAd();
-        msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_PRELOAD_NONLINEAR_ADS: items_count=%d", nonlinear_ads->items.size() );
-        break;
-    }
-    case IN_MSG_PRELOAD_STOP_ADS : {
-        preload_stop_ads_in_msg *stop_ads = static_cast<preload_stop_ads_in_msg *>(in_msg);
-        m_stop_items.clear();
-        m_stop_items = stop_ads->items;
-        prepareStopItems();
-        requestStopInteractiveAd();
-        msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_PRELOAD_STOP_ADS: items_count=%d", stop_ads->items.size() );
+    case IN_MSG_LOAD_URL: {
+        load_url_msg *load_url = static_cast<load_url_msg *>(in_msg);
+        prepareLoadUrlItems(load_url);
+        msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_LOAD_URL: items_count=%d", load_url->items.size() );
         break;
     }
     default :
@@ -865,243 +822,273 @@ void Control::versionProcess( int major, int minor, int build, int revision )
     m_version_options.support_ten_ages_userinfo = true;
 }
 
-void Control::preparePauseItems() {
+void Control::prepareLoadUrlItems(load_url_msg *msg)
+{
+    if(!msg) return;
+    if(msg->items.size() <= 0) return;
     bool flash_enable = var_GetBool(m_vlcobj->p_libvlc, "flash-enable");
     
-    if( !flash_enable ) {
-        for( vector<preload_pause_ad_item>::iterator it = m_pause_items.begin(); it != m_pause_items.end(); ) {
-            // if(it->min_width == 0)
-                // it->min_width = it->width;
-
-            // if(it->min_height == 0)
-                // it->min_height = it->height;
-
-            if(it->require_flash)
-                m_pause_items.erase(it);
+    msg_P2PLog(m_vlcobj, "[control.cpp::prepareLoadUrlItems]: before preparing %d", msg->items.size() );
+    for( vector<load_url_item>::iterator it = msg->items.begin(); it != msg->items.end(); ) {
+        int _type = it->type;
+        // TODO refactor
+        if(_type == P2P_LOAD_URL_UNDF)
+            msg->items.erase(it);
+        else if(_type == P2P_LOAD_URL_PAUSE) {
+            if(it->max_impressions <= 0 || (!flash_enable && it->require_flash))
+                msg->items.erase(it);
+            else
+                ++it;
+        }
+        else if(_type == P2P_LOAD_URL_STOP) {
+            if(!flash_enable && it->require_flash)
+                msg->items.erase(it);
+            else
+                ++it;
+        }
+        else if(_type == P2P_LOAD_URL_OVERLAY) {
+            if((it->require_flash && !flash_enable) ||
+                (it->content_type.compare("iframe") != 0 && it->content_type.compare("html") != 0) )
+                msg->items.erase(it);
+            else
+                ++it;
+        }
+        else if(_type == P2P_LOAD_URL_SLIDER) {
+            if(!flash_enable && it->require_flash)
+                msg->items.erase(it);
+            else
+                ++it;
+        }
+        else if(_type == P2P_LOAD_URL_PREROLL) {
+            if(!flash_enable && it->require_flash)
+                msg->items.erase(it);
+            else
+                ++it;
+        }
+        else if(_type == P2P_LOAD_URL_HIDDEN) {
+            if((!flash_enable && it->require_flash) || it->close_after_seconds <= 0)
+                msg->items.erase(it);
             else
                 ++it;
         }
     }
-}
+    msg_P2PLog(m_vlcobj, "[control.cpp::prepareLoadUrlItems]: after preparing %d", msg->items.size() );
 
-void Control::prepareNonLinearItems() {
-    bool flash_enable = var_GetBool(m_vlcobj->p_libvlc, "flash-enable");
-    
-    for( vector<preload_nonlinear_ad_item>::iterator it = m_nonlinear_items.begin(); it != m_nonlinear_items.end(); ) {
-        // if(it->min_width == 0)
-            // it->min_width = it->width;
-
-        // if(it->min_height == 0)
-            // it->min_height = it->height;
-
-        if(it->require_flash && !flash_enable)
-            m_nonlinear_items.erase(it);
-        else if(it->ad_type.compare("iframe") != 0 && it->ad_type.compare("html") != 0)
-            m_nonlinear_items.erase(it);
-        else
-            ++it;
+    vector<load_url_item> _preroll;
+    vector<load_url_item> _overlay;
+    vector<load_url_item> _slider;
+    vector<load_url_item> _pause;
+    vector<load_url_item> _stop;
+    vector<load_url_item> _hidden;
+    for( vector<load_url_item>::iterator it = msg->items.begin(); it != msg->items.end(); ++it) {
+        int _type = it->type;
+        if(_type == P2P_LOAD_URL_PAUSE)
+            _pause.push_back(*it);
+        else if(_type == P2P_LOAD_URL_STOP)
+            _stop.push_back(*it);
+        else if(_type == P2P_LOAD_URL_OVERLAY)
+            _overlay.push_back(*it);
+        else if(_type == P2P_LOAD_URL_SLIDER)
+            _slider.push_back(*it);
+        else if(_type == P2P_LOAD_URL_PREROLL)
+            _preroll.push_back(*it);
+        else if(_type == P2P_LOAD_URL_HIDDEN)
+            _hidden.push_back(*it);
+    }
+    if(_pause.size() > 0) {
+        m_pause_items.clear();
+        m_pause_items = _pause;
+        requestLoadUrl(P2P_LOAD_URL_PAUSE);
+    }
+    if(_stop.size() > 0) {
+        m_stop_items.clear();
+        m_stop_items = _stop;
+        requestLoadUrl(P2P_LOAD_URL_STOP);
+    }
+    if(_overlay.size() > 0) {
+        m_overlay_items.clear();
+        m_overlay_items = _overlay;
+        requestLoadUrl(P2P_LOAD_URL_OVERLAY);
+    }
+    if(_slider.size() > 0) {
+        m_slider_items.clear();
+        m_slider_items = _slider;
+        requestLoadUrl(P2P_LOAD_URL_SLIDER);
+    }
+    if(_preroll.size() > 0) {
+        m_preroll_items.clear();
+        m_preroll_items = _preroll;
+        requestLoadUrl(P2P_LOAD_URL_PREROLL);
+    }
+    if(_hidden.size() > 0) {
+        m_hidden_items.clear();
+        m_hidden_items = _hidden;
+        requestLoadUrl(P2P_LOAD_URL_HIDDEN);
     }
 }
 
-void Control::prepareStopItems() {
-    bool flash_enable = var_GetBool(m_vlcobj->p_libvlc, "flash-enable");
+void Control::requestLoadUrl(int type)
+{
+    vector<load_url_item> *_items;
+    if(type == P2P_LOAD_URL_PAUSE)
+        _items = &m_pause_items;
+    else if(type == P2P_LOAD_URL_STOP)
+        _items = &m_stop_items;
+    else if(type == P2P_LOAD_URL_OVERLAY)
+        _items = &m_overlay_items;
+    else if(type == P2P_LOAD_URL_SLIDER)
+        _items = &m_slider_items;
+    else if(type == P2P_LOAD_URL_PREROLL)
+        _items = &m_preroll_items;
+    else if(type == P2P_LOAD_URL_HIDDEN)
+        _items = &m_hidden_items;
+    else
+        return;
     
-    if( !flash_enable ) {
-        for( vector<preload_stop_ad_item>::iterator it = m_stop_items.begin(); it != m_stop_items.end(); ) {
-            // if(it->min_width == 0)
-                // it->min_width = it->width;
-
-            // if(it->min_height == 0)
-                // it->min_height = it->height;
-
-            if(it->require_flash)
-                m_stop_items.erase(it);
-            else
-                ++it;
-        }
-    }
-}
-
-void Control::requestPauseInteractiveAd() {
-    int w, h;    
-    var_GetCoords(m_vlcobj, "vout-display-size", &w, &h);
-    bool f = var_GetBool(m_vlcobj, "vout-display-fullscreen");
+    if(_items->size() <= 0) return;
     
-    if(m_pause_items.size() && w != 0 && h != 0) {
-        int min_impressions = 9999;
-        vector<preload_pause_ad_item> matched_items;
-        vector<preload_pause_ad_item> matched_nonpreload_items;
-        for(vector<preload_pause_ad_item>::iterator it = m_pause_items.begin(); it != m_pause_items.end(); ++it) {
-            if((it->min_width == 0 || it->min_width <= w) && 
-                (it->min_height == 0 || it->min_height <= h) && 
-                (it->fullscreen == 0 
-                    || (it->fullscreen == 1 && !f)
-                    || (it->fullscreen == 2 && f)
-                )) 
-            {
-                if(it->preload)
-                    matched_items.push_back(*it);
-                else
-                    matched_nonpreload_items.push_back(*it);
-                if(it->impressions < min_impressions)
-                    min_impressions = it->impressions;
-            }
-        }
+    load_url_item selected_item;
+    bool selected = false;
+    
+    msg_P2PLog(m_vlcobj, "[control.cpp::requestLoadUrl] trying to select interactive with type %d", type);
+    
+    if(type == P2P_LOAD_URL_PAUSE || type == P2P_LOAD_URL_STOP) {
+        int w, h;    
+        var_GetCoords(m_vlcobj, "vout-display-size", &w, &h);
+        bool f = var_GetBool(m_vlcobj, "vout-display-fullscreen");
         
-        preload_pause_ad_item selected_item;
-        bool selected = false;
-        for(vector<preload_pause_ad_item>::iterator it = matched_items.begin(); it != matched_items.end(); ++it) {
-            if(it->impressions <= min_impressions) {
-                selected_item = *it;
-                selected = true;
-                break;
-            }
-        }
-        if(!selected) {
-            for(vector<preload_pause_ad_item>::iterator it = matched_nonpreload_items.begin(); it != matched_nonpreload_items.end(); ++it) {
-                if(it->impressions <= min_impressions) {
-                    selected_item = *it;
-                    selected = true;
-                    break;
+        if(w != 0 && h != 0) {
+            int min_impressions = 9999;
+            vector<load_url_item> matched_items;
+            vector<load_url_item> matched_nonpreload_items;
+            for(vector<load_url_item>::iterator it = _items->begin(); it != _items->end(); ++it) {
+                if((it->min_width == 0 || it->min_width <= w) && 
+                    (it->min_height == 0 || it->min_height <= h) && 
+                    (it->fullscreen == 0 || (it->fullscreen == 1 && !f) || (it->fullscreen == 2 && f))) 
+                {
+                    if(it->preload)
+                        matched_items.push_back(*it);
+                    else
+                        matched_nonpreload_items.push_back(*it);
+                    if(type == P2P_LOAD_URL_PAUSE && it->impressions < min_impressions)
+                        min_impressions = it->impressions;
                 }
             }
-        }
-
-        if(selected) {
-            p2p_preload_pause_url_item_t p_item;
-            p_item.url = selected_item.url.c_str();
-            p_item.id = selected_item.id.c_str();
-            p_item.preload = selected_item.preload;
-            p_item.width = selected_item.width;
-            p_item.height = selected_item.height;
-            p_item.left = selected_item.left;
-            p_item.top = selected_item.top;
-            p_item.right = selected_item.right;
-            p_item.bottom = selected_item.bottom;
-            p_item.allow_dialogs = selected_item.allow_dialogs;
-            p_item.enable_flash = selected_item.enable_flash;
-            p_item.cookies = selected_item.cookies;
-            p_item.embed_script = selected_item.embed_script.c_str();
-            var_SetAddress( m_vlcobj, "preload-pause-url", &p_item );
-        }
-        else {
-            var_SetAddress( m_vlcobj, "preload-pause-url", NULL );
-        }
-        matched_items.clear();
-        matched_nonpreload_items.clear();
-    }
-}
-
-void Control::requestNonLinearInteractiveAd() {
-    //int w, h;
-    //var_GetCoords(m_vlcobj, "vout-display-size", &w, &h);
-    
-    if(m_nonlinear_items.size() /*&& w != 0 && h != 0*/) {
-        preload_nonlinear_ad_item selected_item;
-        bool selected = false;
-        for(vector<preload_nonlinear_ad_item>::iterator it = m_nonlinear_items.begin(); it != m_nonlinear_items.end(); ++it) {
-            if((!it->ad_type.compare("iframe") || !it->ad_type.compare("html"))
-                && it->height != 0 /*&& it->width <= w && it->height <= h * 0.5*/) {
-                selected_item = *it;
-                selected = true;
-                break;
+            
+            if(type == P2P_LOAD_URL_PAUSE) {
+                for(vector<load_url_item>::iterator it = matched_items.begin(); it != matched_items.end(); ++it) {
+                    if(it->impressions <= min_impressions) {
+                        selected_item = *it;
+                        selected = true;
+                        break;
+                    }
+                }
             }
-        }
-
-        if(selected) {
-            p2p_preload_nonlinear_url_item_t p_item;
-            p_item.url = selected_item.url.c_str();
-            p_item.id = selected_item.id.c_str();
-            p_item.type = selected_item.ad_type.c_str();
-            p_item.creative_type = selected_item.creative_type.c_str();
-            p_item.click_url = selected_item.click_url.c_str();
-
-            p_item.width = selected_item.width;
-            p_item.height = selected_item.height;
-            p_item.left = selected_item.left;
-            p_item.top = selected_item.top;
-            p_item.right = selected_item.right;
-            p_item.bottom = selected_item.bottom;
-            p_item.allow_dialogs = selected_item.allow_dialogs;
-            p_item.enable_flash = selected_item.enable_flash;
-            p_item.cookies = selected_item.cookies;
-            p_item.embed_script = selected_item.embed_script.c_str();
-            var_SetAddress( m_vlcobj, "preload-nonlinear-url", &p_item );
-        }
-        else {
-            var_SetAddress( m_vlcobj, "preload-nonlinear-url", NULL );
-        }
-    }
-}
-
-void Control::requestStopInteractiveAd() {
-    int w, h;
-    var_GetCoords(m_vlcobj, "vout-display-size", &w, &h);
-    bool f = var_GetBool(m_vlcobj, "vout-display-fullscreen");
-    
-    if(m_stop_items.size() && w != 0 && h != 0) {
-        vector<preload_stop_ad_item> matched_items;
-        vector<preload_stop_ad_item> matched_nonpreload_items;
-        for(vector<preload_stop_ad_item>::iterator it = m_stop_items.begin(); it != m_stop_items.end(); ++it) {
-            if((it->min_width == 0 || it->min_width <= w) && 
-                (it->min_height == 0 || it->min_height <= h) && 
-                (it->fullscreen == 0 
-                    || (it->fullscreen == 1 && !f)
-                    || (it->fullscreen == 2 && f)
-                )) 
-            {
-                if(it->preload) {
-                    matched_items.push_back(*it);
+            else {
+                if(matched_items.size() > 0) {
+                    selected_item = matched_items.front();
+                    selected = true;
+                }
+            }
+            if(!selected) {
+                if(type == P2P_LOAD_URL_PAUSE) {
+                    for(vector<load_url_item>::iterator it = matched_nonpreload_items.begin(); it != matched_nonpreload_items.end(); ++it) {
+                        if(it->impressions <= min_impressions) {
+                            selected_item = *it;
+                            selected = true;
+                            break;
+                        }
+                    }
                 }
                 else {
-                    matched_nonpreload_items.push_back(*it);
+                    if(matched_nonpreload_items.size() > 0) {
+                        selected_item = matched_nonpreload_items.front();
+                        selected = true;
+                    }
                 }
             }
+            
+            matched_items.clear();
+            matched_nonpreload_items.clear();
         }
-        
-        preload_stop_ad_item selected_item;
-        bool selected = false;
-        if(matched_items.size() > 0) {
-            selected_item = matched_items.front();
-            selected = true;
-        }
-        if(!selected) {
-            if(matched_nonpreload_items.size() > 0) {
-                selected_item = matched_nonpreload_items.front();
+    }
+    else if(type == P2P_LOAD_URL_OVERLAY || type == P2P_LOAD_URL_SLIDER) {
+        int w, h;
+        var_GetCoords(m_vlcobj, "vout-display-size", &w, &h);
+        bool f = var_GetBool(m_vlcobj, "vout-display-fullscreen");
+        for(vector<load_url_item>::iterator it = _items->begin(); it != _items->end(); ++it) {
+            if((it->min_width == 0 || it->min_width <= w) && 
+                (it->min_height == 0 || it->min_height <= h) && 
+                (it->fullscreen == 0 || (it->fullscreen == 1 && !f) || (it->fullscreen == 2 && f)))  
+            {
+                selected_item = *it;
                 selected = true;
+                break;
             }
         }
-
-        if(selected) {
-            p2p_preload_stop_url_item_t p_item;
-            p_item.url = selected_item.url.c_str();
-            p_item.id = selected_item.id.c_str();
-            p_item.preload = selected_item.preload;
-            p_item.fullscreen = selected_item.fullscreen;
-            p_item.width = selected_item.width;
-            p_item.height = selected_item.height;
-            p_item.left = selected_item.left;
-            p_item.top = selected_item.top;
-            p_item.right = selected_item.right;
-            p_item.bottom = selected_item.bottom;
-            p_item.allow_dialogs = selected_item.allow_dialogs;
-            p_item.enable_flash = selected_item.enable_flash;
-            p_item.cookies = selected_item.cookies;
-            p_item.embed_script = selected_item.embed_script.c_str();
-            var_SetAddress( m_vlcobj, "preload-stop-url", &p_item );
-        }
-        else {
-            var_SetAddress( m_vlcobj, "preload-stop-url", NULL );
-        }
-        matched_items.clear();
-        matched_nonpreload_items.clear();
     }
+    else if(type == P2P_LOAD_URL_PREROLL || type == P2P_LOAD_URL_HIDDEN) {
+        selected_item = _items->front();
+        selected = true;
+    }
+
+    p2p_load_url_item_t p_event_item;
+    p_event_item.type = (p2p_load_url_type_t)type;
+    if(selected) {
+        msg_P2PLog(m_vlcobj, "[control.cpp::requestLoadUrl] select interactive with type %d %s", type, selected_item.id.c_str());
+        p_event_item.clear = false;
+        p_event_item.id = selected_item.id.c_str();
+        p_event_item.url = selected_item.url.c_str();
+        p_event_item.width = selected_item.width;
+        p_event_item.height = selected_item.height;
+        p_event_item.left = selected_item.left;
+        p_event_item.top = selected_item.top;
+        p_event_item.right = selected_item.right;
+        p_event_item.bottom = selected_item.bottom;
+        p_event_item.allow_dialogs = selected_item.allow_dialogs;
+        p_event_item.enable_flash = selected_item.enable_flash;
+        p_event_item.cookies = selected_item.cookies;
+        
+        stringstream _embed_scripts;
+        for(vector<string>::iterator it = selected_item.embed_scripts.begin(); it != selected_item.embed_scripts.end(); ++it) {
+            if(it != selected_item.embed_scripts.begin())
+                _embed_scripts << ", ";
+            _embed_scripts << *it;
+        }
+        p_event_item.embed_scripts = _embed_scripts.str().c_str();
+        p_event_item.embed_code = selected_item.embed_code.c_str();
+        
+        p_event_item.preload = selected_item.preload;
+        p_event_item.fullscreen = selected_item.fullscreen;
+        
+        p_event_item.content_type = selected_item.content_type.c_str();
+        p_event_item.creative_type = selected_item.creative_type.c_str();
+        p_event_item.click_url = selected_item.click_url.c_str();
+        
+        p_event_item.user_agent = selected_item.user_agent;
+        
+        p_event_item.close_after_seconds = selected_item.close_after_seconds;
+    }
+    else {
+        msg_P2PLog(m_vlcobj, "[control.cpp::requestLoadUrl] failed to select interactive with type %d", type);
+        p_event_item.clear = true;
+    }
+    var_SetAddress( m_vlcobj, "load-url", &p_event_item );
 }
 
-void Control::registerShowInteractiveAd(string id) {
-    if(id != "") {
-        if(m_pause_items.size()) {
-            for(vector<preload_pause_ad_item>::iterator it = m_pause_items.begin(); it != m_pause_items.end(); ) {
+void Control::registerLoadUrlStatistics(int type, int event_type, std::string id)
+{
+    if(id == "") return;
+    
+    load_url_event_out_msg _msg;
+    
+    if(event_type == P2P_LOAD_URL_STAT_EVENT_IMPRESSION 
+        && type != P2P_LOAD_URL_PREROLL
+        && type != P2P_LOAD_URL_HIDDEN) {
+        
+        // increase impressions for pause
+        if(type == P2P_LOAD_URL_PAUSE && m_pause_items.size()) {
+            for(vector<load_url_item>::iterator it = m_pause_items.begin(); it != m_pause_items.end(); ) {
                 if(!id.compare(it->id)) {
                     it->impressions += 1;
                     if(it->impressions >= it->max_impressions)
@@ -1112,39 +1099,61 @@ void Control::registerShowInteractiveAd(string id) {
                     ++it;
             }
         }
-        
-        nonlinear_ad_event_out_msg _msg;
-        _msg.event_type = std::string("impression");
-        char *enc_id = encode_URI_component(id.c_str());
-        _msg.id = std::string(enc_id);
-        if( !send( &_msg ) ) {
-            msg_P2PLog(m_vlcobj, "[p2p_access.cpp::registerImpression] sending impression event error");
-        }
-        free(enc_id);
-    }
-}
 
-void Control::registerCloseInteractiveAd(string id) {
-    if(id != "") {
-        nonlinear_ad_event_out_msg _msg;
+        _msg.event_name = std::string("nonlinear_ad_event");
+        _msg.event_type = std::string("impression");        
+    }
+    else if(event_type == P2P_LOAD_URL_STAT_EVENT_CLOSE
+        && type == P2P_LOAD_URL_OVERLAY) {
+
+        m_overlay_items.clear();
+
+        _msg.event_name = std::string("nonlinear_ad_event");
         _msg.event_type = std::string("close");
+    }
+    else if(event_type == P2P_LOAD_URL_STAT_EVENT_COMPLETE
+        && (type == P2P_LOAD_URL_PREROLL
+            || type == P2P_LOAD_URL_HIDDEN)) {
+
+        // tmp
+        if(type == P2P_LOAD_URL_HIDDEN) {
+            for(vector<load_url_item>::iterator it = m_hidden_items.begin(); it != m_hidden_items.end(); ) {
+                if(!id.compare(it->id))
+                    m_hidden_items.erase(it);
+                else
+                    ++it;
+            }
+        }
+        else {   
+            _msg.event_name = std::string("interactive_preroll_event");
+            _msg.event_type = std::string("completed");
+        }
+    }
+    else if(event_type == P2P_LOAD_URL_STAT_EVENT_ERROR
+        && (type == P2P_LOAD_URL_PREROLL
+            || type == P2P_LOAD_URL_HIDDEN)) {
+
+        _msg.event_name = std::string("interactive_preroll_event");
+        _msg.event_type = std::string("failed");
+    }
+    
+    if(_msg.event_type != "" && _msg.event_name != "") {
         char *enc_id = encode_URI_component(id.c_str());
         _msg.id = std::string(enc_id);
+        msg_P2PLog(m_vlcobj, "[p2p_access.cpp::registerLoadUrlStatistics] sending statistics event %s %s", _msg.event_name.c_str(), _msg.event_type.c_str());
         if( !send( &_msg ) ) {
-            msg_P2PLog(m_vlcobj, "[p2p_access.cpp::registerClose] sending close event error");
+            msg_P2PLog(m_vlcobj, "[p2p_access.cpp::registerLoadUrlStatistics] failed");
         }
         free(enc_id);
     }
 }
 
-void Control::clearPauseItems() {
+void Control::clearLoadUrl()
+{
+    m_slider_items.clear();
+    m_overlay_items.clear();
     m_pause_items.clear();
-}
-
-void Control::clearNonLinearItems() {
-    m_nonlinear_items.clear();
-}
-
-void Control::clearStopItems() {
     m_stop_items.clear();
+    m_preroll_items.clear();
+    m_hidden_items.clear();
 }

@@ -1,7 +1,7 @@
 diff -ru vlc-2.1.2.orig/src/libvlccore.sym vlc-2.1.2/src/libvlccore.sym
 --- vlc-2.1.2.orig/src/libvlccore.sym	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/libvlccore.sym	2014-01-16 17:26:26.840831353 +0200
-@@ -637,3 +637,74 @@
++++ vlc-2.1.2/src/libvlccore.sym	2014-03-05 10:10:52.899433764 +0200
+@@ -637,3 +637,72 @@
  vlc_str2keycode
  fingerprinter_Create
  fingerprinter_Destroy
@@ -68,11 +68,9 @@ diff -ru vlc-2.1.2.orig/src/libvlccore.sym vlc-2.1.2/src/libvlccore.sym
 +p2p_StatEvent
 +p2p_SaveOption
 +p2p_VideoClickActivate
-+p2p_RequestPauseAd
-+p2p_RequestNonLinearAd
-+p2p_RequestStopAd
-+p2p_RegisterAdShown
-+p2p_RegisterAdClosed
++p2p_RegisterLoadUrlAdStatistics
++p2p_RequestLoadUrlAd
 +playlist_LastPlayingItem
 +playlist_GetFirstP2PIntupItem
 +playlist_p2pLoadCallback
++vlc_GetActionByKey

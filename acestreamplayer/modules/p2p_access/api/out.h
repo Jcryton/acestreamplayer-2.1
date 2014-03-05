@@ -25,7 +25,7 @@ private:
     static std::string user_data( user_data_out_msg* );
     static std::string shutdown( shutdown_out_msg* );
     static std::string stat_event( stat_event_out_msg* );
-    static std::string nonlinear_ad_event( nonlinear_ad_event_out_msg* );
+    static std::string load_url_event( load_url_event_out_msg* );
 };
 
 #endif

@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc_events.h
 --- vlc-2.1.2.orig/include/vlc/libvlc_events.h	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.2/include/vlc/libvlc_events.h	2014-01-21 16:44:41.555843183 +0200
++++ vlc-2.1.2/include/vlc/libvlc_events.h	2014-03-04 16:47:14.213839674 +0200
 @@ -73,11 +73,15 @@
      libvlc_MediaPlayerSnapshotTaken,
      libvlc_MediaPlayerLengthChanged,
@@ -17,7 +17,7 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
  
      libvlc_MediaListViewItemAdded=0x300,
      libvlc_MediaListViewWillAddItem,
-@@ -101,9 +105,74 @@
+@@ -101,9 +105,72 @@
      libvlc_VlmMediaInstanceStatusPlaying,
      libvlc_VlmMediaInstanceStatusPause,
      libvlc_VlmMediaInstanceStatusEnd,
@@ -36,10 +36,8 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
 +    libvlc_AcestreamAdParams,                   // advertisements params (event description - u.acestream_adparams)
 +    libvlc_AcestreamShowPlaylist,               // web plugin must show playlist (for js extensions)
 +    libvlc_AcestreamStatusRaw,                  // acestream engine STATUS raw data (for js extensions)
-+    libvlc_AcestreamPreloadPauseUrl,            // preload context ads for pause 
-+    libvlc_AcestreamPreloadNonLinearUrl,        // preload context ads for on video
-+    libvlc_AcestreamPreloadStopUrl,             // preload context ads for stop
-+    libvlc_AcestreamClearPreloadUrl,            // preload context ads for stop
++    libvlc_AcestreamLoadUrl,                    //
++    libvlc_AcestreamClearLoadUrl,               //
  };
  
 +typedef enum libvlc_hotkey_action_t {
@@ -93,7 +91,7 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
  /**
   * A LibVLC event
   */
-@@ -225,6 +294,129 @@
+@@ -225,6 +292,98 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -118,17 +116,6 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
 +            const char *error;  // error message
 +        } acestream_error;
 +        struct {
-+            const char *url;
-+            const char *text;
-+            int width;
-+            int height;
-+            int left;
-+            int top;
-+            int bottom;
-+            int right;
-+            int type;
-+        } acestream_showurl;    // deprecated
-+        struct {
 +            const char *clickurl;       // url to show on visit button click
 +            const char *clicktext;      // text to place on visit button
 +            const char *skipoffset;     // "hh:mm:ss" or "xx%" time or position to ad can be skipped
@@ -140,57 +127,6 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
 +            const char *title;          // dialog title
 +            const char *msg;            // dialog text
 +        } acestream_showerrordialog;
-+        struct {
-+            const char *url;
-+            const char *id;
-+            bool preload;
-+            int width;
-+            int height;
-+            int left;
-+            int top;
-+            int bottom;
-+            int right;
-+            bool allow_dialogs;
-+            bool enable_flash;
-+            int cookies;
-+            const char *embed_script;
-+        } acestream_preloadpauseurl;
-+        struct {
-+            const char *url;
-+            const char *id;
-+            const char *type;
-+            const char *creative_type;
-+            const char *click_url;
-+            int width;
-+            int height;
-+            int left;
-+            int top;
-+            int bottom;
-+            int right;
-+            bool allow_dialogs;
-+            bool enable_flash;
-+            int cookies;
-+            const char *embed_script;
-+        } acestream_preloadnonlinearurl;
-+        struct {
-+            const char *url;
-+            const char *id;
-+            bool preload;
-+            int fullscreen;
-+            int width;
-+            int height;
-+            int left;
-+            int top;
-+            int bottom;
-+            int right;
-+            bool allow_dialogs;
-+            bool enable_flash;
-+            int cookies;
-+            const char *embed_script;
-+        } acestream_preloadstopurl;
-+        struct {
-+            int type;
-+        } acestream_clearpreloadurl;
 +        
 +        /* media list */
 +        struct
@@ -220,6 +156,37 @@ diff -ru vlc-2.1.2.orig/include/vlc/libvlc_events.h vlc-2.1.2/include/vlc/libvlc
 +        struct {
 +            libvlc_hotkey_action_t type;    // libvlc_hotkey_action_t
 +        } media_player_hotkey;
++
++        struct {
++            int type;
++            const char *id;
++            const char *url;
++            int width;
++            int height;
++            int left;
++            int top;
++            int bottom;
++            int right;
++            bool allow_dialogs;
++            bool enable_flash;
++            int cookies;
++            const char *embed_scripts;
++            const char *embed_code;
++            
++            bool preload;
++            int fullscreen;
++            
++            const char *content_type;
++            const char *creative_type;
++            const char *click_url;
++            
++            int user_agent;
++            int close_after_seconds;
++        } acestream_loadurl;
++
++        struct {
++            int type;
++        } acestream_clearloadurl;
      } u; /**< Type-dependent event description */
  } libvlc_event_t;
  
@@ -1050,7 +1017,7 @@ diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
 +}
 diff -ru vlc-2.1.2.orig/lib/event.c vlc-2.1.2/lib/event.c
 --- vlc-2.1.2.orig/lib/event.c	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.2/lib/event.c	2014-01-16 16:41:22.665616757 +0200
++++ vlc-2.1.2/lib/event.c	2014-03-04 17:25:28.149889688 +0200
 @@ -280,11 +280,15 @@
      DEF(MediaPlayerSnapshotTaken)
      DEF(MediaPlayerLengthChanged)
@@ -1067,7 +1034,7 @@ diff -ru vlc-2.1.2.orig/lib/event.c vlc-2.1.2/lib/event.c
  
      DEF(MediaListViewItemAdded)
      DEF(MediaListViewWillAddItem)
-@@ -309,6 +313,23 @@
+@@ -309,6 +313,21 @@
      DEF(VlmMediaInstanceStatusPause)
      DEF(VlmMediaInstanceStatusEnd)
      DEF(VlmMediaInstanceStatusError)
@@ -1084,10 +1051,8 @@ diff -ru vlc-2.1.2.orig/lib/event.c vlc-2.1.2/lib/event.c
 +    DEF(AcestreamAdParams)
 +    DEF(AcestreamShowPlaylist)
 +    DEF(AcestreamStatusRaw)
-+    DEF(AcestreamPreloadPauseUrl)
-+    DEF(AcestreamPreloadNonLinearUrl)
-+    DEF(AcestreamPreloadStopUrl)
-+    DEF(AcestreamClearPreloadUrl)
++    DEF(AcestreamLoadUrl)
++    DEF(AcestreamClearLoadUrl)
  };
  #undef DEF
  

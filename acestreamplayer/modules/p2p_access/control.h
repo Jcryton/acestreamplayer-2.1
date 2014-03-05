@@ -48,16 +48,9 @@ public:
     bool supportedStatEvents() { return m_version_options.support_stat_events; }
     bool supportedTenAgesUserinfo() { return m_version_options.support_ten_ages_userinfo; }
     
-    void requestPauseInteractiveAd();
-    void requestNonLinearInteractiveAd();
-    void requestStopInteractiveAd();
-    
-    void registerCloseInteractiveAd(std::string);
-    void registerShowInteractiveAd(std::string);
-    
-    void clearPauseItems();
-    void clearNonLinearItems();
-    void clearStopItems();
+    void requestLoadUrl(int);
+    void registerLoadUrlStatistics(int, int, std::string);
+    void clearLoadUrl();
     
 private:
 #ifdef WIN32
@@ -70,9 +63,7 @@ private:
     
     void versionProcess( int, int, int, int );
     
-    void preparePauseItems();
-    void prepareNonLinearItems();
-    void prepareStopItems();
+    void prepareLoadUrlItems(load_url_msg *);
     
 private:
     p2p_object_t *m_vlcobj;
@@ -84,11 +75,13 @@ private:
     bool m_db_enabled;
     std::string m_ready_key;
     bool m_remote_engine;
-    bool m_nonlinear_requested;
     
-    std::vector<preload_pause_ad_item> m_pause_items;
-    std::vector<preload_nonlinear_ad_item> m_nonlinear_items;
-    std::vector<preload_stop_ad_item> m_stop_items;
+    std::vector<load_url_item> m_slider_items;
+    std::vector<load_url_item> m_overlay_items;
+    std::vector<load_url_item> m_pause_items;
+    std::vector<load_url_item> m_stop_items;
+    std::vector<load_url_item> m_preroll_items;
+    std::vector<load_url_item> m_hidden_items;
     
     struct version_options {
         bool support_stat_events;
