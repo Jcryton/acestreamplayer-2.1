@@ -1,14 +1,15 @@
-diff -ru vlc-2.1.2.orig/modules/video_output/msw/common.c vlc-2.1.2/modules/video_output/msw/common.c
---- vlc-2.1.2.orig/modules/video_output/msw/common.c	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/modules/video_output/msw/common.c	2014-01-14 17:05:48.000000000 +0200
-@@ -78,6 +78,7 @@
-     sys->is_on_top = false;
- 
+diff -ru vlc-2.1.4.orig/modules/video_output/msw/common.c vlc-2.1.4/modules/video_output/msw/common.c
+--- vlc-2.1.4.orig/modules/video_output/msw/common.c	2014-02-14 19:40:50.000000000 +0200
++++ vlc-2.1.4/modules/video_output/msw/common.c	2014-03-05 18:06:31.276224805 +0200
+@@ -80,6 +80,8 @@
      var_Create(vd, "video-deco", VLC_VAR_BOOL | VLC_VAR_DOINHERIT);
-+    var_Create(vd, "video-bgcolor", VLC_VAR_STRING | VLC_VAR_DOINHERIT);
+     var_Create(vd, "disable-screensaver", VLC_VAR_BOOL | VLC_VAR_DOINHERIT);
  
++    var_Create(vd, "video-bgcolor", VLC_VAR_STRING | VLC_VAR_DOINHERIT);
++
      /* */
      sys->event = EventThreadCreate(vd);
+     if (!sys->event)
 diff -ru vlc-2.1.2.orig/modules/video_output/msw/events.c vlc-2.1.2/modules/video_output/msw/events.c
 --- vlc-2.1.2.orig/modules/video_output/msw/events.c	2013-12-05 18:39:06.000000000 +0200
 +++ vlc-2.1.2/modules/video_output/msw/events.c	2014-01-14 17:04:29.000000000 +0200

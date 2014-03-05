@@ -1,15 +1,15 @@
-diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
---- vlc-2.1.2.orig/configure.ac	2013-12-07 18:16:19.000000000 +0200
-+++ vlc-2.1.2/configure.ac	2014-01-17 15:10:02.558987399 +0200
+diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
+--- vlc-2.1.4.orig/configure.ac	2014-02-21 16:00:00.000000000 +0200
++++ vlc-2.1.4/configure.ac	2014-03-05 17:43:04.004256793 +0200
 @@ -2,14 +2,14 @@
  
- AC_COPYRIGHT([Copyright 2002-2013 VLC authors and VideoLAN])
+ AC_COPYRIGHT([Copyright 2002-2014 VLC authors and VideoLAN])
  
--AC_INIT(vlc, 2.1.2)
-+AC_INIT(acestreamplayer, 2.1.2)
+-AC_INIT(vlc, 2.1.4)
++AC_INIT(acestreamplayer, 2.1.4)
  VERSION_MAJOR=2
  VERSION_MINOR=1
- VERSION_REVISION=2
+ VERSION_REVISION=4
  VERSION_EXTRA=0
  VERSION_DEV=
  
@@ -21,7 +21,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
 @@ -155,10 +155,10 @@
      OBJCFLAGS="${OBJCFLAGS} -D_INTL_REDIRECT_MACROS -std=gnu99 ${ARCH_flag}"
      LDFLAGS="${LDFLAGS} -Wl,-headerpad_max_install_names ${ARCH_flag}"
-     VLC_ADD_LIBS([motion rotate], [-Wl,-framework,IOKit,-framework,CoreFoundation])
+     VLC_ADD_LIBS([motion rotate dvdread dvdnav], [-Wl,-framework,IOKit,-framework,CoreFoundation])
 -    VLC_ADD_LIBS([libvlc vlc],[-Wl,-undefined,dynamic_lookup,-framework,AppKit])
 +    VLC_ADD_LIBS([libtsplayer acestreamplayer],[-Wl,-undefined,dynamic_lookup,-framework,AppKit])
      VLC_ADD_LIBS([avcodec access_avio swscale postproc i420_rgb_mmx x264 x26410b],[-Wl,-read_only_relocs,suppress])
@@ -156,7 +156,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
    ], [
      AS_IF([test -n "${enable_ncurses}"], [
        AC_MSG_ERROR([${NCURSES_PKG_ERRORS}.])
-@@ -4006,11 +4008,70 @@
+@@ -4006,11 +4008,69 @@
    then
      AC_MSG_ERROR([libgcrypt is required for update checking system])
    fi
@@ -184,7 +184,6 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
 +  then
 +    AC_MSG_ERROR([sqlite3 is required for p2p_access])
 +fi
-+
 +
 +dnl ---------------------------------------------------------------------------------------
 +dnl   TorrentStream Alias 
@@ -229,7 +228,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
  dnl
  dnl Growl notification plugin
  dnl
-@@ -4081,7 +4131,7 @@
+@@ -4081,7 +4141,7 @@
  dnl
  dnl  the VLC binary
  dnl
@@ -238,7 +237,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
    [  --enable-vlc            build the VLC media player (default enabled)])
  AM_CONDITIONAL(BUILD_VLC, [test "${enable_vlc}" != "no"])
  
-@@ -4182,6 +4232,8 @@
+@@ -4182,6 +4242,8 @@
    modules/sse2/Makefile
    modules/altivec/Makefile
    modules/arm_neon/Makefile
@@ -247,7 +246,7 @@ diff -ru vlc-2.1.2.orig/configure.ac vlc-2.1.2/configure.ac
  ])
  
  AM_COND_IF([HAVE_WIN32], [
-@@ -4234,9 +4286,9 @@
+@@ -4234,9 +4296,9 @@
  architecture          : ${ARCH}
  optimizations         : ${enable_optimizations}"
  if test "${enable_vlc}" != "no"; then

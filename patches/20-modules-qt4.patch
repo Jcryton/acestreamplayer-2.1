@@ -5177,9 +5177,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/ui/sprefs_interface.ui vlc-2.1.2/modules
     <item>
      <widget class="QGroupBox" name="OneInterfaceBox">
       <property name="title">
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/gui/qt4/util/input_slider.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/util/input_slider.cpp	2014-01-23 16:05:57.750222043 +0200
+diff -ru vlc-2.1.4.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.4/modules/gui/qt4/util/input_slider.cpp
+--- vlc-2.1.4.orig/modules/gui/qt4/util/input_slider.cpp	2014-02-14 19:40:50.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/util/input_slider.cpp	2014-03-05 18:00:31.212232919 +0200
 @@ -63,10 +63,21 @@
      chapters = NULL;
      mHandleLength = -1;
@@ -5213,26 +5213,24 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
  
      /* Timer used to fire intermediate updatePos() when sliding */
      seekLimitTimer = new QTimer( this );
-@@ -112,12 +123,12 @@
-     setFocusPolicy( Qt::NoFocus );
+@@ -113,11 +124,11 @@
  
      /* Use the new/classic style */
+     setMinimumHeight( 18 );
 -    if( !b_classic )
 -    {
 -        alternativeStyle = new SeekStyle;
 -        setStyle( alternativeStyle );
 -    }
--
 +    //if( !b_classic )
 +    //{
 +    //    alternativeStyle = new SeekStyle;
 +    //    setStyle( alternativeStyle );
 +    //}
-+    
+ 
      /* Init to 0 */
      setPosition( -1.0, 0, 0 );
-     secstotimestr( psz_length, 0 );
-@@ -140,8 +151,8 @@
+@@ -141,8 +152,8 @@
  SeekSlider::~SeekSlider()
  {
      delete chapters;
@@ -5243,7 +5241,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
  }
  
  /***
-@@ -175,23 +186,93 @@
+@@ -176,23 +187,93 @@
      else
          setEnabled( b_seekable );
  
@@ -5310,7 +5308,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
  {
      /* Only fire one update, when sliding, every 150ms */
 -    if( isSliding && !seekLimitTimer->isActive() )
-+    if(  !b_disableDragSeek && isSliding && !seekLimitTimer->isActive() )
++    if( !b_disableDragSeek && isSliding && !seekLimitTimer->isActive() )
          seekLimitTimer->start( 150 );
  }
  
@@ -5343,11 +5341,12 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
  }
  
  void SeekSlider::updateBuffering( float f_buffering_ )
-@@ -204,14 +285,13 @@
+@@ -205,14 +286,14 @@
  {
      if ( !isSliding && !isJumping ) return;
      isSliding = false;
 -    bool b_seekPending = seekLimitTimer->isActive();
++    //bool b_seekPending = seekLimitTimer->isActive();
      seekLimitTimer->stop(); /* We're not sliding anymore: only last seek on release */
      if ( isJumping )
      {
@@ -5355,11 +5354,11 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
          return;
      }
 -    if( b_seekPending && isEnabled() )
-+    if( isEnabled() )
++    if( /*b_seekPending &&*/ isEnabled() )
          updatePos();
  }
  
-@@ -304,10 +384,17 @@
+@@ -305,10 +386,17 @@
          int margin = handleLength() / 2;
          int posX = qMax( rect().left() + margin, qMin( rect().right() - margin, event->x() ) );
  
@@ -5380,12 +5379,12 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
                  QList<SeekPoint> points = chapters->getPoints();
                  int i_selected = -1;
                  bool b_startsnonzero = false;
-@@ -321,13 +408,18 @@
+@@ -322,13 +410,18 @@
                  }
                  if ( i_selected >= 0 && i_selected < points.size() )
                      chapterLabel = points.at( i_selected ).name;
 +            }
-+            
++
 +            secstotimestr( psz_length, ( posX * inputLength ) / size().width() );
 +            mTimeTooltip->setText( psz_length, chapterLabel );
          }
@@ -5400,7 +5399,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/util/input_slider.cpp vlc-2.1.2/modules/
          }
      }
      event->accept();
-@@ -449,6 +541,230 @@
+@@ -450,6 +543,230 @@
              || hideHandleTimer->isActive();
  }
  
