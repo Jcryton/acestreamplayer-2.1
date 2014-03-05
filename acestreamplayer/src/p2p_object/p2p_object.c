@@ -83,13 +83,14 @@ static int P2PDisplaySizeCallback(vlc_object_t *p_this, char const *psz_cmd, vlc
     VLC_UNUSED(psz_cmd);  VLC_UNUSED(oldval);  VLC_UNUSED(newval);
     p2p_object_t *p_p2p = (p2p_object_t*)p_this;
 
-    //p2p_RequestNonLinearAd(p_p2p);
-    //int w, h;    
-    //var_GetCoords(p_p2p, "vout-display-size", &w, &h);
-    //if( w!=0 && h!=0 ) {
-        p2p_RequestPauseAd(p_p2p);
-        p2p_RequestStopAd(p_p2p);
-    //}
+    int w, h;    
+    var_GetCoords(p_p2p, "vout-display-size", &w, &h);
+    msg_P2PLog( p_p2p, "[p2p_object.c] requesting new interactive because off resize %d %d", w, h );
+    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_OVERLAY);
+    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_PAUSE);
+    if( w!=0 && h!=0 ) {
+        p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_STOP);
+    }
     
     return VLC_SUCCESS;
 }
@@ -119,11 +120,7 @@ static void VariablesInit( p2p_object_t *p_p2p )
     var_SetBool( p_p2p, "vout-display-fullscreen", false );
     
     var_Create( p_p2p, "livepos", VLC_VAR_P2P_LIVEPOS );    // for input
-    var_Create( p_p2p, "showurl", VLC_VAR_ADDRESS );        // show ad url
     var_Create( p_p2p, "showdialog", VLC_VAR_ADDRESS );        // show ad url
-    var_Create( p_p2p, "preload-pause-url", VLC_VAR_ADDRESS ); // preload pause url
-    var_Create( p_p2p, "preload-nonlinear-url", VLC_VAR_ADDRESS ); // preload pause url
-    var_Create( p_p2p, "preload-stop-url", VLC_VAR_ADDRESS ); // preload stop url
     
     var_Create( p_p2p, "clickurl", VLC_VAR_STRING );  // current clickurl
     var_SetString( p_p2p, "clickurl", "" );
@@ -142,6 +139,8 @@ static void VariablesInit( p2p_object_t *p_p2p )
 
     var_Create( p_p2p, "ad-skipped", VLC_VAR_BOOL );
     var_SetBool( p_p2p, "ad-skipped", false );
+    
+    var_Create( p_p2p, "load-url", VLC_VAR_ADDRESS ); // load url event
 }
 
 static void VariablesUninit( p2p_object_t *p_p2p )
@@ -158,11 +157,7 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     var_Destroy( p_p2p, "vout-display-size" );
     var_Destroy( p_p2p, "vout-display-fullscreen" );
     var_Destroy( p_p2p, "livepos" );
-    var_Destroy( p_p2p, "showurl" );
     var_Destroy( p_p2p, "showdialog" );
-    var_Destroy( p_p2p, "preload-pause-url" );
-    var_Destroy( p_p2p, "preload-nonlinear-url" );
-    var_Destroy( p_p2p, "preload-stop-url" );
     var_Destroy( p_p2p, "clickurl" );
     var_Destroy( p_p2p, "advolume" );
     var_Destroy( p_p2p, "adparams" );
@@ -171,6 +166,8 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     var_Destroy( p_p2p, "show-playlist");
     var_Destroy( p_p2p, "item-will-replay" );
     var_Destroy( p_p2p, "ad-skipped" );
+    
+    var_Destroy( p_p2p, "load-url" );
 }
 
 static void ClearMethods( p2p_object_t *p_p2p )
@@ -190,11 +187,8 @@ static void ClearMethods( p2p_object_t *p_p2p )
     p_p2p->pf_stat_event = NULL;
     p_p2p->pf_save_option = NULL;
     p_p2p->pf_set_callback = NULL;
-    p_p2p->pf_request_pause_ad = NULL;
-    p_p2p->pf_request_non_linear_ad = NULL;
-    p_p2p->pf_request_stop_ad = NULL;
-    p_p2p->pf_register_ad_shown = NULL;
-    p_p2p->pf_register_ad_closed = NULL;
+    p_p2p->pf_register_load_url_ad_stat = NULL;
+    p_p2p->pf_request_load_url_ad = NULL;
 }
 
 p2p_object_t *p2p_Create( vlc_object_t *p_parent )
@@ -430,52 +424,35 @@ void p2p_VideoClickActivate( p2p_object_t *p_p2p, bool b_activate )
     vlc_mutex_unlock( &p_p2p->lock );
 }
 
-void p2p_RequestPauseAd(p2p_object_t *p_p2p)
+void p2p_RegisterLoadUrlAdStatistics(p2p_object_t *p_p2p, p2p_load_url_type_t type, p2p_load_url_statistics_event_type_t event_type, const char *id)
 {
     vlc_mutex_lock( &p_p2p->lock );
-    if( p_p2p->pf_request_pause_ad )
-        p_p2p->pf_request_pause_ad( p_p2p );
+    if( p_p2p->pf_register_load_url_ad_stat )
+        p_p2p->pf_register_load_url_ad_stat( p_p2p, (int)type, (int)event_type, id );
     vlc_mutex_unlock( &p_p2p->lock );
 }
 
-void p2p_RequestNonLinearAd(p2p_object_t *p_p2p)
+void p2p_RequestLoadUrlAd(p2p_object_t *p_p2p, p2p_load_url_type_t type)
 {
     vlc_mutex_lock( &p_p2p->lock );
-    if( p_p2p->pf_request_non_linear_ad )
-        p_p2p->pf_request_non_linear_ad( p_p2p );
-    vlc_mutex_unlock( &p_p2p->lock );
-}
-
-void p2p_RequestStopAd(p2p_object_t *p_p2p)
-{
-    vlc_mutex_lock( &p_p2p->lock );
-    if( p_p2p->pf_request_stop_ad )
-        p_p2p->pf_request_stop_ad( p_p2p );
-    vlc_mutex_unlock( &p_p2p->lock );
-}
-
-void p2p_RegisterAdShown(p2p_object_t *p_p2p, const char *id)
-{
-    vlc_mutex_lock( &p_p2p->lock );
-    if( p_p2p->pf_register_ad_shown )
-        p_p2p->pf_register_ad_shown( p_p2p, id );
-    vlc_mutex_unlock( &p_p2p->lock );
-}
-
-void p2p_RegisterAdClosed(p2p_object_t *p_p2p, const char *id)
-{
-    vlc_mutex_lock( &p_p2p->lock );
-    if( p_p2p->pf_register_ad_closed )
-        p_p2p->pf_register_ad_closed( p_p2p, id );
+    if( p_p2p->pf_request_load_url_ad )
+        p_p2p->pf_request_load_url_ad( p_p2p, (int)type );
     vlc_mutex_unlock( &p_p2p->lock );
 }
 
 static p2p_uri_id_type_t get_uri_id( const char *id )
 {
+    if(!id) return P2P_TYPE_UNSUPPORT;
+
     char *acestream_proto = strstr( id, "acestream://" );
-    if( acestream_proto )
-        return ( strlen(id) == 52 ) ? P2P_TYPE_PLAYER : P2P_TYPE_UNSUPPORT;
-    
+    if( acestream_proto ) {
+        if(strlen(id) ==  52)
+            return P2P_TYPE_PLAYER;
+        else if(strlen(id) == 53 && id[52]=='/')
+            return P2P_TYPE_PLAYER;
+        return P2P_TYPE_UNSUPPORT;
+    }
+
     char *last_point = strrchr( id, '.' );
 	if( !last_point ) {
         if( strlen( id ) == 40 && !strchr( id, ':' ) ) {
@@ -483,7 +460,7 @@ static p2p_uri_id_type_t get_uri_id( const char *id )
         }
         return P2P_TYPE_UNSUPPORT;
 	}
-    
+
     char *id_extension = (char*)malloc( strlen(id) + 1 );
 	int last = last_point - id + 1;
 	strncpy_from( id_extension, id, last, ( strlen(id) + 1 ) - last );

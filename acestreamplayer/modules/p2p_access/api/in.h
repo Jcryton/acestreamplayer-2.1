@@ -32,9 +32,7 @@ private:
     static load_in_msg *load( const std::string&, bool = false );
     static shutdown_in_msg *shutdown( const std::string& );
     static event_in_msg *event( const std::string& );
-    static preload_pause_ads_in_msg *preload_pause_ads( const std::string& );
-    static preload_nonlinear_ads_in_msg *preload_nonlinear_ads( const std::string& );
-    static preload_stop_ads_in_msg *preload_stop_ads( const std::string& );
+    static load_url_msg *load_url( const std::string& );
 };
 
 #endif

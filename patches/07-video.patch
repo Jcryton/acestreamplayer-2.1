@@ -36,18 +36,18 @@ diff -ru vlc-2.1.2.orig/src/video_output/video_output.c vlc-2.1.2/src/video_outp
          assert(!vout->p->splitter_name);
 diff -ru vlc-2.1.2.orig/src/video_output/display.c vlc-2.1.2/src/video_output/display.c
 --- vlc-2.1.2.orig/src/video_output/display.c	2013-07-25 14:29:38.000000000 +0300
-+++ vlc-2.1.2/src/video_output/display.c	2014-01-16 17:00:04.048635858 +0200
-@@ -155,6 +155,11 @@
++++ vlc-2.1.2/src/video_output/display.c	2014-03-05 14:33:22.864516561 +0200
+@@ -144,6 +144,11 @@
   */
- static int vout_display_Control(vout_display_t *vd, int query, ...)
+ static void vout_display_Delete(vout_display_t *vd)
  {
 +    p2p_object_t *p_p2p = p2p_Get( vd );
 +    if( p_p2p ) {
 +        var_SetCoords( p_p2p, "vout-display-size", 0, 0 );
 +    }
 +
-     va_list args;
-     int result;
+     if (vd->module)
+         module_unneed(vd, vd->module);
  
 @@ -680,8 +685,8 @@
      if (!osys->vout->p) {

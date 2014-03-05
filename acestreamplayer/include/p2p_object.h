@@ -107,13 +107,22 @@ typedef enum p2p_playback_value_t {
     P2P_PLAYBACK_SKIP = 101
 } p2p_playback_value_t;
 
-typedef enum p2p_show_url_type {
-    P2P_URL_UNDF = -1,
-    P2P_URL_AD,
-    P2P_URL_NOTIFICATION,
-    P2P_URL_SERVICE,
-    P2P_URL_OVERLAY,
-} p2p_show_url_type;
+typedef enum p2p_load_url_type_t {
+    P2P_LOAD_URL_UNDF = -1,
+    P2P_LOAD_URL_PAUSE,
+    P2P_LOAD_URL_STOP,
+    P2P_LOAD_URL_OVERLAY,
+    P2P_LOAD_URL_PREROLL,
+    P2P_LOAD_URL_SLIDER,
+    P2P_LOAD_URL_HIDDEN
+} p2p_load_url_type_t;
+
+typedef enum p2p_load_url_statistics_event_type_t {
+    P2P_LOAD_URL_STAT_EVENT_IMPRESSION,
+    P2P_LOAD_URL_STAT_EVENT_CLOSE,
+    P2P_LOAD_URL_STAT_EVENT_COMPLETE,
+    P2P_LOAD_URL_STAT_EVENT_ERROR,
+} p2p_load_url_statistics_event_type_t;
 
 // callback structs
 struct p2p_load_item_t {
@@ -138,71 +147,35 @@ struct p2p_cansave_item_t {
     p2p_save_format_t format;
 };
 
-struct p2p_showurl_item_t {
-    const char *url;
-    const char *text;
-    p2p_show_url_type type;
-    int width;
-    int height;
-    
-    int left;
-    int top;
-    int right;
-    int bottom;
-};
-
-struct p2p_preload_pause_url_item_t {
-    const char *url;
+struct p2p_load_url_item_t {
+    p2p_load_url_type_t type;
     const char *id;
-    bool preload;
+    const char *url;
     int width;
     int height;
     int left;
     int top;
     int right;
     int bottom;
-
     bool allow_dialogs;
     bool enable_flash;
     int cookies;
-    const char *embed_script;
-};
-
-struct p2p_preload_stop_url_item_t {
-    const char *url;
-    const char *id;
+    const char *embed_scripts;
+    const char *embed_code;
+    
+    // pause+stop
     bool preload;
     int fullscreen;
-    int width;
-    int height;
-    int left;
-    int top;
-    int right;
-    int bottom;
-
-    bool allow_dialogs;
-    bool enable_flash;
-    int cookies;
-    const char *embed_script;
-};
-
-struct p2p_preload_nonlinear_url_item_t {
-    const char *url;
-    const char *id;
-    const char *type;
+    // overlay
+    const char *content_type;
     const char *creative_type;
-    const char *click_url;
-    int width;
-    int height;
-    int left;
-    int top;
-    int right;
-    int bottom;
-
-    bool allow_dialogs;
-    bool enable_flash;
-    int cookies;
-    const char *embed_script;
+    const char *click_url;    
+    
+    // hidden
+    int close_after_seconds;
+    
+    int user_agent;
+    bool clear;
 };
 
 struct p2p_showdialog_item_t {
@@ -267,11 +240,8 @@ struct p2p_object_t {
     bool (*pf_stat_event) (p2p_object_t*, p2p_statistics_event_type_t/*event type*/, int/*value*/);
     bool (*pf_save_option) (p2p_object_t*, const char*, const char*, const char*);
     
-    void (*pf_request_pause_ad) (p2p_object_t*);
-    void (*pf_request_non_linear_ad) (p2p_object_t*);
-    void (*pf_request_stop_ad) (p2p_object_t*);
-    void (*pf_register_ad_shown) (p2p_object_t*, const char*);
-    void (*pf_register_ad_closed) (p2p_object_t*, const char*);
+    void (*pf_register_load_url_ad_stat) (p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
+    void (*pf_request_load_url_ad) (p2p_object_t*, p2p_load_url_type_t);
 };
 
 VLC_API p2p_object_t *p2p_Get( vlc_object_t * ) VLC_USED;
@@ -305,12 +275,8 @@ VLC_API bool p2p_SaveOption(p2p_object_t*, const char*, const char*, const char*
 
 VLC_API void p2p_VideoClickActivate( p2p_object_t*, bool );
 
-VLC_API void p2p_RequestPauseAd(p2p_object_t*);
-VLC_API void p2p_RequestNonLinearAd(p2p_object_t*);
-VLC_API void p2p_RequestStopAd(p2p_object_t*);
-
-VLC_API void p2p_RegisterAdShown(p2p_object_t*, const char*);
-VLC_API void p2p_RegisterAdClosed(p2p_object_t*, const char*);
+VLC_API void p2p_RegisterLoadUrlAdStatistics(p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
+VLC_API void p2p_RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t);
 
 # ifdef __cplusplus
 }

@@ -269,7 +269,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/control.c vlc-2.1.2/src/playlist/control.c
      default:
 diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 --- vlc-2.1.2.orig/src/playlist/engine.c	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/playlist/engine.c	2014-01-16 17:25:49.063729718 +0200
++++ vlc-2.1.2/src/playlist/engine.c	2014-03-04 16:44:11.889835766 +0200
 @@ -32,12 +32,18 @@
  #include <vlc_sout.h>
  #include <vlc_playlist.h>
@@ -308,7 +308,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
  }
  
  void set_current_status_node( playlist_t * p_playlist,
-@@ -513,6 +524,20 @@
+@@ -513,6 +524,21 @@
      var_Create( p_playlist, "mute", VLC_VAR_BOOL );
      var_Create( p_playlist, "volume", VLC_VAR_FLOAT );
      var_SetFloat( p_playlist, "volume", -1.f );
@@ -317,6 +317,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +    var_Create( p_playlist, "playlist-some-control-request", VLC_VAR_BOOL );
 +    var_Create( p_playlist, "playlist-item-update-saveable", VLC_VAR_BOOL );
 +    var_Create( p_playlist, "playlist-item-show-appended-qualities", VLC_VAR_BOOL );
++    var_Create( p_playlist, "playlist-index-changed", VLC_VAR_BOOL );
 +    
 +    /* p2p_object */
 +    var_Create (p_playlist, "start-position", VLC_VAR_FLOAT);
@@ -329,7 +330,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
  }
  
  playlist_item_t * playlist_CurrentPlayingItem( playlist_t * p_playlist )
-@@ -529,3 +554,132 @@
+@@ -529,3 +555,132 @@
      return pl_priv(p_playlist)->status.i_status;
  }
  
@@ -464,7 +465,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +}
 diff -ru vlc-2.1.2.orig/src/playlist/thread.c vlc-2.1.2/src/playlist/thread.c
 --- vlc-2.1.2.orig/src/playlist/thread.c	2013-12-03 11:12:35.000000000 +0200
-+++ vlc-2.1.2/src/playlist/thread.c	2014-01-16 17:24:25.037764312 +0200
++++ vlc-2.1.2/src/playlist/thread.c	2014-03-04 16:45:07.225836906 +0200
 @@ -326,43 +326,56 @@
          {
              if( p_playlist->i_current_index < -1 )
@@ -613,7 +614,15 @@ diff -ru vlc-2.1.2.orig/src/playlist/thread.c vlc-2.1.2/src/playlist/thread.c
          /* The new item can't be autoselected  */
          if( p_new != NULL && p_new->i_flags & PLAYLIST_SKIP_FLAG )
              return NULL;
-@@ -485,6 +513,9 @@
+@@ -459,6 +487,7 @@
+         PL_DEBUG( "dead input" );
+         PL_UNLOCK;
+ 
++
+         /* WARNING: Input resource manipulation and callback deletion are
+          * incompatible with the playlist lock. */
+         if( !var_InheritBool( p_input, "sout-keep" ) )
+@@ -485,6 +514,9 @@
      playlist_private_t *p_sys = pl_priv(p_playlist);
      assert( !p_sys->p_input );
  
@@ -623,10 +632,17 @@ diff -ru vlc-2.1.2.orig/src/playlist/thread.c vlc-2.1.2/src/playlist/thread.c
      /* No input. Several cases
       *  - No request, running status -> start new item
       *  - No request, stopped status -> collect garbage
-@@ -501,19 +532,56 @@
+@@ -501,19 +533,63 @@
      playlist_item_t *p_item = NextItem( p_playlist );
      if( p_item )
      {
++        playlist_item_t *_cur = get_current_status_item(p_playlist);
++        if(_cur) {
++            msg_P2PLog(p_playlist, "current %d new %d", _cur->i_id, p_item->i_id);
++            if(p_item->i_id != _cur->i_id) {
++                var_TriggerCallback( p_playlist, "playlist-index-changed" );
++            }
++        }
 +        if( input_item_IsP2P( p_item->p_input ) ) {
 +            if( input_item_GetP2PPlayCommandFlag( p_item->p_input ) ) {
 +                input_item_unSetP2PPlayCommandFlag( p_item->p_input );

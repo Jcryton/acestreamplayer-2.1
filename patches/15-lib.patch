@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.2.orig/lib/libvlc.sym vlc-2.1.2/lib/libvlc.sym
 --- vlc-2.1.2.orig/lib/libvlc.sym	2013-09-12 18:18:33.000000000 +0300
-+++ vlc-2.1.2/lib/libvlc.sym	2014-01-22 12:57:56.049920695 +0200
++++ vlc-2.1.2/lib/libvlc.sym	2014-03-04 16:50:15.033843535 +0200
 @@ -255,3 +255,76 @@
  libvlc_audio_filter_list_get
  libvlc_video_filter_list_get
@@ -74,7 +74,7 @@ diff -ru vlc-2.1.2.orig/lib/libvlc.sym vlc-2.1.2/lib/libvlc.sym
 +libvlc_media_list_player_set_position_shift
 +libvlc_media_list_player_get_position_shift
 +libvlc_set_flash_enable
-+libvlc_acestream_object_register_ad_shown
-+libvlc_acestream_object_request_pause_ad
-+libvlc_acestream_object_register_ad_closed
 +libvlc_acestream_object_get_ad_volume
++libvlc_acestream_object_register_loadurl_statistics
++libvlc_acestream_object_request_loadurl
++libvlc_acestream_object_ready

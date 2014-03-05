@@ -87,8 +87,12 @@ if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST} ]; then
     cd ${PWD_DIR}
 fi
 
+# private directory
+if [ -d  ${PWD_DIR}/private/vlc ]; then
+    cp -rf ${PWD_DIR}/private/vlc/* ${PWD_DIR}/vlc-${VLC_VERSION}
+fi
+
 # bootstraping vlc
 ${PWD_DIR}/vlc-${VLC_VERSION}/bootstrap
 
 info "Ok"
-info "To use your developer key, put key.h in vlc-${VLC_VERSION}/bin"

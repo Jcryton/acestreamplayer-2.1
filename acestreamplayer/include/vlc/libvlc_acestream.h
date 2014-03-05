@@ -54,16 +54,24 @@ typedef enum libvlc_acestream_state_t {
 } libvlc_acestream_state_t;
 
 /**
- * Description for url type ( for libvlc_AcestreamShowUrl event ) DEPRECATED
+ * Description for url type ( for libvlc_AcestreamLoadUrl event ) DEPRECATED
  */
-typedef enum libvlc_acestream_showurl_type_t {
-    libvlc_ace_showurl_Undf = -1,
-    libvlc_ace_showurl_Ad,
-    libvlc_ace_showurl_Notification,
-    libvlc_ace_showurl_Services,
-    libvlc_ace_showurl_Overlay,
-    libvlc_ace_showurl_StopAd
-} libvlc_acestream_showurl_type_t;
+typedef enum libvlc_acestream_loadurl_type_t {
+    libvlc_ace_loadurl_Undf = -1,
+    libvlc_ace_loadurl_Pause,
+    libvlc_ace_loadurl_Stop,
+    libvlc_ace_loadurl_Overlay,
+    libvlc_ace_loadurl_Preroll,
+    libvlc_ace_loadurl_Slider,
+    libvlc_ace_loadurl_Hidden
+} libvlc_acestream_loadurl_type_t;
+
+typedef enum libvlc_acestream_loadurl_event_type_t {
+    libvlc_ace_loadurl_event_Show,
+    libvlc_ace_loadurl_event_Close,
+    libvlc_ace_loadurl_event_Complete,
+    libvlc_ace_loadurl_event_Error
+} libvlc_acestream_loadurl_event_type_t;
 
 /**
  * Create an libvlc_acestream_object instance
@@ -104,6 +112,13 @@ LIBVLC_API libvlc_event_manager_t *libvlc_acestream_object_event_manager( libvlc
  */
 LIBVLC_API void libvlc_acestream_object_set_media_list_player( libvlc_acestream_object_t *p_ace, 
                                                                libvlc_media_list_player_t *p_mlist_player );
+
+/**
+ * Reports that all events connected
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ */
+LIBVLC_API void libvlc_acestream_object_ready( libvlc_acestream_object_t *p_ace );
 
 /**
  * Command for engine to load acestream file or content
@@ -241,35 +256,34 @@ LIBVLC_API void libvlc_acestream_object_activate_video_click( libvlc_acestream_o
 LIBVLC_API void libvlc_acestream_object_skip( libvlc_acestream_object_t *p_ace );
 
 /**
- * Reports engine that pause context advertisement shown
- *  
- * \param p_ace a libvlc_acestream_object instance
- * \param id advertisement id
- */
-LIBVLC_API void libvlc_acestream_object_register_ad_shown( libvlc_acestream_object_t *p_ace, const char *id );
-
-/**
- * Request for next pause context advertisement to preload
- *  
- * \param p_ace a libvlc_acestream_object instance
- */
-LIBVLC_API void libvlc_acestream_object_request_pause_ad( libvlc_acestream_object_t *p_ace);
-
-/**
- * Reports engine that context advertisement closed by user
- *  
- * \param p_ace a libvlc_acestream_object instance
- * \param id advertisement id
- */
-LIBVLC_API void libvlc_acestream_object_register_ad_closed( libvlc_acestream_object_t *p_ace, const char *id );
-
-/**
  * Return volume value for advertisement
  *  
  * \param p_ace a libvlc_acestream_object instance
  * \return volume value
  */
 LIBVLC_API int libvlc_acestream_object_get_ad_volume( libvlc_acestream_object_t *p_ace );
+
+/**
+ * Requests new loadurl ad with type
+ *  
+ * \param p_ace a libvlc_acestream_object instance
+ * \param type a libvlc_acestream_loadurl_type_t loadurl type to request
+ */
+LIBVLC_API void libvlc_acestream_object_request_loadurl(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type);
+
+/**
+ * Registers statistics event for loadurl with type
+ *  
+ * \param p_ace a libvlc_acestream_object instance
+ * \param type a libvlc_acestream_loadurl_type_t loadurl type
+ * \param event_type a libvlc_acestream_loadurl_event_type_t event type to register
+ * \param id advertisement id
+ */
+LIBVLC_API void libvlc_acestream_object_register_loadurl_statistics(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type,
+                                            libvlc_acestream_loadurl_event_type_t event_type,
+                                            const char *id);
 
 /** @} acestream */
 
