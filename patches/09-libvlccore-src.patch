@@ -223,9 +223,9 @@ diff -ru vlc-2.1.2.orig/include/vlc_config_cat.h vlc-2.1.2/include/vlc_config_ca
  
      { -1, NULL, NULL }
  };
-diff -ru vlc-2.1.2.orig/src/libvlc-module.c vlc-2.1.2/src/libvlc-module.c
---- vlc-2.1.2.orig/src/libvlc-module.c	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/src/libvlc-module.c	2014-01-16 17:28:07.626412547 +0200
+diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
+--- vlc-2.1.4.orig/src/libvlc-module.c	2014-02-21 16:00:00.000000000 +0200
++++ vlc-2.1.4/src/libvlc-module.c	2014-03-06 17:19:52.692919784 +0200
 @@ -634,6 +634,10 @@
  #define RUN_TIME_LONGTEXT N_( \
      "The stream will run this duration (in seconds)." )
@@ -237,7 +237,19 @@ diff -ru vlc-2.1.2.orig/src/libvlc-module.c vlc-2.1.2/src/libvlc-module.c
  #define INPUT_FAST_SEEK_TEXT N_("Fast seek")
  #define INPUT_FAST_SEEK_LONGTEXT N_( \
      "Favor speed over precision while seeking" )
-@@ -1712,6 +1716,9 @@
+@@ -1475,6 +1479,11 @@
+     add_integer( "audio-desync", 0, DESYNC_TEXT,
+                  DESYNC_LONGTEXT, true )
+         change_safe ()
++        
++    add_bool( "audio-mute-saved", 0, N_( "Saved mute value" ), N_( "Saved mute value" ), false )
++    change_safe ()
++    add_float( "audio-volume-saved", 2., N_( "Saved volume value" ), N_( "Saved volume value" ), false )
++    change_safe ()
+ 
+     add_module( "audio-resampler", "audio resampler", NULL,
+                 AUDIO_RESAMPLER_TEXT, AUDIO_RESAMPLER_LONGTEXT, true )
+@@ -1712,6 +1721,9 @@
      add_float( "run-time", 0,
                 RUN_TIME_TEXT, RUN_TIME_LONGTEXT, true )
          change_safe ()
@@ -247,7 +259,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc-module.c vlc-2.1.2/src/libvlc-module.c
      add_bool( "input-fast-seek", false,
                INPUT_FAST_SEEK_TEXT, INPUT_FAST_SEEK_LONGTEXT, false )
          change_safe ()
-@@ -2098,6 +2105,21 @@
+@@ -2098,6 +2110,21 @@
      add_module_list_cat( "control", SUBCAT_INTERFACE_CONTROL, NULL,
                           CONTROL_TEXT, CONTROL_LONGTEXT, false )
  
@@ -269,7 +281,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc-module.c vlc-2.1.2/src/libvlc-module.c
  /* Hotkey options*/
      set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
      add_category_hint( N_("Hot keys"), HOTKEY_CAT_LONGTEXT , false )
-@@ -2685,6 +2707,8 @@
+@@ -2694,6 +2721,8 @@
          change_volatile ()
      add_string( "config", NULL, CONFIG_TEXT, "", false )
          change_volatile ()
