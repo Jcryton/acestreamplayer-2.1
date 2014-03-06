@@ -225,7 +225,7 @@ diff -ru vlc-2.1.2.orig/include/vlc_config_cat.h vlc-2.1.2/include/vlc_config_ca
  };
 diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
 --- vlc-2.1.4.orig/src/libvlc-module.c	2014-02-21 16:00:00.000000000 +0200
-+++ vlc-2.1.4/src/libvlc-module.c	2014-03-06 17:19:52.692919784 +0200
++++ vlc-2.1.4/src/libvlc-module.c	2014-03-06 18:01:51.192997953 +0200
 @@ -634,6 +634,10 @@
  #define RUN_TIME_LONGTEXT N_( \
      "The stream will run this duration (in seconds)." )
@@ -237,34 +237,38 @@ diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
  #define INPUT_FAST_SEEK_TEXT N_("Fast seek")
  #define INPUT_FAST_SEEK_LONGTEXT N_( \
      "Favor speed over precision while seeking" )
-@@ -1475,6 +1479,11 @@
+@@ -1475,6 +1479,13 @@
      add_integer( "audio-desync", 0, DESYNC_TEXT,
                   DESYNC_LONGTEXT, true )
          change_safe ()
 +        
 +    add_bool( "audio-mute-saved", 0, N_( "Saved mute value" ), N_( "Saved mute value" ), false )
 +    change_safe ()
++    change_private ()
 +    add_float( "audio-volume-saved", 2., N_( "Saved volume value" ), N_( "Saved volume value" ), false )
 +    change_safe ()
++    change_private ()
  
      add_module( "audio-resampler", "audio resampler", NULL,
                  AUDIO_RESAMPLER_TEXT, AUDIO_RESAMPLER_LONGTEXT, true )
-@@ -1712,6 +1721,9 @@
+@@ -1712,6 +1723,9 @@
      add_float( "run-time", 0,
                 RUN_TIME_TEXT, RUN_TIME_LONGTEXT, true )
          change_safe ()
 +    add_float( "start-position", 0,
 +               START_POSITION_TEXT, START_POSITION_LONGTEXT, true )
-+        change_safe ()
++        change_volatile ()
      add_bool( "input-fast-seek", false,
                INPUT_FAST_SEEK_TEXT, INPUT_FAST_SEEK_LONGTEXT, false )
          change_safe ()
-@@ -2098,6 +2110,21 @@
+@@ -2098,6 +2112,25 @@
      add_module_list_cat( "control", SUBCAT_INTERFACE_CONTROL, NULL,
                           CONTROL_TEXT, CONTROL_LONGTEXT, false )
  
 +    add_string( "p2p-logfile", "", N_( "Path to p2p logfile" ), N_( "Path to p2p logfile" ), false )
++    change_volatile ()
 +    add_bool ( "p2p-log-enable", false, N_( "Enable p2p logfile" ), N_( "Enable p2p logfile" ), false )
++    change_volatile ()
 +    
 +    /* Web plugin options */
 +	set_category( CAT_WEB_PLUGIN )
@@ -274,14 +278,16 @@ diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
 +    add_bool( "play-on-click", 0, N_( "Perform play/pause action on plugin's area single click" ), N_( "Perform play/pause action on plugin's area single click" ), false )
 +    change_safe ()
 +    add_bool("fs-controller-min-view", 0, N_( "Show a controller in fullscreen mode in minimal view" ), N_( "Show a controller in fullscreen mode in minimal view" ), false)
-+    change_safe()
++    change_safe ()
++    change_private ()
 +    add_string("video-bgcolor", "#000000", N_("Video background color"), N_("Set color of video holder window."), true)
-+    change_safe()
++    change_safe ()
++    change_private ()
 +
  /* Hotkey options*/
      set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
      add_category_hint( N_("Hot keys"), HOTKEY_CAT_LONGTEXT , false )
-@@ -2694,6 +2721,8 @@
+@@ -2694,6 +2727,8 @@
          change_volatile ()
      add_string( "config", NULL, CONFIG_TEXT, "", false )
          change_volatile ()
