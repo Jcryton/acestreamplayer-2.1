@@ -256,14 +256,6 @@ LIBVLC_API void libvlc_acestream_object_activate_video_click( libvlc_acestream_o
 LIBVLC_API void libvlc_acestream_object_skip( libvlc_acestream_object_t *p_ace );
 
 /**
- * Return volume value for advertisement
- *  
- * \param p_ace a libvlc_acestream_object instance
- * \return volume value
- */
-LIBVLC_API int libvlc_acestream_object_get_ad_volume( libvlc_acestream_object_t *p_ace );
-
-/**
  * Requests new loadurl ad with type
  *  
  * \param p_ace a libvlc_acestream_object instance

@@ -2795,9 +2795,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/dialogs_provider.hpp vlc-2.1.2/modules/g
  };
  
  class DialogEvent : public QEvent
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/qt4/input_manager.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/input_manager.cpp	2014-03-05 14:34:08.120515527 +0200
+diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/qt4/input_manager.cpp
+--- vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp	2014-02-21 15:59:56.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/input_manager.cpp	2014-03-07 12:46:39.259001023 +0200
 @@ -40,6 +40,7 @@
  #include <QFile>
  #include <QDir>
@@ -2846,7 +2846,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      timeB        = 0;
      f_cache      = -1.; /* impossible initial value, different from all */
 +
-+    m_cached_volume = -1;
++    m_cached_volume = -1.f;
 +    m_is_ad = false;
 +    m_ad_params.reset();
 +    m_first_time_pos_changed = true;
@@ -2944,8 +2944,8 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
 +
 +void InputManager::dropCachedVolume()
 +{
-+    if(m_cached_volume > 0)
-+        m_cached_volume = -1;
++    if(m_cached_volume > 0.f)
++        m_cached_volume = -1.f;
 +}
 +
 +void InputManager::skipAd()
@@ -3027,29 +3027,16 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  void InputManager::UpdatePosition()
  {
      /* Update position */
-@@ -407,7 +537,57 @@
+@@ -407,7 +537,44 @@
      i_length = var_GetTime(  p_input , "length" ) / CLOCK_FREQ;
      i_time = var_GetTime(  p_input , "time");
      f_pos = var_GetFloat(  p_input , "position" );
 +
 +    if(m_first_time_pos_changed) {
-+        if(isAd()) {
-+            
++        if(isAd()) { 
 +            firstAdPosProcess();
-+            
-+            int i_volume = playlist_VolumeGet(pl_Get(p_intf)) * 100;
-+            int advolume = var_GetInteger(THEP2P, "advolume");
-+            if(i_volume > advolume) {
-+                playlist_VolumeSet(pl_Get(p_intf), advolume / 100.f);
-+                m_cached_volume = (int)i_volume;
-+            }
 +        }
-+        else {
-+            if(m_cached_volume > 0) {
-+                playlist_VolumeSet(pl_Get(p_intf), m_cached_volume / 100.f );
-+                m_cached_volume = -1;
-+            }
-+        }
++
 +        m_first_time_pos_changed = false;
 +    }
 +
@@ -3085,7 +3072,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  }
  
  void InputManager::UpdateNavigation()
-@@ -444,6 +624,9 @@
+@@ -444,6 +611,9 @@
      {
          i_old_playing_status = state;
          emit playingStatusChanged( state );
@@ -3095,7 +3082,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      }
  }
  
-@@ -502,6 +685,16 @@
+@@ -502,6 +672,16 @@
      return i_old_playing_status;
  }
  
@@ -3112,7 +3099,34 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  bool InputManager::hasAudio()
  {
      if( hasInput() )
-@@ -761,6 +954,23 @@
+@@ -621,6 +801,26 @@
+     if( hasInput() )
+     {
+         /* TODO */
++
++        /* advolume stuff */
++        audio_output_t *aout = input_GetAout( p_input );
++        if( !aout )
++            return;
++        if(isAd()) {
++            float advolume = var_InheritFloat(aout, "advolume");
++            float volume = playlist_VolumeGet(pl_Get(p_intf));
++            if(volume > advolume) {
++                playlist_VolumeSet(pl_Get(p_intf), advolume);
++                m_cached_volume = volume;
++            }
++        }
++        else {
++            if(m_cached_volume > 0.f) {
++                playlist_VolumeSet(pl_Get(p_intf), m_cached_volume );
++                m_cached_volume = -1.f;
++            }
++        }
++        vlc_object_release( aout );
+     }
+ }
+ void InputManager::UpdateCaching()
+@@ -761,6 +961,23 @@
      }
  }
  
@@ -3136,7 +3150,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  /* User update of the slider */
  void InputManager::sliderUpdate( float new_pos )
  {
-@@ -955,6 +1165,69 @@
+@@ -955,6 +1172,69 @@
          var_SetTime( THEMIM->getInput(), "time" , timeA );
  }
  
@@ -3206,7 +3220,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  /**********************************************************************
   * MainInputManager implementation. Wrap an input manager and
   * take care of updating the main playlist input.
-@@ -962,7 +1235,7 @@
+@@ -962,7 +1242,7 @@
   **********************************************************************/
  
  MainInputManager::MainInputManager( intf_thread_t *_p_intf )
@@ -3215,7 +3229,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
        random( VLC_OBJECT(THEPL), "random" ),
        repeat( VLC_OBJECT(THEPL), "repeat" ), loop( VLC_OBJECT(THEPL), "loop" ),
        volume( VLC_OBJECT(THEPL), "volume" ), mute( VLC_OBJECT(THEPL), "mute" )
-@@ -970,6 +1243,9 @@
+@@ -970,6 +1250,9 @@
      p_input = NULL;
      im = new InputManager( this, p_intf );
  
@@ -3225,7 +3239,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      var_AddCallback( THEPL, "item-change", ItemChanged, im );
      var_AddCallback( THEPL, "activity", PLItemChanged, this );
      var_AddCallback( THEPL, "leaf-to-parent", LeafToParent, this );
-@@ -982,6 +1258,15 @@
+@@ -982,6 +1265,15 @@
      volume.addCallback( this, SLOT(notifyVolume(float)) );
      mute.addCallback( this, SLOT(notifyMute(bool)) );
  
@@ -3241,7 +3255,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      /* Warn our embedded IM about input changes */
      DCONNECT( this, inputChanged( input_thread_t * ),
                im, setInput( input_thread_t * ) );
-@@ -1011,6 +1296,14 @@
+@@ -1011,6 +1303,14 @@
      var_DelCallback( THEPL, "playlist-item-append", PLItemAppended, this );
      var_DelCallback( THEPL, "playlist-item-deleted", PLItemRemoved, this );
  
@@ -3256,7 +3270,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      delete menusAudioMapper;
  }
  
-@@ -1035,7 +1328,8 @@
+@@ -1035,7 +1335,8 @@
      {
      case PLEvent::PLItemAppended:
          plEv = static_cast<PLEvent*>( event );
@@ -3266,7 +3280,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
          return;
      case PLEvent::PLItemRemoved:
          plEv = static_cast<PLEvent*>( event );
-@@ -1049,6 +1343,37 @@
+@@ -1049,6 +1350,37 @@
          plEv = static_cast<PLEvent*>( event );
          emit leafBecameParent( plEv->getItemId() );
          return;
@@ -3304,7 +3318,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      default:
          if( type != IMEvent::ItemChanged ) return;
      }
-@@ -1062,7 +1387,13 @@
+@@ -1062,7 +1394,13 @@
  /* Playlist Control functions */
  void MainInputManager::stop()
  {
@@ -3319,7 +3333,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  }
  
  void MainInputManager::next()
-@@ -1088,8 +1419,13 @@
+@@ -1088,8 +1426,13 @@
      /* No input, play */
      if( !p_input )
          playlist_Play( THEPL );
@@ -3334,7 +3348,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  }
  
  void MainInputManager::play()
-@@ -1178,6 +1514,51 @@
+@@ -1178,6 +1521,51 @@
      return b_empty;
  }
  
@@ -3386,7 +3400,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  /****************************
   * Static callbacks for MIM *
   ****************************/
-@@ -1201,7 +1582,6 @@
+@@ -1201,7 +1589,6 @@
      MainInputManager *mim = (MainInputManager*)param;
  
      PLEvent *event = new PLEvent( PLEvent::LeafToParent, newval.i_int );
@@ -3394,7 +3408,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
      QApplication::postEvent( mim, event );
      return VLC_SUCCESS;
  }
-@@ -1216,7 +1596,6 @@
+@@ -1216,7 +1603,6 @@
      emit soundMuteChanged(mute);
  }
  
@@ -3402,7 +3416,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
  void MainInputManager::menusUpdateAudio( const QString& data )
  {
      audio_output_t *aout = getAout();
-@@ -1259,3 +1638,159 @@
+@@ -1259,3 +1645,159 @@
      }
      return VLC_SUCCESS;
  }
@@ -3562,10 +3576,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.2/modules/gui/
 +    QApplication::postEvent( im, event );
 +    return VLC_SUCCESS;
 +}
-\ No newline at end of file
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.2/modules/gui/qt4/input_manager.hpp
---- vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/input_manager.hpp	2014-03-04 18:33:16.041978300 +0200
+diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/qt4/input_manager.hpp
+--- vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp	2014-02-21 15:59:56.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/input_manager.hpp	2014-03-07 13:21:45.009523789 +0200
 @@ -37,6 +37,10 @@
  
  #include <QObject>
@@ -3691,7 +3704,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.2/modules/gui/
      bool            b_video;
      mtime_t         timeA, timeB;
  
-+    int m_cached_volume;
++    float m_cached_volume;
 +    AdParams m_ad_params;
 +    bool m_is_ad;
 +    bool m_first_time_pos_changed;
@@ -3709,7 +3722,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.2/modules/gui/
  
  public slots:
      void setInput( input_thread_t * ); ///< Our controlled input changed
-@@ -208,9 +293,17 @@
+@@ -208,6 +293,14 @@
      /* A to B Loop */
      void setAtoB();
  
@@ -3718,15 +3731,12 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.2/modules/gui/
 +    void UpdateSaveable();
 +    void setAdParams(QString, QString, int, QString, bool);
 +    void skipAd();
++    
++    void dropCachedVolume();
 +
  private slots:
      void AtoBLoop( float, int64_t, int );
  
-+    void dropCachedVolume();
-+
- signals:
-     /// Send new position, new time and new length
-     void positionUpdated( float , int64_t, int );
 @@ -248,6 +341,23 @@
      /// Program Event changes
      void encryptionChanged( bool );
@@ -3785,9 +3795,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.2/modules/gui/
  };
  
  #endif
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui/qt4/main_interface.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/main_interface.cpp	2014-03-05 12:17:20.867932922 +0200
+diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui/qt4/main_interface.cpp
+--- vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp	2014-02-21 15:59:56.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-03-07 13:31:47.544084337 +0200
 @@ -41,6 +41,10 @@
  #include "components/playlist/playlist.hpp"     // plWidget
  #include "dialogs/firstrun.hpp"                 // First Run
@@ -3983,7 +3993,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
          }
  }
  
-@@ -529,7 +594,13 @@
+@@ -535,7 +600,13 @@
  #endif
  }
  
@@ -3998,7 +4008,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
  inline void MainInterface::restoreStackOldWidget()
              { showTab( stackCentralOldWidget ); }
  
-@@ -543,42 +614,51 @@
+@@ -549,42 +620,51 @@
                   stackCentralW->indexOf( stackCentralOldWidget ) );
      msg_Dbg( p_intf, "ShowTab request for %s", widget->metaObject()->className() );
  #endif
@@ -4076,7 +4086,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
          }
      }
  
-@@ -683,19 +763,27 @@
+@@ -689,19 +769,27 @@
      assert( videoWidget );
      videoWidget->release();
      setVideoOnTop( false );
@@ -4113,7 +4123,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
  }
  
  void MainInterface::setVideoSize( unsigned int w, unsigned int h )
-@@ -713,6 +801,7 @@
+@@ -719,6 +807,7 @@
  void MainInterface::setVideoFullScreen( bool fs )
  {
      b_videoFullScreen = fs;
@@ -4121,7 +4131,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      if( fs )
      {
          int numscreen = var_InheritInteger( p_intf, "qt-fullscreen-screennumber" );
-@@ -740,15 +829,23 @@
+@@ -746,15 +835,23 @@
  
          /* */
          setMinimalView( true );
@@ -4147,7 +4157,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      videoWidget->sync();
  }
  
-@@ -996,6 +1093,13 @@
+@@ -1002,6 +1099,13 @@
  void MainInterface::setName( const QString& name )
  {
      input_name = name; /* store it for the QSystray use */
@@ -4161,7 +4171,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      /* Display it in the status bar, but also as a Tooltip in case it doesn't
         fit in the label */
      nameLabel->setText( name );
-@@ -1010,11 +1114,11 @@
+@@ -1016,11 +1120,11 @@
  {
      if( aTitle.isEmpty() )
      {
@@ -4175,7 +4185,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      }
  }
  
-@@ -1053,9 +1157,9 @@
+@@ -1059,9 +1163,9 @@
      else
          iconVLC = QIcon::fromTheme( "vlc", QIcon( ":/logo/vlc256.png" ) );
      sysTray = new QSystemTrayIcon( iconVLC, this );
@@ -4187,7 +4197,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      systrayMenu->setIcon( iconVLC );
  
      VLCMenuBar::updateSystrayMenu( this, p_intf, true );
-@@ -1155,7 +1259,7 @@
+@@ -1161,7 +1265,7 @@
  #endif
              break;
          case QSystemTrayIcon::MiddleClick:
@@ -4196,7 +4206,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
                      qtr( "Control menu for the player" ),
                      QSystemTrayIcon::Information, 3000 );
              break;
-@@ -1172,7 +1276,7 @@
+@@ -1178,7 +1282,7 @@
  {
      if( name.isEmpty() )
      {
@@ -4205,7 +4215,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      }
      else
      {
-@@ -1180,7 +1284,7 @@
+@@ -1186,7 +1290,7 @@
          if( ( i_notificationSetting == NOTIFICATION_ALWAYS ) ||
              ( i_notificationSetting == NOTIFICATION_MINIMIZED && (isMinimized() || isHidden()) ) )
          {
@@ -4214,7 +4224,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
                      QSystemTrayIcon::NoIcon, 3000 );
          }
      }
-@@ -1203,7 +1307,7 @@
+@@ -1209,7 +1313,7 @@
          sysTray->setToolTip( input_name + " - " + qtr( "Paused") );
          break;
      default:
@@ -4223,7 +4233,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
          break;
      }
      VLCMenuBar::updateSystrayMenu( this, p_intf );
-@@ -1302,9 +1406,18 @@
+@@ -1308,9 +1412,18 @@
              }
              if( mrl.length() > 0 )
              {
@@ -4245,7 +4255,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
                  first = false;
                  RecentsMRL::getInstance( p_intf )->addRecent( mrl );
              }
-@@ -1317,10 +1430,20 @@
+@@ -1323,10 +1436,20 @@
      if( !mimeData->hasUrls() && mimeData->hasText() &&
          QUrl(mimeData->text()).isValid() )
      {
@@ -4270,7 +4280,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
      }
      event->accept();
  }
-@@ -1369,7 +1492,16 @@
+@@ -1375,7 +1498,16 @@
      int i_vlck = qtEventToVLCKey( e );
      if( i_vlck > 0 )
      {
@@ -4288,7 +4298,18 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
          e->accept();
      }
      else
-@@ -1449,6 +1581,393 @@
+@@ -1385,6 +1517,10 @@
+ void MainInterface::wheelEvent( QWheelEvent *e )
+ {
+     int i_vlckey = qtWheelEventToVLCKey( e );
++    uint32_t action = vlc_GetActionByKey(p_intf, i_vlckey);
++    if(action == ACTIONID_VOL_UP || action == ACTIONID_VOL_DOWN) {
++       THEMIM->getIM()->dropCachedVolume(); 
++    }
+     var_SetInteger( p_intf->p_libvlc, "key-pressed", i_vlckey );
+     e->accept();
+ }
+@@ -1455,6 +1591,393 @@
      raise();
  }
  
@@ -4682,7 +4703,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1515,3 +2034,36 @@
+@@ -1521,3 +2044,36 @@
  
      return VLC_SUCCESS;
  }
@@ -4719,7 +4740,6 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.2/modules/gui
 +
 +    return VLC_SUCCESS;
 +}
-\ No newline at end of file
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui/qt4/main_interface.hpp
 --- vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp	2013-12-05 18:39:06.000000000 +0200
 +++ vlc-2.1.2/modules/gui/qt4/main_interface.hpp	2014-03-04 18:13:30.637952474 +0200

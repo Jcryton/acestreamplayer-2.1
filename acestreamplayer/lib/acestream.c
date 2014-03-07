@@ -647,14 +647,6 @@ void libvlc_acestream_object_skip( libvlc_acestream_object_t *p_ace )
     vlc_mutex_unlock( &p_ace->object_lock );
 }
 
-int libvlc_acestream_object_get_ad_volume( libvlc_acestream_object_t *p_ace )
-{
-    vlc_mutex_lock( &p_ace->object_lock );
-    int vol = var_GetInteger( getP2P( p_ace->p_libvlc_instance ), "advolume" );
-    vlc_mutex_unlock( &p_ace->object_lock );
-    return vol;
-}
-
 void libvlc_acestream_object_request_loadurl(libvlc_acestream_object_t *p_ace, libvlc_acestream_loadurl_type_t type)
 {
     vlc_mutex_lock( &p_ace->object_lock );

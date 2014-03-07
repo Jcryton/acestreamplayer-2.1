@@ -125,9 +125,6 @@ static void VariablesInit( p2p_object_t *p_p2p )
     var_Create( p_p2p, "clickurl", VLC_VAR_STRING );  // current clickurl
     var_SetString( p_p2p, "clickurl", "" );
     
-    var_Create( p_p2p, "advolume", VLC_VAR_INTEGER );  // current advolume
-    var_SetInteger( p_p2p, "advolume", 15 );
-    
     var_Create( p_p2p, "adparams", VLC_VAR_ADDRESS );        // ad params
     
     var_Create( p_p2p, "exit-fullscreen", VLC_VAR_VOID );  // trigger to exit fullscreen if needed
@@ -159,7 +156,6 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     var_Destroy( p_p2p, "livepos" );
     var_Destroy( p_p2p, "showdialog" );
     var_Destroy( p_p2p, "clickurl" );
-    var_Destroy( p_p2p, "advolume" );
     var_Destroy( p_p2p, "adparams" );
     var_Destroy( p_p2p, "exit-fullscreen" );
     var_Destroy( p_p2p, "show-userdata-dialog");
