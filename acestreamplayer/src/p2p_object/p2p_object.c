@@ -184,6 +184,7 @@ static void ClearMethods( p2p_object_t *p_p2p )
     p_p2p->pf_save_option = NULL;
     p_p2p->pf_set_callback = NULL;
     p_p2p->pf_register_load_url_ad_stat = NULL;
+    p_p2p->pf_register_load_url_ad_event = NULL;
     p_p2p->pf_request_load_url_ad = NULL;
 }
 
@@ -436,9 +437,19 @@ void p2p_RequestLoadUrlAd(p2p_object_t *p_p2p, p2p_load_url_type_t type)
     vlc_mutex_unlock( &p_p2p->lock );
 }
 
+void p2p_RegisterLoadUrlAdEvent(p2p_object_t *p_p2p, p2p_load_url_type_t type, const char *event_type, const char *id)
+{
+    vlc_mutex_lock( &p_p2p->lock );
+    if( p_p2p->pf_register_load_url_ad_event )
+        p_p2p->pf_register_load_url_ad_event( p_p2p, (int)type, event_type, id );
+    vlc_mutex_unlock( &p_p2p->lock );
+}
+
 static p2p_uri_id_type_t get_uri_id( const char *id )
 {
-    if(!id) return P2P_TYPE_UNSUPPORT;
+    if(!id) {
+        return P2P_TYPE_UNSUPPORT;
+    }
 
     char *acestream_proto = strstr( id, "acestream://" );
     if( acestream_proto ) {

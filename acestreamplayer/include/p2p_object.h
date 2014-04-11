@@ -39,8 +39,8 @@ extern "C" {
 #define P2P_APP_NAME "Ace Player HD"
 #endif
 
-#define P2P_APP_VERSION "3.0"
-#define P2P_STD_VERSION "3.0.0.0"
+#define P2P_APP_VERSION "2.2.4"
+#define P2P_STD_VERSION "2.2.4.0"
 
 typedef enum p2p_state_t {
     P2P_STATE_NOTLAUNCHED = -1,
@@ -114,7 +114,12 @@ typedef enum p2p_load_url_type_t {
     P2P_LOAD_URL_OVERLAY,
     P2P_LOAD_URL_PREROLL,
     P2P_LOAD_URL_SLIDER,
-    P2P_LOAD_URL_HIDDEN
+    P2P_LOAD_URL_HIDDEN,
+    P2P_LOAD_URL_PREPLAY = 6,
+    P2P_LOAD_URL_WEBSTAT_PLAY,
+    P2P_LOAD_URL_WEBSTAT_PAUSE,
+    P2P_LOAD_URL_WEBSTAT_STOP,
+    P2P_LOAD_URL_WEBSTAT_FULLSCREEN
 } p2p_load_url_type_t;
 
 typedef enum p2p_load_url_statistics_event_type_t {
@@ -122,6 +127,8 @@ typedef enum p2p_load_url_statistics_event_type_t {
     P2P_LOAD_URL_STAT_EVENT_CLOSE,
     P2P_LOAD_URL_STAT_EVENT_COMPLETE,
     P2P_LOAD_URL_STAT_EVENT_ERROR,
+    P2P_LOAD_URL_STAT_EVENT_COMPLETE_HIDDEN,
+    P2P_LOAD_URL_STAT_EVENT_ERROR_HIDDEN,
 } p2p_load_url_statistics_event_type_t;
 
 // callback structs
@@ -173,7 +180,9 @@ struct p2p_load_url_item_t {
     
     // hidden
     int close_after_seconds;
+    int show_time;
     
+    bool start_hidden;
     int user_agent;
     bool clear;
 };
@@ -242,6 +251,7 @@ struct p2p_object_t {
     
     void (*pf_register_load_url_ad_stat) (p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
     void (*pf_request_load_url_ad) (p2p_object_t*, p2p_load_url_type_t);
+    void (*pf_register_load_url_ad_event) (p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
 };
 
 VLC_API p2p_object_t *p2p_Get( vlc_object_t * ) VLC_USED;
@@ -277,6 +287,7 @@ VLC_API void p2p_VideoClickActivate( p2p_object_t*, bool );
 
 VLC_API void p2p_RegisterLoadUrlAdStatistics(p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
 VLC_API void p2p_RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t);
+VLC_API void p2p_RegisterLoadUrlAdEvent(p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
 
 # ifdef __cplusplus
 }

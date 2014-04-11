@@ -20,7 +20,7 @@ public:
             bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
             bool _preload,
             QString _contentT, QString _creativeT, QString _clickU,
-            BrowserUserAgent _uA, int _cA);
+            BrowserUserAgent _uA, int _cA, int _sT, bool _sH);
     LoadItem(const LoadItem &other);
     ~LoadItem();
 
@@ -47,6 +47,8 @@ public:
     QString clickUrl() const;
     BrowserUserAgent userAgent() const;
     int closeAfterSeconds() const;
+    int showTime() const;
+    bool startHidden() const;
 
     QString hostUserAgent() const;
     unsigned int fixedBottomSpace() const;
@@ -92,6 +94,8 @@ private:
     QString mClickUrl;
     BrowserUserAgent mUserAgent;
     int mCloseAfterSeconds;
+    int mShowTime;
+    bool mStartHidden;
 
     //additional
     QString mHostUserAgent;

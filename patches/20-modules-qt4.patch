@@ -2797,7 +2797,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/dialogs_provider.hpp vlc-2.1.2/modules/g
  class DialogEvent : public QEvent
 diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/qt4/input_manager.cpp
 --- vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/input_manager.cpp	2014-03-07 12:46:39.259001023 +0200
++++ vlc-2.1.4/modules/gui/qt4/input_manager.cpp	2014-04-11 14:49:12.518692292 +0300
 @@ -40,6 +40,7 @@
  #include <QFile>
  #include <QDir>
@@ -2909,7 +2909,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  
      if( !hasInput() )
          return;
-@@ -261,22 +310,68 @@
+@@ -261,22 +310,70 @@
      case IMEvent::EPGEvent:
          UpdateEPG();
          break;
@@ -2944,8 +2944,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +
 +void InputManager::dropCachedVolume()
 +{
-+    if(m_cached_volume > 0.f)
++    if(m_cached_volume > 0.f) {
 +        m_cached_volume = -1.f;
++    }
 +}
 +
 +void InputManager::skipAd()
@@ -2954,6 +2955,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +        char *url = input_item_GetURI( p_item );
 +        if(url) {
 +            input_item_UnblockP2PIsAdFlag( p_item );
++            delInput();
 +            p2p_Skip( THEP2P, url );
 +            free(url);
 +            //
@@ -2978,7 +2980,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  }
  
  /* Static callbacks for IM */
-@@ -373,6 +468,10 @@
+@@ -373,6 +470,10 @@
          /* EPG data changed */
          event = new IMEvent( IMEvent::EPGEvent );
          break;
@@ -2989,7 +2991,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  
      case INPUT_EVENT_SIGNAL:
          /* This is for capture-card signals */
-@@ -398,6 +497,37 @@
+@@ -398,6 +499,37 @@
      return VLC_SUCCESS;
  }
  
@@ -3027,7 +3029,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  void InputManager::UpdatePosition()
  {
      /* Update position */
-@@ -407,7 +537,44 @@
+@@ -407,7 +539,47 @@
      i_length = var_GetTime(  p_input , "length" ) / CLOCK_FREQ;
      i_time = var_GetTime(  p_input , "time");
      f_pos = var_GetFloat(  p_input , "position" );
@@ -3035,6 +3037,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +    if(m_first_time_pos_changed) {
 +        if(isAd()) { 
 +            firstAdPosProcess();
++        }
++        else {
++            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PLAY);
 +        }
 +
 +        m_first_time_pos_changed = false;
@@ -3072,7 +3077,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  }
  
  void InputManager::UpdateNavigation()
-@@ -444,6 +611,9 @@
+@@ -444,6 +616,9 @@
      {
          i_old_playing_status = state;
          emit playingStatusChanged( state );
@@ -3082,7 +3087,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      }
  }
  
-@@ -502,6 +672,16 @@
+@@ -502,6 +677,16 @@
      return i_old_playing_status;
  }
  
@@ -3099,7 +3104,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  bool InputManager::hasAudio()
  {
      if( hasInput() )
-@@ -621,6 +801,26 @@
+@@ -621,6 +806,26 @@
      if( hasInput() )
      {
          /* TODO */
@@ -3126,7 +3131,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      }
  }
  void InputManager::UpdateCaching()
-@@ -761,6 +961,23 @@
+@@ -761,6 +966,23 @@
      }
  }
  
@@ -3150,7 +3155,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  /* User update of the slider */
  void InputManager::sliderUpdate( float new_pos )
  {
-@@ -955,6 +1172,69 @@
+@@ -955,6 +1177,69 @@
          var_SetTime( THEMIM->getInput(), "time" , timeA );
  }
  
@@ -3220,7 +3225,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  /**********************************************************************
   * MainInputManager implementation. Wrap an input manager and
   * take care of updating the main playlist input.
-@@ -962,7 +1242,7 @@
+@@ -962,7 +1247,7 @@
   **********************************************************************/
  
  MainInputManager::MainInputManager( intf_thread_t *_p_intf )
@@ -3229,7 +3234,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
        random( VLC_OBJECT(THEPL), "random" ),
        repeat( VLC_OBJECT(THEPL), "repeat" ), loop( VLC_OBJECT(THEPL), "loop" ),
        volume( VLC_OBJECT(THEPL), "volume" ), mute( VLC_OBJECT(THEPL), "mute" )
-@@ -970,6 +1250,9 @@
+@@ -970,6 +1255,9 @@
      p_input = NULL;
      im = new InputManager( this, p_intf );
  
@@ -3239,7 +3244,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      var_AddCallback( THEPL, "item-change", ItemChanged, im );
      var_AddCallback( THEPL, "activity", PLItemChanged, this );
      var_AddCallback( THEPL, "leaf-to-parent", LeafToParent, this );
-@@ -982,6 +1265,15 @@
+@@ -982,6 +1270,15 @@
      volume.addCallback( this, SLOT(notifyVolume(float)) );
      mute.addCallback( this, SLOT(notifyMute(bool)) );
  
@@ -3255,7 +3260,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      /* Warn our embedded IM about input changes */
      DCONNECT( this, inputChanged( input_thread_t * ),
                im, setInput( input_thread_t * ) );
-@@ -1011,6 +1303,14 @@
+@@ -1011,6 +1308,14 @@
      var_DelCallback( THEPL, "playlist-item-append", PLItemAppended, this );
      var_DelCallback( THEPL, "playlist-item-deleted", PLItemRemoved, this );
  
@@ -3270,7 +3275,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      delete menusAudioMapper;
  }
  
-@@ -1035,7 +1335,8 @@
+@@ -1035,7 +1340,8 @@
      {
      case PLEvent::PLItemAppended:
          plEv = static_cast<PLEvent*>( event );
@@ -3280,7 +3285,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
          return;
      case PLEvent::PLItemRemoved:
          plEv = static_cast<PLEvent*>( event );
-@@ -1049,6 +1350,37 @@
+@@ -1049,6 +1355,37 @@
          plEv = static_cast<PLEvent*>( event );
          emit leafBecameParent( plEv->getItemId() );
          return;
@@ -3318,7 +3323,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      default:
          if( type != IMEvent::ItemChanged ) return;
      }
-@@ -1062,7 +1394,13 @@
+@@ -1062,7 +1399,13 @@
  /* Playlist Control functions */
  void MainInputManager::stop()
  {
@@ -3333,7 +3338,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  }
  
  void MainInputManager::next()
-@@ -1088,8 +1426,13 @@
+@@ -1088,8 +1431,13 @@
      /* No input, play */
      if( !p_input )
          playlist_Play( THEPL );
@@ -3348,7 +3353,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  }
  
  void MainInputManager::play()
-@@ -1178,6 +1521,51 @@
+@@ -1178,6 +1526,51 @@
      return b_empty;
  }
  
@@ -3400,7 +3405,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  /****************************
   * Static callbacks for MIM *
   ****************************/
-@@ -1201,7 +1589,6 @@
+@@ -1201,7 +1594,6 @@
      MainInputManager *mim = (MainInputManager*)param;
  
      PLEvent *event = new PLEvent( PLEvent::LeafToParent, newval.i_int );
@@ -3408,7 +3413,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
      QApplication::postEvent( mim, event );
      return VLC_SUCCESS;
  }
-@@ -1216,7 +1603,6 @@
+@@ -1216,7 +1608,6 @@
      emit soundMuteChanged(mute);
  }
  
@@ -3416,7 +3421,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  void MainInputManager::menusUpdateAudio( const QString& data )
  {
      audio_output_t *aout = getAout();
-@@ -1259,3 +1645,159 @@
+@@ -1259,3 +1650,167 @@
      }
      return VLC_SUCCESS;
  }
@@ -3484,14 +3489,20 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +    if(cur.p_address) {
 +        p2p_load_url_item_t *p_loadurl = (p2p_load_url_item_t *)cur.p_address;
 +        if( p_loadurl ) {
++            AceWebBrowser::BrowserType _type = (p_loadurl->type == P2P_LOAD_URL_WEBSTAT_PLAY
++                || p_loadurl->type == P2P_LOAD_URL_WEBSTAT_PAUSE
++                || p_loadurl->type == P2P_LOAD_URL_WEBSTAT_STOP
++                || p_loadurl->type == P2P_LOAD_URL_WEBSTAT_FULLSCREEN)
++                ? AceWebBrowser::BTYPE_WEBSTAT
++                : static_cast<AceWebBrowser::BrowserType>(p_loadurl->type);
 +            if(p_loadurl->clear) {
-+                ClearLoadUrlEvent *event = new ClearLoadUrlEvent(static_cast<AceWebBrowser::BrowserType>(p_loadurl->type));
++                ClearLoadUrlEvent *event = new ClearLoadUrlEvent(_type);
 +                QApplication::postEvent( mim, event );
 +                return VLC_SUCCESS;
 +            }
 +            
 +            AceWebBrowser::LoadItem *item = new AceWebBrowser::LoadItem(
-+                    static_cast<AceWebBrowser::BrowserType>(p_loadurl->type),
++                    _type,
 +                    QString(p_loadurl->id),
 +                    QString(p_loadurl->url),
 +                    p_loadurl->width,
@@ -3510,7 +3521,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +                    QString(p_loadurl->creative_type),
 +                    QString(p_loadurl->click_url),
 +                    static_cast<AceWebBrowser::BrowserUserAgent>(p_loadurl->user_agent),
-+                    p_loadurl->close_after_seconds
++                    p_loadurl->close_after_seconds,
++                    p_loadurl->show_time,
++                    p_loadurl->start_hidden
 +                    );
 +
 +            LoadUrlEvent *event = new LoadUrlEvent(*item);
@@ -3578,8 +3591,8 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +}
 diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/qt4/input_manager.hpp
 --- vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/input_manager.hpp	2014-03-07 13:21:45.009523789 +0200
-@@ -37,6 +37,10 @@
++++ vlc-2.1.4/modules/gui/qt4/input_manager.hpp	2014-04-11 13:08:13.750100524 +0300
+@@ -37,8 +37,13 @@
  
  #include <QObject>
  #include <QEvent>
@@ -3589,8 +3602,11 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/
 +
  class QSignalMapper;
  
++
  enum { NORMAL,    /* loop: 0, repeat: 0 */
-@@ -69,9 +73,18 @@
+        REPEAT_ONE,/* loop: 0, repeat: 1 */
+        REPEAT_ALL,/* loop: 1, repeat: 0 */
+@@ -69,9 +74,18 @@
          RandomChanged,
          LoopOrRepeatChanged,
          EPGEvent,
@@ -3610,14 +3626,13 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/
          FullscreenControlShow,
          FullscreenControlHide,
          FullscreenControlPlanHide,
-@@ -120,11 +133,69 @@
+@@ -120,11 +134,68 @@
      int i_parent;
  };
  
 +enum OtherEventsTypes
 +{
-+    OtherShowUrl_Type = QEvent::User + OtherEventTypeOffset + 1,
-+    OtherAdParamsUpdate_Type,
++    OtherAdParamsUpdate_Type = QEvent::User + OtherEventTypeOffset + 1,
 +    OtherLoadUrl_Type,
 +    OtherClearLoadUrl_Type,
 +};
@@ -3797,8 +3812,8 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/
  #endif
 diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui/qt4/main_interface.cpp
 --- vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-03-07 13:31:47.544084337 +0200
-@@ -41,6 +41,10 @@
++++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-04-11 15:35:57.566635472 +0300
+@@ -41,12 +41,19 @@
  #include "components/playlist/playlist.hpp"     // plWidget
  #include "dialogs/firstrun.hpp"                 // First Run
  #include "dialogs/playlist.hpp"                 // PlaylistDialog
@@ -3806,14 +3821,24 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +
 +#include "acewebbrowser/browser.hpp"
 +#include "acewebbrowser/javascriptobject.hpp"
++#include "acewebbrowser/iejsobject.hpp"
++#include "acewebbrowser/exceptions.hpp"
  
  #include "menus.hpp"                            // Menu creation
  #include "recents.hpp"                          // RecentItems when DnD
-@@ -59,9 +63,11 @@
+ 
+ #include <QCloseEvent>
+ #include <QKeyEvent>
++#include <QResizeEvent>
+ 
+ #include <QUrl>
+ #include <QSize>
+@@ -59,9 +66,12 @@
  #include <QLabel>
  #include <QStackedWidget>
  #include <QFileInfo>
 +#include <QDesktopServices>
++#include <QTimer>
  
  #include <vlc_keys.h>                       /* Wheel event */
  #include <vlc_vout_display.h>               /* vout_thread_t and VOUT_ events */
@@ -3821,7 +3846,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
  // #define DEBUG_INTF
  
-@@ -75,6 +81,12 @@
+@@ -75,6 +85,12 @@
  static int IntfRaiseMainCB( vlc_object_t *p_this, const char *psz_variable,
                             vlc_value_t old_val, vlc_value_t new_val,
                             void *param );
@@ -3834,7 +3859,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
  const QEvent::Type MainInterface::ToolbarsNeedRebuild =
          (QEvent::Type)QEvent::registerEventType();
-@@ -99,6 +111,11 @@
+@@ -99,6 +115,15 @@
      b_hasPausedWhenMinimized = false;
      i_kc_offset          = false;
  
@@ -3843,10 +3868,14 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    p2p_error = "";
 +    m_link_2_open_later = "";
 +    m_request_pause_ad = false;
++    ieBrowser = 0;
++    mIeDeleteTimer = 0;
++    m_last_webstat_play_id = "";
++
      /* Ask for Privacy */
      FirstRun::CheckAndRun( this, p_intf );
  
-@@ -161,7 +178,7 @@
+@@ -161,7 +186,7 @@
       * Status Bar *
       **************/
      createStatusBar();
@@ -3855,7 +3884,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /********************
       * Input Manager    *
-@@ -214,11 +231,18 @@
+@@ -214,11 +239,18 @@
          {
              CONNECT( this, askVideoToResize( unsigned int, unsigned int ),
                       this, setVideoSize( unsigned int, unsigned int ) );
@@ -3876,7 +3905,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  
      CONNECT( THEDP, toolBarConfUpdated(), this, toolBarConfUpdated() );
-@@ -229,8 +253,27 @@
+@@ -229,8 +261,27 @@
      CONNECT( this, askBoss(), this, setBoss() );
      CONNECT( this, askRaise(), this, setRaise() );
  
@@ -3904,7 +3933,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /************
       * Callbacks
-@@ -242,6 +285,8 @@
+@@ -242,6 +293,8 @@
      /* Register callback for the intf-popupmenu variable */
      var_AddCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
@@ -3913,20 +3942,38 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /* Final Sizing, restoration and placement of the interface */
      if( settings->value( "MainWindow/playlist-visible", false ).toBool() )
-@@ -311,6 +356,12 @@
+@@ -269,6 +322,16 @@
+     if( videoWidget )
+         releaseVideoSlot();
+ 
++    if(mIeDeleteTimer) {
++        mIeDeleteTimer->stop();
++        mIeDeleteTimer->deleteLater();
++    }
++        
++    if(ieBrowser) {
++        ieBrowser->deleteLater();
++        ieBrowser = 0;
++    }
++        
+ #ifdef _WIN32
+     if( himl )
+         ImageList_Destroy( himl );
+@@ -311,6 +374,13 @@
      var_DelCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
      var_DelCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
 +    var_DelCallback( THEP2P, "show-userdata-dialog", IntfShowUserDataCB, p_intf );
 +    var_DelCallback( THEP2P, "showdialog", IntfShowErrorDialogCB, p_intf );
 +
-+    if(browserManager)
++    if(browserManager) {
 +        delete browserManager;
++    }
 +
      p_intf->p_sys->p_mi = NULL;
  }
  
-@@ -342,9 +393,14 @@
+@@ -342,9 +412,14 @@
      if( fullscreenControls )
      {
          delete fullscreenControls;
@@ -3942,7 +3989,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          THEMIM->requestVoutUpdate();
      }
  
-@@ -378,14 +434,14 @@
+@@ -378,14 +453,14 @@
      stackCentralW = new QVLCStackedWidget( main );
  
      /* Bg Cone */
@@ -3960,7 +4007,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      stackCentralW->addWidget( bgWidget );
      if ( !var_InheritBool( p_intf, "qt-bgcone" ) )
-@@ -395,11 +451,15 @@
+@@ -395,11 +470,15 @@
              bgWidget->setExpandstoHeight( true );
  
      /* And video Outputs */
@@ -3977,7 +4024,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      mainLayout->insertWidget( 1, stackCentralW );
  
      stackWidgetsSizes[bgWidget] =
-@@ -434,9 +494,14 @@
+@@ -434,9 +513,14 @@
          /* Create the FULLSCREEN CONTROLS Widget */
          if( var_InheritBool( p_intf, "qt-fs-controller" ) )
          {
@@ -3993,7 +4040,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          }
  }
  
-@@ -535,7 +600,13 @@
+@@ -535,7 +619,13 @@
  #endif
  }
  
@@ -4008,7 +4055,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  inline void MainInterface::restoreStackOldWidget()
              { showTab( stackCentralOldWidget ); }
  
-@@ -549,42 +620,51 @@
+@@ -549,42 +639,51 @@
                   stackCentralW->indexOf( stackCentralOldWidget ) );
      msg_Dbg( p_intf, "ShowTab request for %s", widget->metaObject()->className() );
  #endif
@@ -4086,7 +4133,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          }
      }
  
-@@ -689,19 +769,27 @@
+@@ -689,19 +788,27 @@
      assert( videoWidget );
      videoWidget->release();
      setVideoOnTop( false );
@@ -4123,7 +4170,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  }
  
  void MainInterface::setVideoSize( unsigned int w, unsigned int h )
-@@ -719,6 +807,7 @@
+@@ -719,6 +826,7 @@
  void MainInterface::setVideoFullScreen( bool fs )
  {
      b_videoFullScreen = fs;
@@ -4131,15 +4178,21 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      if( fs )
      {
          int numscreen = var_InheritInteger( p_intf, "qt-fullscreen-screennumber" );
-@@ -746,15 +835,23 @@
+@@ -746,15 +854,31 @@
  
          /* */
          setMinimalView( true );
 -        setInterfaceFullScreen( true );
-+        if( b_videoEmbedded )
++        if( b_videoEmbedded ) {
 +            setInterfaceFullScreen(true);
-+        else
++        }
++        else {
 +            videoWidget->setWindowState(videoWidget->windowState() | Qt::WindowFullScreen);
++        }
++        
++        if(THEMIM->getIM()->isP2P() && !THEMIM->getIM()->isAd()) {
++            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_FULLSCREEN);
++        }
      }
      else
      {
@@ -4147,17 +4200,19 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
           * qt-fullscreen-screennumber is forced) */
          setMinimalView( b_minimalView );
 -        setInterfaceFullScreen( b_interfaceFullScreen );
-+        if( b_videoEmbedded )
++        if( b_videoEmbedded ) {
 +            setInterfaceFullScreen( b_interfaceFullScreen );
-+        else
++        }
++        else {
 +            videoWidget->setWindowState( videoWidget->windowState() & ~Qt::WindowFullScreen);
++        }
 +        updateMinWidth();
      }
 +    emit notifyFullscreenChanged(fs);
      videoWidget->sync();
  }
  
-@@ -1002,6 +1099,13 @@
+@@ -1002,6 +1126,13 @@
  void MainInterface::setName( const QString& name )
  {
      input_name = name; /* store it for the QSystray use */
@@ -4171,7 +4226,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      /* Display it in the status bar, but also as a Tooltip in case it doesn't
         fit in the label */
      nameLabel->setText( name );
-@@ -1016,11 +1120,11 @@
+@@ -1016,11 +1147,11 @@
  {
      if( aTitle.isEmpty() )
      {
@@ -4185,7 +4240,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  }
  
-@@ -1059,9 +1163,9 @@
+@@ -1059,9 +1190,9 @@
      else
          iconVLC = QIcon::fromTheme( "vlc", QIcon( ":/logo/vlc256.png" ) );
      sysTray = new QSystemTrayIcon( iconVLC, this );
@@ -4197,7 +4252,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      systrayMenu->setIcon( iconVLC );
  
      VLCMenuBar::updateSystrayMenu( this, p_intf, true );
-@@ -1161,7 +1265,7 @@
+@@ -1161,7 +1292,7 @@
  #endif
              break;
          case QSystemTrayIcon::MiddleClick:
@@ -4206,7 +4261,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      qtr( "Control menu for the player" ),
                      QSystemTrayIcon::Information, 3000 );
              break;
-@@ -1178,7 +1282,7 @@
+@@ -1178,7 +1309,7 @@
  {
      if( name.isEmpty() )
      {
@@ -4215,7 +4270,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      else
      {
-@@ -1186,7 +1290,7 @@
+@@ -1186,7 +1317,7 @@
          if( ( i_notificationSetting == NOTIFICATION_ALWAYS ) ||
              ( i_notificationSetting == NOTIFICATION_MINIMIZED && (isMinimized() || isHidden()) ) )
          {
@@ -4224,7 +4279,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      QSystemTrayIcon::NoIcon, 3000 );
          }
      }
-@@ -1209,7 +1313,7 @@
+@@ -1209,7 +1340,7 @@
          sysTray->setToolTip( input_name + " - " + qtr( "Paused") );
          break;
      default:
@@ -4233,7 +4288,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          break;
      }
      VLCMenuBar::updateSystrayMenu( this, p_intf );
-@@ -1308,9 +1412,18 @@
+@@ -1308,9 +1439,18 @@
              }
              if( mrl.length() > 0 )
              {
@@ -4255,7 +4310,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                  first = false;
                  RecentsMRL::getInstance( p_intf )->addRecent( mrl );
              }
-@@ -1323,10 +1436,20 @@
+@@ -1323,10 +1463,20 @@
      if( !mimeData->hasUrls() && mimeData->hasText() &&
          QUrl(mimeData->text()).isValid() )
      {
@@ -4280,7 +4335,25 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      event->accept();
  }
-@@ -1375,7 +1498,16 @@
+@@ -1351,7 +1501,7 @@
+     handleKeyPress( e );
+ 
+     /* easter eggs sequence handling */
+-    if ( e->key() == kc[ i_kc_offset ] )
++    /*if ( e->key() == kc[ i_kc_offset ] )
+         i_kc_offset++;
+     else
+         i_kc_offset = 0;
+@@ -1360,7 +1510,7 @@
+     {
+         i_kc_offset = 0;
+         emit kc_pressed();
+-    }
++    }*/
+ }
+ 
+ void MainInterface::handleKeyPress( QKeyEvent *e )
+@@ -1375,7 +1525,16 @@
      int i_vlck = qtEventToVLCKey( e );
      if( i_vlck > 0 )
      {
@@ -4298,7 +4371,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          e->accept();
      }
      else
-@@ -1385,6 +1517,10 @@
+@@ -1385,10 +1544,20 @@
  void MainInterface::wheelEvent( QWheelEvent *e )
  {
      int i_vlckey = qtWheelEventToVLCKey( e );
@@ -4309,7 +4382,17 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      var_SetInteger( p_intf->p_libvlc, "key-pressed", i_vlckey );
      e->accept();
  }
-@@ -1455,6 +1591,393 @@
+ 
++void MainInterface::resizeEvent(QResizeEvent *e)
++{
++    emit notifySizeChanged(e->size());
++    e->ignore();
++}
++
+ void MainInterface::closeEvent( QCloseEvent *e )
+ {
+ //  hide();
+@@ -1455,6 +1624,573 @@
      raise();
  }
  
@@ -4417,9 +4500,6 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +}
 +
 +
-+
-+
-+
 +void MainInterface::toogleAdvertisementPanel(bool val)
 +{
 +    controls->toogleAdvertisementPanel(val);
@@ -4436,8 +4516,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +
 +void MainInterface::handleClearLoadUrlEvent(AceWebBrowser::BrowserType type) 
 +{
-+    if(browserManager)
++    if(browserManager) {
 +        browserManager->closeBrowser(type);
++    }
 +}
 +
 +void MainInterface::createBrowser(AceWebBrowser::LoadItem conf) 
@@ -4446,7 +4527,16 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    if(conf.type() != AceWebBrowser::BTYPE_PREROLL && !THEMIM->getIM()->isP2P()) return;
 +    if(m_request_pause_ad) return;
 +
-+    qDebug() << "Player::createBrowser: " << conf;
++    qDebug() << "Player::createBrowser:" << conf;
++    
++    if(conf.type() == AceWebBrowser::BTYPE_WEBSTAT && conf.id().startsWith("webstat-play")) {
++        qDebug() << "Player::createBrowser: check webstat play: id =" << conf.id() << "last =" << m_last_webstat_play_id;
++        if(conf.id() == m_last_webstat_play_id) {
++            qDebug() << "Player::createBrowser: webstat play already loaded: id =" << m_last_webstat_play_id;
++            return;
++        }
++        m_last_webstat_play_id = conf.id();
++    }
 +    
 +    conf.setHostUserAgent("AcePlayer/"P2P_STD_VERSION"");
 +    QWidget *parent = 0;
@@ -4456,11 +4546,16 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +        || conf.type() == AceWebBrowser::BTYPE_HIDDEN) {
 +        parent = videoWidget;
 +    }
-+    else if (conf.type() == AceWebBrowser::BTYPE_PREROLL ) {
++    else if (conf.type() == AceWebBrowser::BTYPE_PREROLL || conf.type() == AceWebBrowser::BTYPE_WEBSTAT) {
 +        //|| conf.type() == AceWebBrowser::BTYPE_STOP) {
 +        parent = browserPlaceholder;
 +    }
 +    if(!parent) return;
++    
++    if(conf.type() == AceWebBrowser::BTYPE_PREROLL) {
++        createIEBrowser(conf, parent);
++        return;
++    }
 +    
 +    AceWebBrowser::Browser *browser = browserManager->createBrowser(conf, parent);
 +    
@@ -4486,10 +4581,14 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    // browser register events
 +    connect(browser, SIGNAL(registerBrowserShownEvent(AceWebBrowser::BrowserType,QString)),
 +            SLOT(registerShow(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
-+    connect(browser, SIGNAL(registerBrowserClosedEvent(AceWebBrowser::BrowserType,QString,bool)),
-+            SLOT(registerClosed(AceWebBrowser::BrowserType,QString,bool)), Qt::UniqueConnection);
++    connect(browser, SIGNAL(registerBrowserHideEvent(AceWebBrowser::BrowserType,QString)),
++            SLOT(registerHide(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
++    connect(browser, SIGNAL(registerBrowserClosedEvent(AceWebBrowser::BrowserType,QString,bool,bool)),
++            SLOT(registerClosed(AceWebBrowser::BrowserType,QString,bool,bool)), Qt::UniqueConnection);
 +    connect(browser, SIGNAL(registerBrowserErrorEvent(AceWebBrowser::BrowserType,QString)),
 +            SLOT(registerError(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
++    connect(browser, SIGNAL(registerSendEvent(AceWebBrowser::BrowserType, QString, QString)),
++            SLOT(registerBrowserSendEvent(AceWebBrowser::BrowserType, QString, QString)), Qt::UniqueConnection);
 +    // browser notifications
 +    connect(browser, SIGNAL(notifyBrowserVisiabilityChanged(AceWebBrowser::BrowserType,bool)),
 +            SLOT(handleBrowserVisiability(AceWebBrowser::BrowserType,bool)), Qt::UniqueConnection);
@@ -4499,6 +4598,8 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    connect(browser, SIGNAL(notifyBrowserPosition(AceWebBrowser::BrowserType, const QPoint&, const QSize&)), 
 +            SLOT(handleBrowserPosition(AceWebBrowser::BrowserType, const QPoint&, const QSize&)), Qt::UniqueConnection);
 +    // javascript object
++    connect(parent, SIGNAL(notifySizeChanged(QSize)),
++            browser->javaScriptObject(), SLOT(handlePlayerSizeChanged(QSize)), Qt::UniqueConnection);
 +    connect(browser->javaScriptObject(), SIGNAL(jsoPlayerPlay()),
 +            SLOT(handleJSOPlay()), Qt::UniqueConnection);
 +    connect(browser->javaScriptObject(), SIGNAL(jsoPlayerPause()),
@@ -4507,35 +4608,149 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +            SLOT(handleJSOStop()), Qt::UniqueConnection);
 +    connect(browser->javaScriptObject(), SIGNAL(jsoLinkOpenLater(QString, bool)),
 +            SLOT(handleJSOLinkOpenLater(QString, bool)), Qt::UniqueConnection);
-+
++    /*connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerSetFullscreen(bool)),
++            SLOT(handleJSOSetFullscreen(bool)), Qt::UniqueConnection);*/
++    connect(browser->javaScriptObject(), SIGNAL(jsoPlayerToggleFullscreen()),
++            SLOT(handleJSOToggleFullscreen()), Qt::UniqueConnection);
 +    browser->load(conf);
++}
++
++void MainInterface::createIEBrowser(AceWebBrowser::LoadItem conf, QWidget *parent)
++{
++    qWarning() << "Player::createIEBrowser";
++    if(mIeDeleteTimer && mIeDeleteTimer->isActive()) {
++        mIeDeleteTimer->stop();
++    }
++    if(!ieBrowser) {
++        try {
++            ieBrowser = new AceWebBrowser::IEBrowser2(conf, parent);
++        }
++        catch(AceWebBrowser::BrowserException *e) {
++            qWarning() << "Player::createIEBrowser: Exception:" << e->message();
++            registerIEError(e->type(), e->id());
++            ieBrowser = 0;
++            return;
++        }
++        
++        // player notifications
++        connect(parent, SIGNAL(notifySizeChanged(QSize)),
++                ieBrowser, SLOT(handleParentSize(QSize)), Qt::UniqueConnection);
++        connect(THEMIM->getIM(), SIGNAL(notifyStateChanged(int, bool)),
++                ieBrowser, SLOT(handleParentState(int, bool)), Qt::UniqueConnection);
++        connect(this, SIGNAL(notifyFullscreenChanged(bool)),
++                ieBrowser, SLOT(handleParentFullscreen(bool)), Qt::UniqueConnection);
++        // browser register events
++        connect(ieBrowser, SIGNAL(registerBrowserSuccessEvent(AceWebBrowser::BrowserType,QString)),
++                SLOT(registerIESuccess(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
++        connect(ieBrowser, SIGNAL(registerBrowserErrorEvent(AceWebBrowser::BrowserType,QString)),
++                SLOT(registerIEError(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
++        connect(ieBrowser, SIGNAL(registerBrowserSendEvent(AceWebBrowser::BrowserType,QString,QString)),
++                SLOT(registerBrowserSendEvent(AceWebBrowser::BrowserType,QString,QString)), Qt::UniqueConnection);
++        // browser notifications
++        connect(ieBrowser, SIGNAL(notifyBrowserVisiabilityChanged(AceWebBrowser::BrowserType,bool)),
++            SLOT(handleBrowserVisiability(AceWebBrowser::BrowserType,bool)), Qt::UniqueConnection);
++        connect(ieBrowser, SIGNAL(notifyParentCommandToShow(AceWebBrowser::BrowserType)),
++                SLOT(handleParentCommandToShow(AceWebBrowser::BrowserType)), Qt::UniqueConnection);
++        connect(ieBrowser, SIGNAL(notifyNeedExitFullscreen()), SLOT(handleExitFullscreen()), Qt::UniqueConnection);
++        // javascript object
++        connect(parent, SIGNAL(notifySizeChanged(QSize)),
++                ieBrowser->javaScriptObject(), SLOT(handlePlayerSizeChanged(QSize)), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerPlay()),
++                SLOT(handleJSOPlay()), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerPause()),
++                SLOT(handleJSOPause()), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerStop()),
++                SLOT(handleJSOStop()), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoLinkOpenLater(QString, bool)),
++                SLOT(handleJSOLinkOpenLater(QString, bool)), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerSetFullscreen(bool)),
++                SLOT(handleJSOSetFullscreen(bool)), Qt::UniqueConnection);
++        connect(ieBrowser->javaScriptObject(), SIGNAL(jsoPlayerToggleFullscreen()),
++            SLOT(handleJSOToggleFullscreen()), Qt::UniqueConnection);
++    }
++    ieBrowser->load(conf);
++}
++
++void MainInterface::registerIESuccess(AceWebBrowser::BrowserType type, QString id)
++{
++    qDebug() << "Player::registerIESuccess: register preroll complete";
++    
++    if(ieBrowser) {
++        statusBar()->clearMessage();
++        if(!mIeDeleteTimer) {
++            mIeDeleteTimer = new QTimer(this);
++            mIeDeleteTimer->setSingleShot(true);
++            connect(mIeDeleteTimer, SIGNAL(timeout()), SLOT(deleteIEBrowser()));
++        }
++        mIeDeleteTimer->setInterval(1000);
++        mIeDeleteTimer->start();
++    }
++    p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_COMPLETE, qtu(id));
++}
++
++void MainInterface::registerIEError(AceWebBrowser::BrowserType type, QString id)
++{
++    qDebug() << "Player::registerIEError: register preroll failed";
++    
++    if(ieBrowser) {
++        statusBar()->clearMessage();
++        if(!mIeDeleteTimer) {
++            mIeDeleteTimer = new QTimer(this);
++            mIeDeleteTimer->setSingleShot(true);
++            connect(mIeDeleteTimer, SIGNAL(timeout()), SLOT(deleteIEBrowser()));
++        }
++        mIeDeleteTimer->setInterval(1000);
++        mIeDeleteTimer->start();
++    }
++    p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_ERROR, qtu(id));
++}
++
++void MainInterface::deleteIEBrowser() {
++    qDebug() << "Player::deleteIEBrowser";
++    if(ieBrowser) {
++        delete ieBrowser;
++        ieBrowser = 0;
++        statusBar()->clearMessage();
++    }
 +}
 +
 +void MainInterface::registerShow(AceWebBrowser::BrowserType type, QString id)
 +{
 +    qDebug() << "Player::registerShow: type" << (int)type << "id" << id;
 +
-+    if(type != AceWebBrowser::BTYPE_PREROLL) {
++    if(type != AceWebBrowser::BTYPE_PREROLL && type != AceWebBrowser::BTYPE_HIDDEN) {
 +        qDebug() << "Player::registerShow: register IMPRESSION";
 +        p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_IMPRESSION, qtu(id));
 +    }
 +}
 +
-+void MainInterface::registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed)
++void MainInterface::registerHide(AceWebBrowser::BrowserType type, QString id)
++{
++    qDebug() << "Player::registerHide: type" << (int)type << "id" << id;
++
++    if(type == AceWebBrowser::BTYPE_PREROLL) {
++        p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_COMPLETE, qtu(id));
++    }
++}
++
++void MainInterface::registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool browserMode)
 +{
 +    qDebug() << "Player::registerClosed: type" << (int)type << "id" << id << "failed" << failed;
 +
 +    if(!failed) {
-+        if(type == AceWebBrowser::BTYPE_PREROLL
-+            || type == AceWebBrowser::BTYPE_HIDDEN) {
++        if(type == AceWebBrowser::BTYPE_PREROLL) {
 +            qDebug() << "Player::registerClosed: register COMPLETE";
 +            p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_COMPLETE, qtu(id));
++        }
++        else if(type == AceWebBrowser::BTYPE_HIDDEN) {
++            qDebug() << "Player::registerClosed: register COMPLETE_HIDDEN";
++            p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_COMPLETE_HIDDEN, qtu(id));
 +        }
 +        else if (type == AceWebBrowser::BTYPE_OVERLAY) {
 +            qDebug() << "Player::registerClosed: register CLOSE";
 +            p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_CLOSE, qtu(id));
 +            availableBrowserShowing(AceWebBrowser::BTYPE_PAUSE, true);
-+            if(THEMIM->getIM()->playingStatus() == PAUSE_S) {
++            if(browserMode && THEMIM->getIM()->playingStatus() == PAUSE_S) {
 +                THEMIM->togglePlayPause();
 +            }
 +        }
@@ -4561,11 +4776,24 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +{
 +    qDebug() << "Player::registerError: type" << type << "id" << id;
 +
-+    if(type == AceWebBrowser::BTYPE_PREROLL
-+        || type == AceWebBrowser::BTYPE_HIDDEN) {
++    if(type == AceWebBrowser::BTYPE_PREROLL) {
 +        qDebug() << "Player::registerError: register ERROR";
 +        p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_ERROR, qtu(id));
 +    }
++    else if(type == AceWebBrowser::BTYPE_HIDDEN) {
++        qDebug() << "Player::registerError: register ERROR_HIDDEN";
++        p2p_RegisterLoadUrlAdStatistics(THEP2P, (p2p_load_url_type_t)type, P2P_LOAD_URL_STAT_EVENT_ERROR_HIDDEN, qtu(id));
++    }
++}
++
++void MainInterface::registerBrowserSendEvent(AceWebBrowser::BrowserType type, QString event_name, QString id)
++{
++    if(type != AceWebBrowser::BTYPE_PREROLL) return;
++
++    if(event_name.size() > 50)
++        event_name.truncate(50);
++    event_name.remove(QRegExp("[^a-zA-Z0-9\\-\\_]"));
++    p2p_RegisterLoadUrlAdEvent(THEP2P, (p2p_load_url_type_t)type, qtu(event_name), qtu(id));
 +}
 +
 +void MainInterface::handleBrowserVisiability(AceWebBrowser::BrowserType type, bool isVisible)
@@ -4586,7 +4814,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    }
 +    
 +    if(!isVisible) {
-+        if(browserManager && !browserManager->isVisible()){
++        if(browserManager && (!browserManager->isVisible() || ieBrowser)){
 +            emit enableFsControlsHiding(true);
 +            emit placeFsControls(-1, -1);
 +        }
@@ -4598,20 +4826,38 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    qDebug() << "Player::handleParentCommandToShow" << type;
 +    
 +    if(type == AceWebBrowser::BTYPE_PREROLL) {
-+        AceWebBrowser::Browser *preroll = browserManager->getBrowser(AceWebBrowser::BTYPE_PREROLL);
-+        if(preroll) {
-+            statusBar()->setSizeGripEnabled(false);
-+            controls->hideMainControls();
-+            menuBar()->setVisible(false);
-+            m_status_bar_visible_cached = b_statusbarVisible;
-+            if(b_statusbarVisible) {
-+                setStatusBarVisibility(false);
++        if(ieBrowser) {
++            if(menuBar()->isVisible()) {
++                statusBar()->setSizeGripEnabled(false);
++                controls->hideMainControls();
++                menuBar()->setVisible(false);
++                m_status_bar_visible_cached = b_statusbarVisible;
++                if(b_statusbarVisible) {
++                    setStatusBarVisibility(false);
++                }
++                inputC->setVisible(false);
++                
++                ieBrowser->setVisiabilityProcessingEnable(false);
++                showTab(browserPlaceholder);
++                ieBrowser->setVisiabilityProcessingEnable(true);
 +            }
-+            inputC->setVisible(false);
-+            
-+            preroll->setVisiabilityProcessingEnable(false);
-+            showTab(browserPlaceholder);
-+            preroll->setVisiabilityProcessingEnable(true);
++        }
++        else {
++            AceWebBrowser::Browser *preroll = browserManager->getBrowser(AceWebBrowser::BTYPE_PREROLL);
++            if(preroll && menuBar()->isVisible()) {
++                statusBar()->setSizeGripEnabled(false);
++                controls->hideMainControls();
++                menuBar()->setVisible(false);
++                m_status_bar_visible_cached = b_statusbarVisible;
++                if(b_statusbarVisible) {
++                    setStatusBarVisibility(false);
++                }
++                inputC->setVisible(false);
++                
++                preroll->setVisiabilityProcessingEnable(false);
++                showTab(browserPlaceholder);
++                preroll->setVisiabilityProcessingEnable(true);
++            }
 +        }
 +    }
 +}
@@ -4630,7 +4876,6 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +void MainInterface::handleExitFullscreen()
 +{
 +    if(b_videoFullScreen) {
-+
 +        THEAM->fullscreen();
 +    }
 +}
@@ -4660,6 +4905,20 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    m_link_2_open_later = url;
 +}
 +
++void MainInterface::handleJSOSetFullscreen(bool fs)
++{
++    qDebug() << "Player::handleJSOSetFullscreen:" << fs;
++    if(b_videoFullScreen != fs) {
++        THEAM->fullscreen();
++    }
++}
++
++void MainInterface::handleJSOToggleFullscreen()
++{
++    qDebug() << "Player::handleJSOToggleFullscreen";
++    THEAM->fullscreen();
++}
++
 +void MainInterface::availableBrowserShowing(AceWebBrowser::BrowserType type, bool available)
 +{
 +    if(browserManager && browserManager->hasBrowser(type)) {
@@ -4673,7 +4932,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +void MainInterface::handleVoutChanged(bool hasVout) 
 +{
 +    if(browserManager) {
-+        qDebug() << "checking if videowidget visible" << videoWidget->isVisible();
++        qDebug() << "checking if videowidget visible" << videoWidget->isVisible() << "has video" << hasVout;
 +        browserManager->updateBrowsersOnVoutChanged(hasVout);
 +    }
 +}
@@ -4685,6 +4944,10 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_PAUSE);
 +        m_request_pause_ad = false;
 +    }
++    else if(state == AceWebBrowser::BHPS_PAUSED && !isAd && THEMIM->getIM()->isP2P())
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PAUSE);
++    else if(state == AceWebBrowser::BHPS_STOPPED && !isAd)
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_STOP);
 +}
 +
 +void MainInterface::handleUserPauseAction()
@@ -4703,7 +4966,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1521,3 +2044,36 @@
+@@ -1521,3 +2257,36 @@
  
      return VLC_SUCCESS;
  }
@@ -4741,40 +5004,37 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    return VLC_SUCCESS;
 +}
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui/qt4/main_interface.hpp
---- vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/main_interface.hpp	2014-03-04 18:13:30.637952474 +0200
-@@ -33,6 +33,7 @@
+--- vlc-2.1.4.orig/modules/gui/qt4/main_interface.hpp	2014-02-21 15:59:56.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/main_interface.hpp	2014-04-11 15:29:18.806643625 +0300
+@@ -33,6 +33,10 @@
   #include <vlc_windows_interfaces.h>
  #endif
  
++#include <ole2.h>
++#include <windows.h>
 +#include "acewebbrowser/browsermanager.hpp"
++#include "acewebbrowser/iebrowser2.hpp"
  #include <QSystemTrayIcon>
  #include <QStackedWidget>
  
-@@ -55,6 +56,8 @@
+@@ -55,6 +59,8 @@
  class QMenu;
  class QSize;
  class StandardPLPanel;
 +class BrowserHolder;
-+
++class QTimer;
  
  class MainInterface : public QVLCMW
  {
-@@ -144,7 +147,13 @@
-     VideoWidget         *videoWidget;
-     BackgroundWidget    *bgWidget;
-     PlaylistWidget      *playlistWidget;
-+    BrowserHolder       *browserPlaceholder;
-     //VisualSelector      *visualSelector;
-+    
-+    AceWebBrowser::BrowserManager *browserManager;
-+    bool m_request_pause_ad;
-+    QString m_link_2_open_later;
-+    bool m_status_bar_visible_cached;
+@@ -105,6 +111,7 @@
+     virtual void keyPressEvent( QKeyEvent *);
+     virtual void wheelEvent( QWheelEvent * );
+     virtual bool eventFilter(QObject *, QEvent *);
++    virtual void resizeEvent(QResizeEvent *);
  
-     /* Status Bar */
-     QLabel              *nameLabel;
-@@ -183,6 +192,10 @@
+ private:
+     /* Main Widgets Creation */
+@@ -183,6 +190,10 @@
  
      static const Qt::Key kc[10]; /* easter eggs */
      int i_kc_offset;
@@ -4785,7 +5045,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
  
  public slots:
      void dockPlaylist( bool b_docked = true );
-@@ -266,6 +279,59 @@
+@@ -266,6 +277,80 @@
      void askBoss();
      void askRaise();
      void kc_pressed(); /* easter eggs */
@@ -4808,40 +5068,61 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    void handleLoadUrlEvent(const AceWebBrowser::LoadItem &conf);
 +    void handleClearLoadUrlEvent(AceWebBrowser::BrowserType type);
 +    void createBrowser(AceWebBrowser::LoadItem conf);
++    void createIEBrowser(AceWebBrowser::LoadItem conf, QWidget *parent); //tmp
 +
 +
 +    void registerShow(AceWebBrowser::BrowserType type, QString id);
-+    void registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed);
++    void registerHide(AceWebBrowser::BrowserType type, QString id);
++    void registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool);
 +    void registerError(AceWebBrowser::BrowserType type, QString id);
-+    
++    void registerBrowserSendEvent(AceWebBrowser::BrowserType type, QString event_type, QString id);
++
 +    void handleBrowserVisiability(AceWebBrowser::BrowserType type, bool isVisible);
 +    void handleParentCommandToShow(AceWebBrowser::BrowserType type);
 +    void handleBrowserPosition(AceWebBrowser::BrowserType, const QPoint&, const QSize&);
 +    void handleExitFullscreen();
-+    
++
 +    void handleJSOPlay();
 +    void handleJSOPause();
 +    void handleJSOStop();
 +    void handleJSOLinkOpenLater(QString, bool);
-+    
++    void handleJSOSetFullscreen(bool);
++    void handleJSOToggleFullscreen();
++
 +    void availableBrowserShowing(AceWebBrowser::BrowserType type, bool available);
-+    
++
 +    void handleVoutChanged(bool);
 +    void handleUserPauseAction();
 +    void handleUserStopAction();
 +    void handleInputState(int, bool);
-+    
++
++    //tmp
++    void registerIESuccess(AceWebBrowser::BrowserType type, QString id);
++    void registerIEError(AceWebBrowser::BrowserType type, QString id);
++
++    void deleteIEBrowser();
++
 +signals:
 +    void askUserData();
 +    void askErrorDialog(QString, QString);
 +    void setFullscreenVideo( bool );
 +    void backgroundText( QString );
-+    
++
 +    void notifyFullscreenChanged(bool);
 +    void notifySizeChanged(const QSize&);
 +    void enableFsControlsHiding(bool);
 +    void placeFsControls(int, int);
 +    void notifyPauseClicked();
++
++private:
++    BrowserHolder *browserPlaceholder;
++    AceWebBrowser::BrowserManager *browserManager;
++    AceWebBrowser::IEBrowser2 *ieBrowser;
++    QTimer *mIeDeleteTimer;
++    QString m_last_webstat_play_id;
++    bool m_request_pause_ad;
++    QString m_link_2_open_later;
++    bool m_status_bar_visible_cached;
  };
  
  #endif
@@ -4889,9 +5170,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/menus.cpp vlc-2.1.2/modules/gui/qt4/menu
          ":/type/folder-grey", SLOT( PLOpenDir() ) );
      addDPStaticEntry( openmenu, qtr( "Open &Disc..." ),
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Modules.am
---- vlc-2.1.2.orig/modules/gui/qt4/Modules.am	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/Modules.am	2014-03-04 17:29:15.165894586 +0200
-@@ -25,6 +25,18 @@
+--- vlc-2.1.4.orig/modules/gui/qt4/Modules.am	2014-02-21 15:59:56.000000000 +0200
++++ vlc-2.1.4/modules/gui/qt4/Modules.am	2014-04-11 12:19:10.978282038 +0300
+@@ -25,6 +25,21 @@
  		adapters/seekpoints.moc.cpp \
  		adapters/chromaprint.moc.cpp \
  		adapters/variables.moc.cpp \
@@ -4907,10 +5188,13 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +		acewebbrowser/proxyreply.moc.cpp \
 +		acewebbrowser/webpage.moc.cpp \
 +		acewebbrowser/webview.moc.cpp \
++		acewebbrowser/iebrowser2.moc.cpp \
++		acewebbrowser/iejsobject.moc.cpp \
++		acewebbrowser/iewebview.moc.cpp \
  		dialogs/playlist.moc.cpp \
  		dialogs/bookmarks.moc.cpp \
  		dialogs/mediainfo.moc.cpp \
-@@ -47,6 +59,7 @@
+@@ -47,6 +62,7 @@
  		dialogs/firstrun.moc.cpp \
  		dialogs/extensions.moc.cpp \
  		dialogs/fingerprintdialog.moc.cpp \
@@ -4918,7 +5202,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		components/extended_panels.moc.cpp \
  		components/info_panels.moc.cpp \
  		components/info_widgets.moc.cpp \
-@@ -86,6 +99,7 @@
+@@ -86,6 +102,7 @@
  		ui/open_disk.h \
  		ui/open_net.h \
  		ui/open_capture.h \
@@ -4926,7 +5210,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		ui/open.h \
  		ui/vlm.h \
  		ui/podcast_configuration.h \
-@@ -209,6 +223,7 @@
+@@ -209,6 +226,7 @@
  	pixmaps/toolbar/volume-muted.png \
  	pixmaps/toolbar/volume-slider-inside.png \
  	pixmaps/toolbar/volume-slider-outside.png \
@@ -4934,7 +5218,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  	pixmaps/types/capture-card_16px.png \
  	pixmaps/types/cdda_16px.png \
  	pixmaps/types/disc_16px.png \
-@@ -237,7 +252,20 @@
+@@ -237,7 +255,20 @@
  	pixmaps/update.png \
  	pixmaps/valid.png \
  	pixmaps/search_clear.png \
@@ -4956,7 +5240,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  
  BUILT_SOURCES += $(nodist_SOURCES_qt4)
  
-@@ -287,6 +315,18 @@
+@@ -287,6 +318,21 @@
  		adapters/seekpoints.cpp \
  		adapters/chromaprint.cpp \
  		adapters/variables.cpp \
@@ -4972,10 +5256,13 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +		acewebbrowser/proxyreply.cpp \
 +		acewebbrowser/webpage.cpp \
 +		acewebbrowser/webview.cpp \
++		acewebbrowser/iebrowser2.cpp \
++		acewebbrowser/iejsobject.cpp \
++		acewebbrowser/iewebview.cpp \
  		dialogs/playlist.cpp \
  		dialogs/bookmarks.cpp \
  		dialogs/preferences.cpp \
-@@ -310,6 +350,7 @@
+@@ -310,6 +356,7 @@
  		dialogs/podcast_configuration.cpp \
  		dialogs/extensions.cpp \
  		dialogs/fingerprintdialog.cpp \
@@ -4983,7 +5270,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		components/extended_panels.cpp \
  		components/info_panels.cpp \
  		components/info_widgets.cpp \
-@@ -365,6 +406,19 @@
+@@ -365,6 +412,23 @@
  	adapters/seekpoints.hpp \
  	adapters/chromaprint.hpp \
  	adapters/variables.hpp \
@@ -5000,10 +5287,14 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +	acewebbrowser/proxyreply.hpp \
 +	acewebbrowser/webpage.hpp \
 +	acewebbrowser/webview.hpp \
++	acewebbrowser/iebrowser2.hpp \
++	acewebbrowser/iewebview.hpp \
++	acewebbrowser/iejsobject.hpp \
++	acewebbrowser/exceptions.hpp \
  	dialogs/playlist.hpp \
  	dialogs/bookmarks.hpp \
  	dialogs/mediainfo.hpp \
-@@ -388,6 +442,7 @@
+@@ -388,6 +452,7 @@
  	dialogs/podcast_configuration.hpp \
  	dialogs/extensions.hpp \
  	dialogs/fingerprintdialog.hpp \
@@ -5011,7 +5302,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  	components/extended_panels.hpp \
  	components/info_panels.hpp \
  	components/info_widgets.hpp \
-@@ -441,6 +496,7 @@
+@@ -441,6 +506,7 @@
  	ui/open_disk.ui \
  	ui/open_net.ui \
  	ui/open_capture.ui \

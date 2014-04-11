@@ -31,6 +31,9 @@ private:
 
 signals:
     void jsoCloseBrowser();
+    void jsoHideBrowser();
+    void jsoShowBrowser();
+    void jsoCloseBrowserAfter(unsigned int);
     void jsoLinkOpen(QString url, bool openInNewWindow);
     void jsoPlayerPlay();
     void jsoPlayerPause();
@@ -39,9 +42,15 @@ signals:
     void jsoFillPlayerSize();
     void jsoPlayerSetFullscreen(bool);
     void jsoBrowserSetSize(const QSize&);
+    void jsoSendEvent(QString);
+    void jsoPlayerToggleFullscreen();
 
 public slots:
     void browserClose();
+    void browserHide();
+    void browserShow();
+    void browserCloseAfter(unsigned int);
+
     void linkOpen(QString url, bool openInNewWindow);
     void playerPlay();
     void playerPause();
@@ -50,6 +59,8 @@ public slots:
     void fillPlayerSize();
     void playerSetFullscreen(bool);
     void browserSetSize(unsigned int, unsigned int);
+    void sendEvent(QString event_name);
+    void playerToggleFullscreen();
 
     bool playerIsFullscreen();
     bool browserIsVisible();

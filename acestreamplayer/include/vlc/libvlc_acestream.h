@@ -63,14 +63,21 @@ typedef enum libvlc_acestream_loadurl_type_t {
     libvlc_ace_loadurl_Overlay,
     libvlc_ace_loadurl_Preroll,
     libvlc_ace_loadurl_Slider,
-    libvlc_ace_loadurl_Hidden
+    libvlc_ace_loadurl_Hidden,
+    libvlc_ace_loadurl_Preplay,
+    libvlc_ace_loadurl_WebStatPlay,
+    libvlc_ace_loadurl_WebStatPause,
+    libvlc_ace_loadurl_WebStatStop,
+    libvlc_ace_loadurl_WebStatFullscreen,
 } libvlc_acestream_loadurl_type_t;
 
 typedef enum libvlc_acestream_loadurl_event_type_t {
     libvlc_ace_loadurl_event_Show,
     libvlc_ace_loadurl_event_Close,
     libvlc_ace_loadurl_event_Complete,
-    libvlc_ace_loadurl_event_Error
+    libvlc_ace_loadurl_event_Error,
+    libvlc_ace_loadurl_event_CompleteHidden,
+    libvlc_ace_loadurl_event_ErrorHidden
 } libvlc_acestream_loadurl_event_type_t;
 
 /**
@@ -276,6 +283,21 @@ LIBVLC_API void libvlc_acestream_object_register_loadurl_statistics(libvlc_acest
                                             libvlc_acestream_loadurl_type_t type,
                                             libvlc_acestream_loadurl_event_type_t event_type,
                                             const char *id);
+
+/**
+ * Registers statistics event for loadurl with type
+ *  
+ * \param p_ace a libvlc_acestream_object instance
+ * \param type a libvlc_acestream_loadurl_type_t loadurl type
+ * \param event_type 
+ * \param id advertisement id
+ */
+LIBVLC_API void libvlc_acestream_object_register_loadurl_event(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type,
+                                            const char *event_type,
+                                            const char *id );
+
+
 
 /** @} acestream */
 

@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc_events.h
 --- vlc-2.1.4.orig/include/vlc/libvlc_events.h	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-03-06 17:26:46.912932638 +0200
++++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-04-11 11:33:33.575723516 +0300
 @@ -73,11 +73,16 @@
      libvlc_MediaPlayerSnapshotTaken,
      libvlc_MediaPlayerLengthChanged,
@@ -103,7 +103,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
          /* media list */
          struct
-@@ -225,6 +297,98 @@
+@@ -225,6 +297,101 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -194,6 +194,9 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +            
 +            int user_agent;
 +            int close_after_seconds;
++            int show_time;
++            
++            bool start_hidden;
 +        } acestream_loadurl;
 +
 +        struct {

@@ -117,17 +117,21 @@ private:
     bool mVisiabilityProcessingEnable;
     
     QTimer *mCloseAfterTimer;
+    QTimer *mHideTimer;
+    QTimer *mDeferredTimer;
 
 signals:
-    void notifyBrowserClosed(BrowserType type); // for manager
+    void notifyBrowserClosed(); // for manager
     void notifyBrowserVisiabilityChanged(AceWebBrowser::BrowserType type, bool isVisible);
     void notifyBrowserSizeChanged(const QSize &);
     void notifyNeedExitFullscreen();
     void notifyBrowserPosition(AceWebBrowser::BrowserType, const QPoint&, const QSize&);
 
     void registerBrowserShownEvent(AceWebBrowser::BrowserType type, QString id);
-    void registerBrowserClosedEvent(AceWebBrowser::BrowserType type, QString id, bool failed);
+    void registerBrowserHideEvent(AceWebBrowser::BrowserType type, QString id);
+    void registerBrowserClosedEvent(AceWebBrowser::BrowserType type, QString id, bool failed, bool isInBrowserMode);
     void registerBrowserErrorEvent(AceWebBrowser::BrowserType type, QString id);
+    void registerSendEvent(AceWebBrowser::BrowserType type, QString event_name, QString id);
 
     void gotFocus();
     void notifyParentCommandToShow(AceWebBrowser::BrowserType type);
@@ -150,12 +154,14 @@ private slots:
 
     void handleJSOFillParentSizeCommand();
     void handleJSOResizeCommand(QSize);
+    void handleJSOSendEvent(QString event_name);
     
 public slots:
     // actions
     void showBrowser();
     void hideBrowser();
     void closeBrowser(bool failed = false);
+    void deferredCloseBrowser(unsigned int);
 
     void handleParentSize(const QSize &size);
     void handleParentFullscreen(bool isFullscreen);

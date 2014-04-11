@@ -176,6 +176,9 @@ static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_v
             
             event.u.acestream_loadurl.user_agent = p_loadurl->user_agent;
             event.u.acestream_loadurl.close_after_seconds = p_loadurl->close_after_seconds;
+            event.u.acestream_loadurl.show_time = p_loadurl->show_time;
+            
+            event.u.acestream_loadurl.start_hidden = p_loadurl->start_hidden;
         }
         libvlc_event_send( p_ace->p_event_manager, &event );
     }
@@ -367,6 +370,8 @@ static void emit_events(libvlc_acestream_object_t *p_ace )
         event_state.type = libvlc_AcestreamState;
         event_state.u.acestream_state.state = state;
         libvlc_event_send( p_ace->p_event_manager, &event_state );
+
+        p2p_RequestLoadUrlAd( p_p2p, libvlc_ace_loadurl_Preplay );
     }
 }
 
@@ -404,8 +409,7 @@ libvlc_acestream_object_t *libvlc_acestream_object_new( libvlc_instance_t *p_ins
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamLoadUrl );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamClearLoadUrl );
     bind_callbacks( p_ace );
-    
-    emit_events(p_ace);
+
     return p_ace;
 }
 
@@ -661,5 +665,15 @@ void libvlc_acestream_object_register_loadurl_statistics(libvlc_acestream_object
 {
     vlc_mutex_lock( &p_ace->object_lock );
     p2p_RegisterLoadUrlAdStatistics( getP2P(p_ace->p_libvlc_instance), type, event_type, id );
+    vlc_mutex_unlock( &p_ace->object_lock );
+}
+
+void libvlc_acestream_object_register_loadurl_event(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type,
+                                            const char *event_type,
+                                            const char *id )
+{
+    vlc_mutex_lock( &p_ace->object_lock );
+    p2p_RegisterLoadUrlAdEvent( getP2P(p_ace->p_libvlc_instance), type, event_type, id );
     vlc_mutex_unlock( &p_ace->object_lock );
 }

@@ -16,6 +16,7 @@ JavaScriptObject::JavaScriptObject(QObject *parent) :
   , mFlashEnabled(true)
   , mBrowserIsVisible(false)
   , mHostUserAgent("")
+  , mBrowserSize(0,0)
 {
 }
 
@@ -50,6 +51,21 @@ void JavaScriptObject::setHostUserAgent(const QString &value)
 void JavaScriptObject::browserClose()
 {
     emit jsoCloseBrowser();
+}
+
+void JavaScriptObject::browserHide()
+{
+    emit jsoHideBrowser();
+}
+
+void JavaScriptObject::browserShow()
+{
+    emit jsoShowBrowser();
+}
+
+void JavaScriptObject::browserCloseAfter(unsigned int secs)
+{
+    emit jsoCloseBrowserAfter(secs);
 }
 
 void JavaScriptObject::linkOpen(QString url, bool openInNewWindow)
@@ -130,4 +146,14 @@ void JavaScriptObject::playerSetFullscreen(bool fullscreen)
 void JavaScriptObject::browserSetSize(unsigned int width, unsigned int height)
 {
     emit jsoBrowserSetSize(QSize(width, height));
+}
+
+void JavaScriptObject::sendEvent(QString event_name)
+{
+    emit jsoSendEvent(event_name);
+}
+
+void JavaScriptObject::playerToggleFullscreen()
+{
+    emit jsoPlayerToggleFullscreen();
 }

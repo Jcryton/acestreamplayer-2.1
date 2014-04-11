@@ -27,12 +27,15 @@ BrowserManager::~BrowserManager()
 
 Browser *BrowserManager::createBrowser(const LoadItem &item, QWidget *parent)
 {
-    Browser *browser = getBrowser(item.type());
-    if(browser)
-        return browser;
+    if(item.type() != AceWebBrowser::BTYPE_WEBSTAT) {
+        Browser *browser = getBrowser(item.type());
+        if(browser) {
+            return browser;
+        }
+    }
 
     Browser *newBrowser = new Browser(item, this, parent);
-    connect(newBrowser, SIGNAL(notifyBrowserClosed(BrowserType)), SLOT(handleBrowserClosed(BrowserType)));
+    connect(newBrowser, SIGNAL(notifyBrowserClosed()), SLOT(handleBrowserClosed()));
 
     mBrowsers.append(newBrowser);
     qDebug() << "BrowserManager::createBrowser: Adding new browser to manager. Type" << item.type() << "Size" << mBrowsers.size();
@@ -41,7 +44,6 @@ Browser *BrowserManager::createBrowser(const LoadItem &item, QWidget *parent)
 
 void BrowserManager::closeBrowser(BrowserType type)
 {
-    qDebug() << "BrowserManager::closeBrowser: type" << type;
     int index = getBrowserIndex(type);
     deleteBrowser(index);
 }
@@ -125,9 +127,21 @@ bool BrowserManager::hasBrowser(BrowserType type)
     return browser && !browser->dieing();
 }
 
-void BrowserManager::handleBrowserClosed(BrowserType type)
+void BrowserManager::handleBrowserClosed()
 {
-    qDebug() << "BrowserManager::handleBrowserClosed: type" << type;
-    int index = getBrowserIndex(type);
-    deleteBrowser(index);
+    if(sender()) {
+        Browser *browser = qobject_cast<Browser*>(sender());
+        if(browser) {
+            if(mBrowsers.removeOne(browser)) {
+                qDebug() << QString("BrowserManager:handleBrowserClosed: removing browser from manager: type=%1 url=%2 count=%3")
+                           .arg(QString::number(browser->type()))
+                           .arg(browser->baseUrl())
+                           .arg(QString::number(mBrowsers.size()));
+            }
+            else {
+                qDebug() << "BrowserManager:handleBrowserClosed: no sender browser in manager";
+            }
+            browser->deleteLater();
+        }
+    }
 }

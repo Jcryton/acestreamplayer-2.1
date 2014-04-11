@@ -55,25 +55,25 @@ base_in_message *In::Parse( const string &msg )
     return _msg;
 }
 
-base_in_message *In::ParseSyncLoad( const std::string &msg )
+base_in_message *In::ParseSyncLoad( const string &msg )
 {
     base_in_message *_msg = static_cast<base_in_message*>( In::load( msg, true ) );
     _msg->raw = msg;
     return _msg;
 }
 
-base_in_message *In::ParseSyncGetPid( const std::string &msg )
+base_in_message *In::ParseSyncGetPid( const string &msg )
 {
     get_pid_req_in_msg *_msg = new get_pid_req_in_msg;
-    _msg->value = std::string(msg);
+    _msg->value = string(msg);
     _msg->raw = msg;
     return static_cast<base_in_message*>(_msg);
 }
 
-base_in_message *In::ParseSyncGetCid( const std::string &msg )
+base_in_message *In::ParseSyncGetCid( const string &msg )
 {
     get_cid_req_in_msg *_msg = new get_cid_req_in_msg;
-    _msg->value = std::string(msg);
+    _msg->value = string(msg);
     _msg->raw = msg;
     return static_cast<base_in_message*>(_msg);
 }
@@ -101,20 +101,28 @@ string In::decode_url( string text )
     return decoded_str;
 }
 
-notready_in_msg *In::notready( const std::string &msg )
+bool In::is_numeric( string &text )
+{
+    istringstream iss(text);
+    double d = 0.0;
+    return (iss >> d) && iss.eof();
+}
+
+notready_in_msg *In::notready( const string &msg )
 {
     notready_in_msg *_msg = new notready_in_msg;
     _msg->raw = msg;
     return _msg;
 }
 
-hello_in_msg *In::hello( const std::string &msg )
+hello_in_msg *In::hello( const string &msg )
 {
     hello_in_msg *_msg = new hello_in_msg;
     _msg->raw = msg;
     _msg->version = "";
     _msg->hello_key = "";
-   _msg->major = _msg->minor = _msg->build = _msg->revision = 0;
+    _msg->major = _msg->minor = _msg->build = _msg->revision = 0;
+    _msg->is_alpha = false;
     
     vector<string> _options = In::split(msg, ' ');
     if( _options.size() > 0 ) {
@@ -125,8 +133,31 @@ hello_in_msg *In::hello( const std::string &msg )
                 vector<string> versionv = In::split(_msg->version, '.');
                 _msg->major = atoi(versionv[0].c_str());
                 _msg->minor = atoi(versionv[1].c_str());
-                _msg->build = versionv.size() > 2 ? atoi(versionv[2].c_str()) : 1000;
-                _msg->revision = versionv.size() > 3 ? atoi(versionv[3].c_str()) : 1000;
+
+                bool has_revision = false;
+                if(versionv.size() > 2) {
+                    size_t _pos = versionv[2].find("-");
+                    if( _pos == string::npos ) {
+                        _msg->build = atoi(versionv[2].c_str());
+                    }
+                    else {
+                        string alpha = versionv[2].substr(_pos + 1);
+                        versionv[2].erase(_pos);
+                        _msg->build = atoi(versionv[2].c_str());
+                        if(alpha[0] == 'a') {
+                            alpha = alpha.substr(1);
+                            if(is_numeric(alpha)) {
+                                _msg->revision = atoi(alpha.c_str());
+                                _msg->is_alpha = true;
+                                has_revision = true;
+                            }
+                        }
+                    }
+                }
+                
+                if(!has_revision && versionv.size() > 3) {
+                    _msg->revision = atoi(versionv[3].c_str());
+                }
             }
             else if( !_options[i].compare(0, 4, "key=") ) {
                 _msg->hello_key.assign(_options[i].substr(4));
@@ -643,6 +674,8 @@ load_url_msg *In::load_url( const string &msg )
             
             item.user_agent = 1;
             item.close_after_seconds = 0;
+            item.show_time = 0;
+            item.start_hidden = false;
             
             do {
                 bool _isArray = false;
@@ -669,6 +702,16 @@ load_url_msg *In::load_url( const string &msg )
                         item.type = P2P_LOAD_URL_SLIDER;
                     else if( !val.compare("interactive-hidden") )
                         item.type = P2P_LOAD_URL_HIDDEN;
+                    else if( !val.compare("interactive-preplay") )
+                        item.type = P2P_LOAD_URL_PREPLAY;
+                    else if( !val.compare("webstat-play") )
+                        item.type = P2P_LOAD_URL_WEBSTAT_PLAY;
+                    else if( !val.compare("webstat-pause") )
+                        item.type = P2P_LOAD_URL_WEBSTAT_PAUSE;
+                    else if( !val.compare("webstat-stop") )
+                        item.type = P2P_LOAD_URL_WEBSTAT_STOP;
+                    else if( !val.compare("webstat-fullscreen") )
+                        item.type = P2P_LOAD_URL_WEBSTAT_FULLSCREEN;
                 }
                 else if( !_param_str.compare( 0, 6, "\"id\": " ) )
                     item.id = _param_str.substr(7, _param_str.length() - 8);
@@ -694,7 +737,7 @@ load_url_msg *In::load_url( const string &msg )
                     item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
                 else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
                     item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
-                else if( !_param_str.compare( 0, 16, "a\"llowDialogs\": " ) ) {
+                else if( !_param_str.compare( 0, 16, "\"allowDialogs\": " ) ) {
                     string val = _param_str.substr(16, _param_str.length() - 16);
                     item.allow_dialogs = !val.compare("true");
                 }
@@ -738,6 +781,12 @@ load_url_msg *In::load_url( const string &msg )
                     item.user_agent = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
                 else if( !_param_str.compare( 0, 14, "\"closeAfter\": " ) )
                     item.close_after_seconds = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
+                else if( !_param_str.compare( 0, 12, "\"showTime\": " ) )
+                    item.show_time = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
+                else if( !_param_str.compare( 0, 15, "\"startHidden\": " ) ) {
+                    string val = _param_str.substr(15, _param_str.length() - 15);
+                    item.start_hidden = !val.compare("true");
+                }
             }
             while( _delim_pos != string::npos );
             

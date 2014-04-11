@@ -68,6 +68,8 @@ Browser::Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent)
   , mShowAvailable(true)
   , mVisiabilityProcessingEnable(true)
   , mCloseAfterTimer(0)
+  , mHideTimer(0)
+  , mDeferredTimer(0)
 {
     setObjectName("Browser");
 
@@ -90,8 +92,12 @@ Browser::Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent)
     connect(this, SIGNAL(notifyBrowserSizeChanged(QSize)), mJSO, SLOT(handleBrowserSizeChanged(QSize)));
     connect(mJSO, SIGNAL(jsoLinkOpen(QString ,bool)), SLOT(openUrl(QString, bool)));
     connect(mJSO, SIGNAL(jsoCloseBrowser()), SLOT(closeBrowser()));
+    connect(mJSO, SIGNAL(jsoShowBrowser()), SLOT(showBrowser()));
+    connect(mJSO, SIGNAL(jsoHideBrowser()), SLOT(hideBrowser()));
+    connect(mJSO, SIGNAL(jsoCloseBrowserAfter(unsigned int)), SLOT(deferredCloseBrowser(unsigned int)));
     connect(mJSO, SIGNAL(jsoFillPlayerSize()), SLOT(handleJSOFillParentSizeCommand()));
     connect(mJSO, SIGNAL(jsoBrowserSetSize(QSize)), SLOT(handleJSOResizeCommand(QSize)));
+    connect(mJSO, SIGNAL(jsoSendEvent(QString)), SLOT(handleJSOSendEvent(QString)));
     mJSO->handlePlayerSizeChanged(parentWidget()->size());
 
     updateSizing();
@@ -103,6 +109,14 @@ Browser::~Browser()
     if(mCloseAfterTimer) {
         mCloseAfterTimer->stop();
         delete mCloseAfterTimer;
+    }
+    if(mHideTimer) {
+        mHideTimer->stop();
+        delete mHideTimer;
+    }
+    if(mDeferredTimer) {
+        mDeferredTimer->stop();
+        delete mDeferredTimer;
     }
 }
 
@@ -189,7 +203,7 @@ bool Browser::showOnlyOnPlayerStateChagned() const
 
 bool Browser::isAlreadyLoading(const LoadItem &item)
 {
-    return mItem == item;
+    return mItem == item && item.type() != BTYPE_WEBSTAT;
 }
 
 void Browser::load(const LoadItem &item)
@@ -203,7 +217,16 @@ void Browser::load(const LoadItem &item)
         return;
     }
 
-    if(!isVisible() && !mItem.preload()) {
+    // preload independent types
+    if(item.type() == BTYPE_PREROLL
+            || item.type() == BTYPE_PREPLAY
+            || item.type() == BTYPE_WEBSTAT) {
+        mItem = item;
+        load();
+        return;
+    }
+
+    if(!isVisible() && !item.preload()) {
         mItem = item;
         return;
     }
@@ -229,10 +252,10 @@ void Browser::activateBrowserMode(bool activate)
         mItem.setSize(0, 0);
         updateSizing();
 
-        mNavigationBar->show();
+        if(mNavigationBar) mNavigationBar->show();
     }
     else {
-        mNavigationBar->hide();
+        if(mNavigationBar) mNavigationBar->hide();
     }
 }
 
@@ -326,7 +349,7 @@ void Browser::createWebView()
 void Browser::handleGotFocus()
 {
     qDebug() << "Browser::handleGotFocus: visible" << isVisible();
-    if(isVisible()) {
+    if(isVisible() && !isFullSized()) {
         emit gotFocus();
     }
 }
@@ -358,7 +381,9 @@ void Browser::processPlayerActiveStatesAfterLoading()
     BrowserAction action = BA_UNDEF;
     BrowserCondition condition = 0;
 
+    qDebug() << "Browser::processPlayerActiveStatesAfterLoading: state" << mParentState << "is_ad" << mIsAd << "type" << type();
     if(type() == AceWebBrowser::BTYPE_PREROLL ||
+            type() == AceWebBrowser::BTYPE_PREPLAY ||
             // playing
             (mParentState == AceWebBrowser::BHPS_PLAYING
                 && (type() == AceWebBrowser::BTYPE_OVERLAY || type() == AceWebBrowser::BTYPE_SLIDER)) ||
@@ -367,35 +392,41 @@ void Browser::processPlayerActiveStatesAfterLoading()
                 && type() == AceWebBrowser::BTYPE_PAUSE) ||
             // stopped
             (mParentState >= AceWebBrowser::BHPS_STOPPED
-                && type() == AceWebBrowser::BTYPE_STOP)) {
-        action = BA_SHOW;
+                && type() == AceWebBrowser::BTYPE_STOP)
+    ) {
+        if((type() == BTYPE_PREROLL || type() == BTYPE_OVERLAY) && !mItem.startHidden()) {
+            action = BA_SHOW;
+        }
     }
     else if(type() == AceWebBrowser::BTYPE_HIDDEN) {
-        if(!mCloseAfterTimer) {
-            mCloseAfterTimer = new QTimer(this);
-            mCloseAfterTimer->setSingleShot(true);
-            connect(mCloseAfterTimer, SIGNAL(timeout()), SLOT(closeActionTriggered()));
+        if(mItem.closeAfterSeconds() > 0) {
+            if(!mCloseAfterTimer) {
+                mCloseAfterTimer = new QTimer(this);
+                mCloseAfterTimer->setSingleShot(true);
+                connect(mCloseAfterTimer, SIGNAL(timeout()), SLOT(closeActionTriggered()));
+            }
+            mCloseAfterTimer->setInterval(mItem.closeAfterSeconds() * 1000);
+            mCloseAfterTimer->start();
         }
-        mCloseAfterTimer->setInterval(mItem.closeAfterSeconds() * 1000);
-        mCloseAfterTimer->start();
 
-        // tmp
-        // action = BA_SHOW;
+        if(mItem.showTime() > 0) {
+            action = BA_SHOW;
+            if(!mHideTimer) {
+                mHideTimer = new QTimer(this);
+                mHideTimer->setSingleShot(true);
+                connect(mHideTimer, SIGNAL(timeout()), SLOT(hideBrowser()));
+            }
+            mHideTimer->setInterval(mItem.showTime() * 1000);
+            mHideTimer->start();
+        }
     }
-    /*// paused
-    else if(mParentState == AceWebBrowser::BHPS_PAUSED
-                && type() == AceWebBrowser::BTYPE_PAUSE)
-    {
-        action = BA_SHOW;
-        //condition = (BrowserCondition)CanShowOnPageLoadingFinished;
-    }*/
     
     doAction(action, condition);
 }
 
 void Browser::processPlayerActiveStatesAfterStateChanged()
 {
-    qDebug() << "Browser::processPlayerActiveStatesAfterStateChanged: state" << mParentState << "is_ad" << mIsAd;
+    qDebug() << "Browser::processPlayerActiveStatesAfterStateChanged: state" << mParentState << "is_ad" << mIsAd << "type" << type();
 
     BrowserAction action = BA_UNDEF;
     BrowserCondition condition = 0;
@@ -424,13 +455,14 @@ void Browser::processPlayerActiveStatesAfterStateChanged()
         }
     }
     */
+    else if(type() == AceWebBrowser::BTYPE_PREPLAY && mParentState == AceWebBrowser::BHPS_PLAYING) {
+        action = BA_CLOSE;
+    }
     else if(mParentState >= AceWebBrowser::BHPS_STOPPED) { // stopped
         if(type() == AceWebBrowser::BTYPE_OVERLAY || type() == AceWebBrowser::BTYPE_SLIDER) {
             action = BA_HIDE;
             mItem.clearEventFlags();
         }
-        else if(type() == AceWebBrowser::BTYPE_STOP)
-            action = BA_SHOW;
     }
     doAction(action, condition);
 }
@@ -468,6 +500,11 @@ void Browser::load()
     }
 }
 
+void Browser::handleJSOSendEvent(QString event_name)
+{
+    emit registerSendEvent(mItem.type(), event_name, mItem.id());
+}
+
 /******************************
  *     Public slots
  ******************************/
@@ -483,7 +520,7 @@ void Browser::showBrowser()
         return;
     }
 
-    if(mState == BS_LOADED && (!mIsAd || type() == AceWebBrowser::BTYPE_PREROLL)) {
+    if(mState == BS_LOADED && (!mIsAd || type() == AceWebBrowser::BTYPE_PREROLL || type() == BTYPE_PREPLAY)) {
         qDebug() << "Browser::showBrowser: showing parent visible" << parentWidget()->isVisible();
         emit notifyParentCommandToShow(type());
         show();
@@ -495,7 +532,7 @@ void Browser::hideBrowser()
 {
     enableNavigationButton(mBackAction, false);
     enableNavigationButton(mFwdAction, false);
-    mNavigationBar->hide();
+    if(mNavigationBar) mNavigationBar->hide();
 
     hide();
 }
@@ -503,27 +540,43 @@ void Browser::hideBrowser()
 void Browser::closeBrowser(bool failed)
 {
     //if(type() != AceWebBrowser::BTYPE_PAUSE) {
-        qDebug() << "Browser::closeBrowser: failed" << failed;
         mDieing = true;
-        if(type() == AceWebBrowser::BTYPE_PREROLL ||
+        /*if(type() == AceWebBrowser::BTYPE_PREROLL ||
             type() == AceWebBrowser::BTYPE_HIDDEN) {
             if(!mItem.completeRegistered()) {
-                emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed);
+
+                emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled);
                 mItem.setCompleteRegistered(true);
             }
         }
         else {
-            emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed);
+            emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled);
+        }*/
+        if(!mItem.hideRegistered()) {
+            emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled);
+            mItem.setHideRegistered(true);
         }
         hideBrowser();
         deleteWebView();
-        emit notifyBrowserClosed(mItem.type());
+        emit notifyBrowserClosed();
     //}
     //else {
     //    mShowOnPlayerStateChangedOnly = true;
     //    emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed);
     //    hideBrowser();
     //}
+}
+
+void Browser::deferredCloseBrowser(unsigned int seconds)
+{
+    if(!mDeferredTimer) {
+        mDeferredTimer = new QTimer(this);
+        mDeferredTimer->setSingleShot(true);
+        connect(mDeferredTimer, SIGNAL(timeout()), SLOT(closeActionTriggered()));
+    }
+    mDeferredTimer->setInterval(seconds * 1000);
+    mDeferredTimer->start();
+    hideBrowser();
 }
 
 /******************************
@@ -627,6 +680,10 @@ void Browser::hideEvent(QHideEvent *event)
             WebPage *page = qobject_cast<WebPage*>(mWebView->page());
             page->setDialogsCanBeShown(false);
         }
+        if(!mItem.hideRegistered()) {
+            emit registerBrowserHideEvent(mItem.type(), mItem.id());
+            mItem.setHideRegistered(true);
+        }
     }
     event->accept();
 }
@@ -647,6 +704,10 @@ void Browser::updateSizing()
 
 void Browser::updateSizing(const QSize &size)
 {
+    if(type() == BTYPE_WEBSTAT) {
+        return;
+    }
+    
     int pWidth = size.width();
     int pHeight = size.height();
 
@@ -721,7 +782,7 @@ void Browser::updatePosition()
 void Browser::updateScrollbars()
 {
     bool scrollbarsEnable = false;
-    if(type() != BTYPE_PREROLL) {
+    if(type() != BTYPE_PREROLL && type() != AceWebBrowser::BTYPE_HIDDEN) {
         int pWidth = parentWidget()->width();
         if(width() >= pWidth || (pWidth > width() && mItem.width() == 0)) {
             scrollbarsEnable = true;
@@ -831,6 +892,8 @@ void Browser::createNavigationBar()
 
 void Browser::enableNavigationButton(QAction *action, bool value)
 {
+    if(!mNavigationBar) return;
+        
     QToolButton *button =(QToolButton *)mNavigationBar->widgetForAction(action);
     if(button) {
         button->setEnabled(value);

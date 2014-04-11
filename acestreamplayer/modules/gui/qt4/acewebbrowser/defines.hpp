@@ -19,7 +19,9 @@ enum BrowserType {
     BTYPE_OVERLAY,
     BTYPE_PREROLL,
     BTYPE_SLIDER,
-    BTYPE_HIDDEN
+    BTYPE_HIDDEN,
+    BTYPE_PREPLAY,
+    BTYPE_WEBSTAT // 7,8,9,10
 };
 
 enum BrowserCookies {
@@ -39,6 +41,20 @@ enum BrowserHolderPlayerState {
     BHPS_PAUSED = 3,
     BHPS_STOPPED = 4,
     BHPS_ERROR = 5
+};
+
+enum BrowserState {
+    BS_UNLOADED,
+    BS_LOADING,
+    BS_LOADED,
+    BS_ERROR
+};
+
+enum BrowserAction {
+    BA_UNDEF,
+    BA_SHOW,
+    BA_HIDE,
+    BA_CLOSE
 };
 
 #define USER_AGENT "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.34 (KHTML, like Gecko) Qt/"QT_VERSION_STR" AceStream/"P2P_STD_VERSION"";

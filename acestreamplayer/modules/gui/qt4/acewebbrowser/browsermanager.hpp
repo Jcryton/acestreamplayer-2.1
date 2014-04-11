@@ -40,7 +40,7 @@ private:
     QList<Browser *> mBrowsers;
 
 private slots:
-    void handleBrowserClosed(BrowserType type);
+    void handleBrowserClosed();
 };
 
 }

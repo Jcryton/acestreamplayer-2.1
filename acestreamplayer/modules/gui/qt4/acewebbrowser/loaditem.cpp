@@ -25,7 +25,9 @@ QDebug operator<<(QDebug debug, const LoadItem &item)
         << "\r  EmbedCode: " << item.embedCode()
         << "\r  Preload: " << item.preload()
         << "\r  UserAgent: " << (int)item.userAgent()
-        << "\r  CloseAfter: " << item.closeAfterSeconds();
+        << "\r  CloseAfter: " << item.closeAfterSeconds()
+        << "\r  ShowTime: " << item.showTime()
+        << "\r  StartHidden: " << item.startHidden();
     return debug.space();
 }
 
@@ -38,7 +40,7 @@ LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
                                  bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
                                  bool _preload,
                                  QString _contentT, QString _creativeT, QString _clickU,
-                                 BrowserUserAgent _uA, int _cA)
+                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH)
     : mType(_type)
     , mId(_id)
     , mUrl(_url)
@@ -65,6 +67,8 @@ LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
     , mEventHideRegistered(false)
     , mEventCompleteRegistered(false)
     , mCloseAfterSeconds(_cA)
+    , mShowTime(_sT)
+    , mStartHidden(_sH)
 {
 }
 
@@ -95,6 +99,8 @@ LoadItem::LoadItem(const LoadItem &other)
     , mEventHideRegistered(false)
     , mEventCompleteRegistered(false)
     , mCloseAfterSeconds(other.closeAfterSeconds())
+    , mShowTime(other.showTime())
+    , mStartHidden(other.startHidden())
 {
 }
 
@@ -293,4 +299,14 @@ void LoadItem::clearEventFlags()
 int LoadItem::closeAfterSeconds() const
 {
     return mCloseAfterSeconds;
+}
+
+int LoadItem::showTime() const
+{
+    return mShowTime;
+}
+
+bool LoadItem::startHidden() const
+{
+    return mStartHidden;
 }

@@ -14,6 +14,7 @@ public:
 public:
     static std::vector<std::string> split( const std::string &, char );
     static std::string decode_url( std::string );
+    static bool is_numeric( std::string & );
 
 private:
     static notready_in_msg *notready( const std::string& );

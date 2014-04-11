@@ -11,7 +11,7 @@ mingw-w64 gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-tools lua5.1 libtool a
 
 `./bootstrap.sh`
 
-`./configure` or `./configure ts` for torrentstream
+`./configure.sh` or `./configure.sh ts` for torrentstream
 
 `cd build-ace` or `cd build-ts` for torrentstream
 
@@ -21,6 +21,6 @@ mingw-w64 gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-tools lua5.1 libtool a
 
 Known problems:
 
-*Error: "Failed to download contribs"* - [download] contribs manually and place into vlc-{version}/contrib folder.
+*Error: "Failed to download contribs"* - [download] contribs manually and put into vlc-{version}/contrib folder.
 
 [download]:https://bitbucket.org/AceStream/acestreamplayer/downloads/i686-w64-mingw32.tar.gz

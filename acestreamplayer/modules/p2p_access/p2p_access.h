@@ -70,6 +70,7 @@ void SetCallback(p2p_object_t*, p2p_command_callback_type, p2p_common_callback, 
 
 void RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t);
 void RegistedLoadUrlAdStatistics(p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
+void RegistedLoadUrlAdEvent(p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
 int generate_new_async_id( p2p_object_t* );
 int generate_new_group_id( p2p_object_t* );
 bool check_load_response( p2p_object_t *, load_in_msg *, std::string );

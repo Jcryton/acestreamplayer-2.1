@@ -24,11 +24,12 @@ QList<QNetworkCookie> CookieJar::cookiesForUrl(const QUrl &url) const
 
 bool CookieJar::setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url)
 {
-    if (!mIsLoaded)
+    if (!mIsLoaded) {
         updateCookies();
+    }
 
     if(mCookiesType != BCOOK_NONE) {
-        QString defaultDomain = url.host();
+        QString defaultDomain = QLatin1Char('.') + url.host();
         QString pathAndFileName = url.path();
         QString defaultPath = pathAndFileName.left(pathAndFileName.lastIndexOf(QLatin1Char('/'))+1);
         if (defaultPath.isEmpty())
@@ -41,8 +42,12 @@ bool CookieJar::setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const
             if(cookie.path().isEmpty())
                 cookie.setPath(defaultPath);
 
-            if (cookie.domain().isEmpty())
+            if(cookie.domain().isEmpty()) {
                 cookie.setDomain(defaultDomain);
+            }
+            else if(!cookie.domain().startsWith(QLatin1Char('.'))) {
+                cookie.setDomain(QLatin1Char('.') + cookie.domain());
+            }
 
             lst += cookie;
             QNetworkCookieJar::setCookiesFromUrl(lst, url);
@@ -50,8 +55,9 @@ bool CookieJar::setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const
         }
         return true;
     }
-    else
+    else {
         return false;
+    }
 }
 
 BrowserCookies CookieJar::browserCookiesType() const
