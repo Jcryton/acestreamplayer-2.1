@@ -382,21 +382,22 @@ void Browser::processPlayerActiveStatesAfterLoading()
     BrowserCondition condition = 0;
 
     qDebug() << "Browser::processPlayerActiveStatesAfterLoading: state" << mParentState << "is_ad" << mIsAd << "type" << type();
-    if(type() == AceWebBrowser::BTYPE_PREROLL ||
-            type() == AceWebBrowser::BTYPE_PREPLAY ||
+    if((type() == AceWebBrowser::BTYPE_PREROLL ||
+       (type() == BTYPE_OVERLAY && mParentState == AceWebBrowser::BHPS_PLAYING)) &&
+       !mItem.startHidden()) {
+        action = BA_SHOW;
+    }
+    else if(type() == AceWebBrowser::BTYPE_PREPLAY ||
             // playing
             (mParentState == AceWebBrowser::BHPS_PLAYING
-                && (type() == AceWebBrowser::BTYPE_OVERLAY || type() == AceWebBrowser::BTYPE_SLIDER)) ||
+                && type() == AceWebBrowser::BTYPE_SLIDER) ||
             // paused
             (mParentState == AceWebBrowser::BHPS_PAUSED
                 && type() == AceWebBrowser::BTYPE_PAUSE) ||
             // stopped
             (mParentState >= AceWebBrowser::BHPS_STOPPED
-                && type() == AceWebBrowser::BTYPE_STOP)
-    ) {
-        if((type() == BTYPE_PREROLL || type() == BTYPE_OVERLAY) && !mItem.startHidden()) {
-            action = BA_SHOW;
-        }
+                && type() == AceWebBrowser::BTYPE_STOP)) {
+        action = BA_SHOW;
     }
     else if(type() == AceWebBrowser::BTYPE_HIDDEN) {
         if(mItem.closeAfterSeconds() > 0) {

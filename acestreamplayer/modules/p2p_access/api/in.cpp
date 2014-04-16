@@ -679,7 +679,7 @@ load_url_msg *In::load_url( const string &msg )
             
             do {
                 bool _isArray = false;
-                if( !_item_str.compare(0, 16, "embedScripts\": [") ) {
+                if( !_item_str.compare(0, 17, "\"embedScripts\": [") ) {
                     _delim_pos = _item_str.find("], \"");
                     _isArray = true;
                 }
@@ -753,7 +753,7 @@ load_url_msg *In::load_url( const string &msg )
                     size_t _arr_delim_pos;
                     do {
                         _arr_delim_pos = _arr_str.find("\", \"");
-                        string _arr_item_str = ( _arr_delim_pos == string::npos ) ? _arr_str.substr(0, _arr_str.length()-1) : _arr_str.substr( 0, _arr_delim_pos );
+                        string _arr_item_str = ( _arr_delim_pos == string::npos ) ? _arr_str : _arr_str.substr( 0, _arr_delim_pos );
                         _arr_str.erase( 0, _arr_delim_pos + 4 );
                         item.embed_scripts.push_back(_arr_item_str);
                     }
