@@ -21,6 +21,7 @@ BrowserManager::~BrowserManager()
     for(int i = mBrowsers.size()-1; i >= 0; --i) {
         deleteBrowser(i);
     }
+    mFilterCache.clear();
     CookieManager *cookieManager = CookieManager::getInstanse();
     CookieManager::releaseInstance(cookieManager);
 }
@@ -28,7 +29,7 @@ BrowserManager::~BrowserManager()
 Browser *BrowserManager::createBrowser(const LoadItem &item, QWidget *parent)
 {
     if(item.type() != AceWebBrowser::BTYPE_WEBSTAT) {
-        Browser *browser = getBrowser(item.type());
+        Browser *browser = getBrowser(item.type(), item.groupId());
         if(browser) {
             return browser;
         }
@@ -52,7 +53,7 @@ Browser *BrowserManager::getBrowser(BrowserType type)
 {
     Browser *browser = NULL;
     foreach (Browser *b, mBrowsers) {
-        if(b->type() == type && !b->dieing()) {
+        if(b->type() == type && !b->dieing() && b->groupId() == group) {
             browser = b;
             break;
         }
@@ -113,7 +114,7 @@ bool BrowserManager::isVisible() const
 {
     bool vis = false;
     foreach (Browser *b, mBrowsers) {
-        if(b->isVisible()) {
+        if(b->isVisible() && b->type() != BTYPE_WEBSTAT) {
             vis = true;
             break;
         }
@@ -144,4 +145,19 @@ void BrowserManager::handleBrowserClosed()
             browser->deleteLater();
         }
     }
+}
+
+bool BrowserManager::filterCacheHasValue(QString key)
+{
+    return mFilterCache.contains(key);
+}
+
+bool BrowserManager::filterCacheGetValue(QString key)
+{
+    return mFilterCache.value(key);
+}
+
+void BrowserManager::filterCacheAddValue(QString key, bool value)
+{
+    mFilterCache.insert(key, value);
 }

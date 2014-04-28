@@ -25,19 +25,23 @@ public:
     bool isVisible() const;
     bool hasBrowser(BrowserType type);
 
-    Browser *getBrowser(BrowserType type);
+    Browser *getBrowser(BrowserType type, int group = 0);
     Browser *getVisibleBrowser();
+
+    bool filterCacheHasValue(QString);
+    bool filterCacheGetValue(QString);
+    void filterCacheAddValue(QString, bool);
+
     
     void updateBrowsersOnVoutChanged(bool);
 
 private:
     void deleteBrowser(int index);
-
-
     int getBrowserIndex(BrowserType type);
 
 private:
     QList<Browser *> mBrowsers;
+    QHash<QString, bool> mFilterCache;
 
 private slots:
     void handleBrowserClosed();

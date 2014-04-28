@@ -3039,7 +3039,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +            firstAdPosProcess();
 +        }
 +        else {
-+            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PLAY);
++            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PLAY, 0);
 +        }
 +
 +        m_first_time_pos_changed = false;
@@ -3421,7 +3421,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  void MainInputManager::menusUpdateAudio( const QString& data )
  {
      audio_output_t *aout = getAout();
-@@ -1259,3 +1650,167 @@
+@@ -1259,3 +1650,169 @@
      }
      return VLC_SUCCESS;
  }
@@ -3523,7 +3523,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +                    static_cast<AceWebBrowser::BrowserUserAgent>(p_loadurl->user_agent),
 +                    p_loadurl->close_after_seconds,
 +                    p_loadurl->show_time,
-+                    p_loadurl->start_hidden
++                    p_loadurl->start_hidden,
++                    p_loadurl->allow_window_open,
++                    p_loadurl->group_id
 +                    );
 +
 +            LoadUrlEvent *event = new LoadUrlEvent(*item);
@@ -4191,7 +4193,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +        }
 +        
 +        if(THEMIM->getIM()->isP2P() && !THEMIM->getIM()->isAd()) {
-+            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_FULLSCREEN);
++            p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_FULLSCREEN, 0);
 +        }
      }
      else
@@ -4392,7 +4394,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  void MainInterface::closeEvent( QCloseEvent *e )
  {
  //  hide();
-@@ -1455,6 +1624,573 @@
+@@ -1455,6 +1624,584 @@
      raise();
  }
  
@@ -4538,7 +4540,18 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +        m_last_webstat_play_id = conf.id();
 +    }
 +    
++    QString aceHost = "";
++    char *psz_host = var_GetString(THEP2P, "engine-http-host");
++    if(psz_host) {
++        aceHost.sprintf( "%s", psz_host );
++        free(psz_host);
++    }
++    int acePort = 0;
++    acePort = var_GetInteger(THEP2P, "engine-http-port");
++    
 +    conf.setHostUserAgent("AcePlayer/"P2P_STD_VERSION"");
++    conf.setEngineHttpHost(aceHost);
++    conf.setEngineHttpPort(acePort);
 +    QWidget *parent = 0;
 +    if(conf.type() == AceWebBrowser::BTYPE_PAUSE 
 +        || conf.type() == AceWebBrowser::BTYPE_OVERLAY 
@@ -4583,8 +4596,8 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +            SLOT(registerShow(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
 +    connect(browser, SIGNAL(registerBrowserHideEvent(AceWebBrowser::BrowserType,QString)),
 +            SLOT(registerHide(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
-+    connect(browser, SIGNAL(registerBrowserClosedEvent(AceWebBrowser::BrowserType,QString,bool,bool)),
-+            SLOT(registerClosed(AceWebBrowser::BrowserType,QString,bool,bool)), Qt::UniqueConnection);
++    connect(browser, SIGNAL(registerBrowserClosedEvent(AceWebBrowser::BrowserType,QString,bool,bool,int)),
++            SLOT(registerClosed(AceWebBrowser::BrowserType,QString,bool,bool,int)), Qt::UniqueConnection);
 +    connect(browser, SIGNAL(registerBrowserErrorEvent(AceWebBrowser::BrowserType,QString)),
 +            SLOT(registerError(AceWebBrowser::BrowserType,QString)), Qt::UniqueConnection);
 +    connect(browser, SIGNAL(registerSendEvent(AceWebBrowser::BrowserType, QString, QString)),
@@ -4733,7 +4746,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    }
 +}
 +
-+void MainInterface::registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool browserMode)
++void MainInterface::registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool browserMode, int group)
 +{
 +    qDebug() << "Player::registerClosed: type" << (int)type << "id" << id << "failed" << failed;
 +
@@ -4762,13 +4775,13 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +            }
 +            else {
 +                qDebug() << "Player::stateChanged: request for new pause url";
-+                p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_PAUSE);
++                p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_PAUSE, 0);
 +                m_request_pause_ad = false;
 +            }
 +        }
 +    }
 +    if(type == AceWebBrowser::BTYPE_HIDDEN) {
-+        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_HIDDEN);
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_HIDDEN, group);
 +    }
 +}
 +
@@ -4941,13 +4954,13 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +{
 +    if(state == AceWebBrowser::BHPS_PLAYING && m_request_pause_ad) {
 +        qDebug() << "Player::handleInputState: request for new pause url";
-+        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_PAUSE);
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_PAUSE, 0);
 +        m_request_pause_ad = false;
 +    }
 +    else if(state == AceWebBrowser::BHPS_PAUSED && !isAd && THEMIM->getIM()->isP2P())
-+        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PAUSE);
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_PAUSE, 0);
 +    else if(state == AceWebBrowser::BHPS_STOPPED && !isAd)
-+        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_STOP);
++        p2p_RequestLoadUrlAd(THEP2P, P2P_LOAD_URL_WEBSTAT_STOP, 0);
 +}
 +
 +void MainInterface::handleUserPauseAction()
@@ -4966,7 +4979,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1521,3 +2257,36 @@
+@@ -1521,3 +2268,36 @@
  
      return VLC_SUCCESS;
  }
@@ -5073,7 +5086,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +
 +    void registerShow(AceWebBrowser::BrowserType type, QString id);
 +    void registerHide(AceWebBrowser::BrowserType type, QString id);
-+    void registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool);
++    void registerClosed(AceWebBrowser::BrowserType type, QString id, bool failed, bool, int);
 +    void registerError(AceWebBrowser::BrowserType type, QString id);
 +    void registerBrowserSendEvent(AceWebBrowser::BrowserType type, QString event_type, QString id);
 +
@@ -5171,8 +5184,8 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/menus.cpp vlc-2.1.2/modules/gui/qt4/menu
      addDPStaticEntry( openmenu, qtr( "Open &Disc..." ),
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Modules.am
 --- vlc-2.1.4.orig/modules/gui/qt4/Modules.am	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/Modules.am	2014-04-11 12:19:10.978282038 +0300
-@@ -25,6 +25,21 @@
++++ vlc-2.1.4/modules/gui/qt4/Modules.am	2014-04-28 12:31:13.348537239 +0300
+@@ -25,6 +25,22 @@
  		adapters/seekpoints.moc.cpp \
  		adapters/chromaprint.moc.cpp \
  		adapters/variables.moc.cpp \
@@ -5186,6 +5199,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +		acewebbrowser/loaditem.moc.cpp \
 +		acewebbrowser/networkmanager.moc.cpp \
 +		acewebbrowser/proxyreply.moc.cpp \
++		acewebbrowser/proxyreply2.moc.cpp \
 +		acewebbrowser/webpage.moc.cpp \
 +		acewebbrowser/webview.moc.cpp \
 +		acewebbrowser/iebrowser2.moc.cpp \
@@ -5194,7 +5208,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		dialogs/playlist.moc.cpp \
  		dialogs/bookmarks.moc.cpp \
  		dialogs/mediainfo.moc.cpp \
-@@ -47,6 +62,7 @@
+@@ -47,6 +63,7 @@
  		dialogs/firstrun.moc.cpp \
  		dialogs/extensions.moc.cpp \
  		dialogs/fingerprintdialog.moc.cpp \
@@ -5202,7 +5216,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		components/extended_panels.moc.cpp \
  		components/info_panels.moc.cpp \
  		components/info_widgets.moc.cpp \
-@@ -86,6 +102,7 @@
+@@ -86,6 +103,7 @@
  		ui/open_disk.h \
  		ui/open_net.h \
  		ui/open_capture.h \
@@ -5210,7 +5224,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		ui/open.h \
  		ui/vlm.h \
  		ui/podcast_configuration.h \
-@@ -209,6 +226,7 @@
+@@ -209,6 +227,7 @@
  	pixmaps/toolbar/volume-muted.png \
  	pixmaps/toolbar/volume-slider-inside.png \
  	pixmaps/toolbar/volume-slider-outside.png \
@@ -5218,7 +5232,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  	pixmaps/types/capture-card_16px.png \
  	pixmaps/types/cdda_16px.png \
  	pixmaps/types/disc_16px.png \
-@@ -237,7 +255,20 @@
+@@ -237,7 +256,20 @@
  	pixmaps/update.png \
  	pixmaps/valid.png \
  	pixmaps/search_clear.png \
@@ -5240,7 +5254,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  
  BUILT_SOURCES += $(nodist_SOURCES_qt4)
  
-@@ -287,6 +318,21 @@
+@@ -287,6 +319,22 @@
  		adapters/seekpoints.cpp \
  		adapters/chromaprint.cpp \
  		adapters/variables.cpp \
@@ -5254,6 +5268,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +		acewebbrowser/loaditem.cpp \
 +		acewebbrowser/networkmanager.cpp \
 +		acewebbrowser/proxyreply.cpp \
++		acewebbrowser/proxyreply2.cpp \
 +		acewebbrowser/webpage.cpp \
 +		acewebbrowser/webview.cpp \
 +		acewebbrowser/iebrowser2.cpp \
@@ -5262,7 +5277,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		dialogs/playlist.cpp \
  		dialogs/bookmarks.cpp \
  		dialogs/preferences.cpp \
-@@ -310,6 +356,7 @@
+@@ -310,6 +358,7 @@
  		dialogs/podcast_configuration.cpp \
  		dialogs/extensions.cpp \
  		dialogs/fingerprintdialog.cpp \
@@ -5270,7 +5285,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  		components/extended_panels.cpp \
  		components/info_panels.cpp \
  		components/info_widgets.cpp \
-@@ -365,6 +412,23 @@
+@@ -365,6 +414,24 @@
  	adapters/seekpoints.hpp \
  	adapters/chromaprint.hpp \
  	adapters/variables.hpp \
@@ -5285,6 +5300,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
 +	acewebbrowser/loaditem.hpp \
 +	acewebbrowser/networkmanager.hpp \
 +	acewebbrowser/proxyreply.hpp \
++	acewebbrowser/proxyreply2.hpp \
 +	acewebbrowser/webpage.hpp \
 +	acewebbrowser/webview.hpp \
 +	acewebbrowser/iebrowser2.hpp \
@@ -5294,7 +5310,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  	dialogs/playlist.hpp \
  	dialogs/bookmarks.hpp \
  	dialogs/mediainfo.hpp \
-@@ -388,6 +452,7 @@
+@@ -388,6 +455,7 @@
  	dialogs/podcast_configuration.hpp \
  	dialogs/extensions.hpp \
  	dialogs/fingerprintdialog.hpp \
@@ -5302,7 +5318,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/Modules.am vlc-2.1.2/modules/gui/qt4/Mod
  	components/extended_panels.hpp \
  	components/info_panels.hpp \
  	components/info_widgets.hpp \
-@@ -441,6 +506,7 @@
+@@ -441,6 +509,7 @@
  	ui/open_disk.ui \
  	ui/open_net.ui \
  	ui/open_capture.ui \

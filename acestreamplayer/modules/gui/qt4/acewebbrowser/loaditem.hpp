@@ -20,7 +20,7 @@ public:
             bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
             bool _preload,
             QString _contentT, QString _creativeT, QString _clickU,
-            BrowserUserAgent _uA, int _cA, int _sT, bool _sH);
+            BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group);
     LoadItem(const LoadItem &other);
     ~LoadItem();
 
@@ -37,6 +37,7 @@ public:
     int right() const;
     int bottom() const;
     bool allowDialogs() const;
+    bool allowWindowOpen() const;
     bool enableFlash() const;
     BrowserCookies cookies() const;
     QStringList embedScripts() const;
@@ -71,7 +72,14 @@ public:
 
     void clear();
     bool isCleared() const;
-    
+
+    void setEngineHttpHost(const QString&);
+    void setEngineHttpPort(int);
+    QString engineHttpHost() const;
+    int engineHttpPort() const;
+
+    QString toString() const;
+    int groupId() const;
 
 private:
     BrowserType mType;
@@ -84,6 +92,7 @@ private:
     int mRight;
     int mBottom;
     bool mAllowDialogs;
+    bool mAllowWindowOpen;
     bool mEnableFlash;
     BrowserCookies mCookies;
     QStringList mEmbedScripts;
@@ -104,6 +113,11 @@ private:
     bool mEventShownRegistered;
     bool mEventHideRegistered;
     bool mEventCompleteRegistered;
+    
+    QString mEngineHttpHost;
+    int mEngineHttpPort;
+
+    int mGroupId;
 };
 
 }

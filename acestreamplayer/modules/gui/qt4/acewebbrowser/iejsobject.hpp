@@ -89,7 +89,7 @@ signals:
     void jsoHideBrowser();
     void jsoShowBrowser();
     void jsoCloseBrowserAfter(unsigned int);
-    void jsoLinkOpen(QString url, bool openInNewWindow);
+    void jsoLinkOpen(QString url, bool openInNewWindow, bool openInAceWeb, QString arguments);
     void jsoPlayerPlay();
     void jsoPlayerPause();
     void jsoPlayerStop();

@@ -176,7 +176,7 @@ diff -ru vlc-2.1.2.orig/src/config/configuration.h vlc-2.1.2/src/config/configur
  
  /* The configuration file */
 -#define CONFIG_FILE                     "vlcrc"
-+#define CONFIG_FILE                     "conf"
++#define CONFIG_FILE                     "conf.2.1.x"
  
  # ifdef __cplusplus
  }

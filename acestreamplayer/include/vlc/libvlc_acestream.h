@@ -272,6 +272,17 @@ LIBVLC_API void libvlc_acestream_object_request_loadurl(libvlc_acestream_object_
                                             libvlc_acestream_loadurl_type_t type);
 
 /**
+ * Requests new loadurl ad with type
+ *  
+ * \param p_ace a libvlc_acestream_object instance
+ * \param type a libvlc_acestream_loadurl_type_t loadurl type to request
+ * \param group int value
+ */
+LIBVLC_API void libvlc_acestream_object_request_loadurl_from_group(libvlc_acestream_object_t *p_ace, 
+                                            libvlc_acestream_loadurl_type_t type, 
+                                            int group_id);
+
+/**
  * Registers statistics event for loadurl with type
  *  
  * \param p_ace a libvlc_acestream_object instance
@@ -295,10 +306,25 @@ LIBVLC_API void libvlc_acestream_object_register_loadurl_statistics(libvlc_acest
 LIBVLC_API void libvlc_acestream_object_register_loadurl_event(libvlc_acestream_object_t *p_ace, 
                                             libvlc_acestream_loadurl_type_t type,
                                             const char *event_type,
-                                            const char *id );
+                                            const char *id);
 
+/**
+ * Get engine http host
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ * \param result pointer to allocated mamory for writing result (memory must be allocated and free by caller)
+ * \return same as result
+ */
+char *libvlc_acestream_object_get_engine_http_host( libvlc_acestream_object_t *p_ace, char *out );
 
-
+/**
+ * Get engine http port
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ * \return port value
+ */
+int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_object_t *p_ace );
+                                            
 /** @} acestream */
 
 # ifdef __cplusplus

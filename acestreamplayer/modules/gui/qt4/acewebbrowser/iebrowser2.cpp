@@ -13,9 +13,12 @@
 #include <QResizeEvent>
 #include <QDesktopServices>
 #include <QCoreApplication>
+#include <QProcess>
+#include <QSettings>
 
 using namespace AceWebBrowser;
 
+QString IEBrowser2::engine_location = "";
 IEBrowser2::IEBrowser2(const LoadItem &item, QWidget *parent) :
     QWidget(parent)
   , mItem(item)
@@ -55,9 +58,12 @@ IEBrowser2::IEBrowser2(const LoadItem &item, QWidget *parent) :
     connect(mWebView, SIGNAL(DocumentComplete(IDispatch*,QVariant&)), SLOT(ieDocumentComplete(IDispatch*,QVariant&)));
     connect(mWebView, SIGNAL(DownloadBegin()), SLOT(ieDownloadBegin()));
     connect(mWebView, SIGNAL(DownloadComplete()), SLOT(ieDownloadComplete()));
-    connect(mWebView, SIGNAL(NavigateError(IDispatch*,QVariant&,QVariant&,QVariant&,bool&)), SLOT(ieNavigateError(IDispatch*,QVariant&,QVariant&,QVariant&,bool&)));
-    connect(mWebView, SIGNAL(BeforeNavigate2(IDispatch*,QVariant&,QVariant&,QVariant&,QVariant&,QVariant&,bool&)), SLOT(ieBeforeNavigate2(IDispatch*,QVariant&,QVariant&,QVariant&,QVariant&,QVariant&,bool&)));
-    connect(mWebView, SIGNAL(exception(int, const QString&, const QString&, const QString&)), SLOT(ieException(int, const QString&, const QString&, const QString&)));
+    connect(mWebView, SIGNAL(NavigateError(IDispatch*,QVariant&,QVariant&,QVariant&,bool&)),
+            SLOT(ieNavigateError(IDispatch*,QVariant&,QVariant&,QVariant&,bool&)));
+    connect(mWebView, SIGNAL(BeforeNavigate2(IDispatch*,QVariant&,QVariant&,QVariant&,QVariant&,QVariant&,bool&)),
+            SLOT(ieBeforeNavigate2(IDispatch*,QVariant&,QVariant&,QVariant&,QVariant&,QVariant&,bool&)));
+    connect(mWebView, SIGNAL(exception(int, const QString&, const QString&, const QString&)),
+            SLOT(ieException(int, const QString&, const QString&, const QString&)));
     connect(mWebView, SIGNAL(WindowClosing(bool,bool&)), SLOT(ieWindowClosing(bool,bool&)));
     connect(mWebView, SIGNAL(NewWindow3(IDispatch**,bool&,uint,QString,QString)),
             SLOT(ieWindowOpen(IDispatch**,bool&,uint,QString,QString)));
@@ -65,7 +71,7 @@ IEBrowser2::IEBrowser2(const LoadItem &item, QWidget *parent) :
     mJSO = new JSObject();
     mJSO->AddRef();
     connect(this, SIGNAL(notifyBrowserSizeChanged(QSize)), mJSO, SLOT(handleBrowserSizeChanged(QSize)));
-    connect(mJSO, SIGNAL(jsoLinkOpen(QString ,bool)), SLOT(openUrl(QString, bool)));
+    connect(mJSO, SIGNAL(jsoLinkOpen(QString ,bool, bool, QString)), SLOT(openUrl(QString, bool, bool, QString)));
     connect(mJSO, SIGNAL(jsoCloseBrowser()), SLOT(closeBrowser()));
     connect(mJSO, SIGNAL(jsoShowBrowser()), SLOT(showBrowser()));
     connect(mJSO, SIGNAL(jsoHideBrowser()), SLOT(hideBrowser()));
@@ -400,6 +406,8 @@ void IEBrowser2::ieBeforeNavigate2(IDispatch *frame, QVariant &url, QVariant &fl
     
     QUrl qurl(url.toString());
     qDebug() << "IEBrowser2::ieBeforeNavigate2: url =" << url.toString() << "hash =" << qurl.fragment() << "frame =" << targetFrameName.toString();
+    if(qurl.scheme() != "http" && qurl.scheme() != "https") {
+        return;
 
     QString fragment = qurl.fragment();
     if(fragment.startsWith("acestream:")) {
@@ -432,13 +440,21 @@ void IEBrowser2::ieWindowClosing(bool isChildWindow, bool &cancel)
 
     qDebug() << "IEBrowser2::ieWindowClosing: isChildWindow =" << isChildWindow;
 
+
+
+
     cancel = true;
 }
 
 void IEBrowser2::ieWindowOpen(IDispatch **, bool &cancel, uint, QString context, QString url)
 {
-    qDebug() << "IEBrowser2::ieWindowOpen: context =" << context << "url =" << url;
-    QDesktopServices::openUrl(url);
+    if(!mItem.allowWindowOpen()) {
+        qDebug() << "IEBrowser2::ieWindowOpen: creating new windows disabled";
+    }
+    else {
+        qDebug() << "IEBrowser2::ieWindowOpen: context =" << context << "url =" << url;
+        QDesktopServices::openUrl(url);
+    }
     cancel = true;
 }
 
@@ -462,11 +478,16 @@ void IEBrowser2::handleJSOSendEvent(QString event_name)
     emit registerBrowserSendEvent(mItem.type(), event_name, mItem.id());
 }
 
-void IEBrowser2::openUrl(QString url, bool inNewWindow)
+void IEBrowser2::openUrl(QString url, bool inNewWindow, bool openInAceWeb, QString arguments)
 {
     qDebug() << "IEBrowser2::openUrl" << url << "new window" << inNewWindow;
 
-    if(inNewWindow) {
+    
+    if(openInAceWeb) {
+        openAceWeb(QUrl(url), arguments);
+        emit notifyNeedExitFullscreen();
+    }
+    else if(inNewWindow) {
         QDesktopServices::openUrl(url);
         emit notifyNeedExitFullscreen();
     }
@@ -475,5 +496,25 @@ void IEBrowser2::openUrl(QString url, bool inNewWindow)
             // navigate
             mWebView->load(QUrl(url));
         }
+    }
+}
+
+void IEBrowser2::openAceWeb(const QUrl &url, const QString &args)
+{
+    if(url.isValid()) {
+        if(engine_location.isEmpty()) {
+            QSettings hkcu("HKEY_CURRENT_USER" ACE_INSTALL_KEY, QSettings::NativeFormat);
+            if(hkcu.contains("EnginePath")) {
+                engine_location = QDir::toNativeSeparators(hkcu.value("EnginePath", "").toString());
+            }
+            else {
+                QSettings hklm("HKEY_LOCAL_MACHINE" ACE_INSTALL_KEY, QSettings::NativeFormat);
+                engine_location = QDir::toNativeSeparators(hklm.value("EnginePath", "").toString());
+            }
+        }
+        QString aceWebLocation = engine_location.replace("ace_engine", "ace_web");
+        QStringList argslist = args.split(" ");
+        argslist.append(url.toString());
+        QProcess::startDetached(aceWebLocation, argslist);
     }
 }

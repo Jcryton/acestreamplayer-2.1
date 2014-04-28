@@ -103,7 +103,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
          /* media list */
          struct
-@@ -225,6 +297,101 @@
+@@ -225,6 +297,103 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -180,6 +180,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +            int bottom;
 +            int right;
 +            bool allow_dialogs;
++            bool allow_window_open;
 +            bool enable_flash;
 +            int cookies;
 +            const char *embed_scripts;
@@ -197,6 +198,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +            int show_time;
 +            
 +            bool start_hidden;
++            int group_id;
 +        } acestream_loadurl;
 +
 +        struct {

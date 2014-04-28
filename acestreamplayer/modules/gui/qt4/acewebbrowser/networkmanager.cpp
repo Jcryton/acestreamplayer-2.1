@@ -7,6 +7,7 @@
 #include "acewebbrowser/cookiejar.hpp"
 #include "acewebbrowser/cookiemanager.hpp"
 #include "acewebbrowser/proxyreply.hpp"
+#include "acewebbrowser/proxyreply2.hpp"
 
 #include <QSslError>
 
@@ -16,6 +17,7 @@ NetworkManager::NetworkManager(Browser *browser, QObject *parent) :
     QNetworkAccessManager(parent)
   , mBrowser(browser)
   , mReferer("")
+  , mFilterNAM(new QNetworkAccessManager(this))
 {
      mTrustedSSLHosts.append("acestream.net");
      setCookieJar(CookieManager::getInstanse()->createCookieJar(mBrowser->cookiesType()));
@@ -39,14 +41,17 @@ QNetworkReply *NetworkManager::createRequest(QNetworkAccessManager::Operation op
     }
     QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
 
-    QString url = req.url().toString();
+    //QString url = req.url().toString();
+
+    QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
+    return new ProxyReply2(reply, mFilterNAM, mBrowser, this);
+
     //TODO: replace with regex
+    //if(url.startsWith("http://www.youtube.com/watch?v=") || url.startsWith("https://www.youtube.com/watch?v=")) {
+    //    return new ProxyReply(reply, this);
+    //}
 
-    if(url.startsWith("http://www.youtube.com/watch?v=") || url.startsWith("https://www.youtube.com/watch?v=")) {
-        return new ProxyReply(reply, this);
-    }
-
-    return reply;
+    //return reply;
 }
 
 #ifndef QT_NO_OPENSSL

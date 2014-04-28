@@ -22,25 +22,12 @@ class Browser : public QWidget
 {
     Q_OBJECT
 
-    enum BrowserState {
-        BS_UNLOADED,
-        BS_LOADING,
-        BS_LOADED
-    };
-
-    enum BrowserAction {
-        BA_UNDEF,
-        BA_SHOW,
-        BA_HIDE,
-        BA_CLOSE
-    };
-
     typedef bool (*BrowserCondition)(const Browser*);
 
 public:
-    Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent = 0);
+    Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent);
     ~Browser();
-    
+
     void setPlayerFullscreen(bool state);
     void setPlayerState(int state, bool isAd);
 
@@ -49,6 +36,11 @@ public:
     BrowserCookies cookiesType();
     QStringList embedScripts();
     QString embedCode();
+    QString id();
+    bool allowWindowOpen();
+    QString engineHost();
+    int enginePort();
+    int groupId() const;
 
     void setShowAvailable(bool);
     bool showAvailable() const;
@@ -90,6 +82,8 @@ private:
     void doAction(BrowserAction action, BrowserCondition condition);
 
     void load();
+    
+    void openAceWeb(const QUrl&, const QString&);
 
 private:
     QLayout *mLayout;
@@ -116,9 +110,11 @@ private:
     bool mShowAvailable;
     bool mVisiabilityProcessingEnable;
     
-    QTimer *mCloseAfterTimer;
-    QTimer *mHideTimer;
     QTimer *mDeferredTimer;
+    QTimer *mCloseAfterIntHiddenTimer;
+    QTimer *mHideIntHiddenTimer;
+    
+    static QString engine_location;
 
 signals:
     void notifyBrowserClosed(); // for manager
@@ -129,7 +125,7 @@ signals:
 
     void registerBrowserShownEvent(AceWebBrowser::BrowserType type, QString id);
     void registerBrowserHideEvent(AceWebBrowser::BrowserType type, QString id);
-    void registerBrowserClosedEvent(AceWebBrowser::BrowserType type, QString id, bool failed, bool isInBrowserMode);
+    void registerBrowserClosedEvent(AceWebBrowser::BrowserType type, QString id, bool failed, bool isInBrowserMode, int group);
     void registerBrowserErrorEvent(AceWebBrowser::BrowserType type, QString id);
     void registerSendEvent(AceWebBrowser::BrowserType type, QString event_name, QString id);
 
@@ -150,11 +146,11 @@ private slots:
     void pageLoadStarted();
     void pageLoadFinished(bool status);
     void openUrl(const QUrl& url);
-    void openUrl(QString url, bool inNewWindow);
+    void openUrl(QString url, bool inNewWindow, bool openInAceWeb, QString arguments);
 
     void handleJSOFillParentSizeCommand();
     void handleJSOResizeCommand(QSize);
-    void handleJSOSendEvent(QString event_name);
+    void handleJSOSendEvent(QString);
     
 public slots:
     // actions

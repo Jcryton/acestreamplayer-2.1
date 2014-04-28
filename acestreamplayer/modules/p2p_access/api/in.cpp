@@ -5,7 +5,10 @@
 #include <p2p_object.h>
 #include <vlc_url.h>
 #include "in.h"
+#include "jsoncpp/value.h"
+#include "jsoncpp/reader.h"
 #include <sstream>  
+#include <time.h>
 
 using namespace std;
 
@@ -123,6 +126,7 @@ hello_in_msg *In::hello( const string &msg )
     _msg->hello_key = "";
     _msg->major = _msg->minor = _msg->build = _msg->revision = 0;
     _msg->is_alpha = false;
+    _msg->http_port = 0;
     
     vector<string> _options = In::split(msg, ' ');
     if( _options.size() > 0 ) {
@@ -161,6 +165,9 @@ hello_in_msg *In::hello( const string &msg )
             }
             else if( !_options[i].compare(0, 4, "key=") ) {
                 _msg->hello_key.assign(_options[i].substr(4));
+            }
+            else if( !_options[i].compare(0, 10, "http_port=") ) {
+                _msg->http_port = atoi(_options[i].substr(10).c_str());
             }
         }
     }
@@ -626,174 +633,119 @@ event_in_msg *In::event( const string &msg )
     return _msg;
 }
 
+static load_url_item parse_load_url_item(Json::Value value, int group) {
+    load_url_item load_item;
+    load_item.type = P2P_LOAD_URL_UNDF;
+    
+    string _type = value.get("type", "").asString();
+    if( !_type.compare("overlay") )
+        load_item.type = P2P_LOAD_URL_OVERLAY;
+    else if( !_type.compare("interactive-pause") )
+        load_item.type = P2P_LOAD_URL_PAUSE;
+    else if( !_type.compare("interactive-stop") )
+        load_item.type = P2P_LOAD_URL_STOP;
+    else if( !_type.compare("interactive-preroll") )
+        load_item.type = P2P_LOAD_URL_PREROLL;
+    else if( !_type.compare("slider") )
+        load_item.type = P2P_LOAD_URL_SLIDER;
+    else if( !_type.compare("interactive-hidden") )
+        load_item.type = P2P_LOAD_URL_HIDDEN;
+    else if( !_type.compare("interactive-preplay") )
+        load_item.type = P2P_LOAD_URL_PREPLAY;
+    else if( !_type.compare("webstat-play") )
+        load_item.type = P2P_LOAD_URL_WEBSTAT_PLAY;
+    else if( !_type.compare("webstat-pause") )
+        load_item.type = P2P_LOAD_URL_WEBSTAT_PAUSE;
+    else if( !_type.compare("webstat-stop") )
+        load_item.type = P2P_LOAD_URL_WEBSTAT_STOP;
+    else if( !_type.compare("webstat-fullscreen") )
+        load_item.type = P2P_LOAD_URL_WEBSTAT_FULLSCREEN;
+
+    load_item.id = value.get("id", "").asString();
+    load_item.url = value.get("url", "").asString();
+    load_item.require_flash = value.get("requireFlash", false).asBool();
+    load_item.width = value.get("width", 0).asInt();
+    load_item.height = value.get("height", 0).asInt();
+    load_item.left = value.get("left", 0).asInt();
+    load_item.top = value.get("top", 0).asInt();
+    load_item.right = value.get("right", 0).asInt();
+    load_item.bottom = value.get("bottom", 0).asInt();
+    load_item.min_width = value.get("minWidth", 0).asInt();
+    load_item.min_height = value.get("minHeight", 0).asInt();
+    load_item.allow_dialogs = value.get("allowDialogs", false).asBool();
+    load_item.allow_window_open = value.get("allowWindowOpen", true).asBool();
+    load_item.enable_flash = value.get("enableFlash", true).asBool();
+    load_item.cookies = value.get("cookies", 1).asInt();
+
+    load_item.embed_code = value.get("embedCode", "").asString();
+
+    load_item.preload = value.get("preload", true).asBool();
+    load_item.fullscreen = value.get("fullscreen", 0).asInt();
+
+    int maxi = value.get("maxIMpresiions", 0).asInt();
+    load_item.max_impressions = maxi == 0 ? 9999 : maxi;
+    load_item.impressions = 0;
+
+    load_item.content_type = value.get("contentType", "").asString();
+    load_item.creative_type = value.get("creativeType", "").asString();
+    load_item.click_url = value.get("clickUrl", "").asString();
+
+    load_item.user_agent = value.get("userAgent", 1).asInt();
+    load_item.close_after_seconds = value.get("closeAfter", 0).asInt();
+    load_item.show_time = value.get("showTime", 0).asInt();
+    load_item.start_hidden = value.get("startHidden", false).asBool();
+
+    load_item.group_id = group;
+
+    Json::Value eScripts = value.get("embedScripts", Json::Value::null);
+    for(int j = 0; j < eScripts.size(); ++j) {
+        string val = eScripts.get(j, "").asString();
+        if(val.compare("")) {
+            load_item.embed_scripts.push_back(val);
+        }
+    }
+
+    return load_item;
+}
+
+static void parse_load_url_array(Json::Value value, int group_id, load_url_msg *_msg) {
+    for(int i = 0; i < value.size(); ++i) {
+        Json::Value item = value.get(i, Json::Value::null);
+        if(!item.isNull()) {
+            if(item.isArray()) {
+                int _group_id = rand() % 9999 + 1000;
+                parse_load_url_array(item, _group_id, _msg);
+            }
+            else if(item.isObject()) {
+                load_url_item load_item = parse_load_url_item(item, group_id);
+                _msg->items.push_back(load_item);
+            }
+        }
+    }
+}
+
 load_url_msg *In::load_url( const string &msg )
 {
     load_url_msg *_msg = new load_url_msg;
     _msg->raw = msg;
     
     string _base = decode_url(msg);
-    size_t _pos;
-    _pos = _base.find("items=[{");
-    
-    if( _pos != string::npos ) {
-        _base = _base.substr(_pos + 8, _base.rfind("}]") - _pos - 8);
-        do {
-            _pos = _base.find("}, {");
-            string _item_str = ( _pos == string::npos ) ? _base : _base.substr( 0, _pos );
-            _base.erase( 0, _pos + 4 );
-            
-            size_t _delim_pos;
-            load_url_item item;
-            item.type = P2P_LOAD_URL_UNDF;
-            item.id = "";
-            item.url = "";
-            item.require_flash = false;
-            item.width = 0;
-            item.height = 0;
-            item.left = -1;
-            item.top = -1;
-            item.right = -1;
-            item.bottom = -1;
-            item.min_width = 0;
-            item.min_height = 0;
-            item.allow_dialogs = false;
-            item.enable_flash = true;
-            item.cookies = 1;
-            //item.embed_scripts; -> vector
-            item.embed_code = "";
-            
-            item.preload = true;
-            item.fullscreen = 0;
-
-            item.max_impressions = 0;
-            item.impressions = 0;
-
-            item.content_type = "";
-            item.creative_type = "";
-            item.click_url = "";
-            
-            item.user_agent = 1;
-            item.close_after_seconds = 0;
-            item.show_time = 0;
-            item.start_hidden = false;
-            
-            do {
-                bool _isArray = false;
-                if( !_item_str.compare(0, 17, "\"embedScripts\": [") ) {
-                    _delim_pos = _item_str.find("], \"");
-                    _isArray = true;
-                }
-                else
-                    _delim_pos = _item_str.find(", \"");
-                string _param_str = ( _delim_pos == string::npos ) ? _item_str : _item_str.substr( 0, _delim_pos );
-                _item_str.erase( 0, _isArray ? _delim_pos + 3 : _delim_pos + 2 );
-                
-                if( !_param_str.compare( 0, 8, "\"type\": " ) ) {
-                    string val = _param_str.substr(9, _param_str.length() - 10);
-                    if( !val.compare("overlay") )
-                        item.type = P2P_LOAD_URL_OVERLAY;
-                    else if( !val.compare("interactive-pause") )
-                        item.type = P2P_LOAD_URL_PAUSE;
-                    else if( !val.compare("interactive-stop") )
-                        item.type = P2P_LOAD_URL_STOP;
-                    else if( !val.compare("interactive-preroll") )
-                        item.type = P2P_LOAD_URL_PREROLL;
-                    else if( !val.compare("slider") )
-                        item.type = P2P_LOAD_URL_SLIDER;
-                    else if( !val.compare("interactive-hidden") )
-                        item.type = P2P_LOAD_URL_HIDDEN;
-                    else if( !val.compare("interactive-preplay") )
-                        item.type = P2P_LOAD_URL_PREPLAY;
-                    else if( !val.compare("webstat-play") )
-                        item.type = P2P_LOAD_URL_WEBSTAT_PLAY;
-                    else if( !val.compare("webstat-pause") )
-                        item.type = P2P_LOAD_URL_WEBSTAT_PAUSE;
-                    else if( !val.compare("webstat-stop") )
-                        item.type = P2P_LOAD_URL_WEBSTAT_STOP;
-                    else if( !val.compare("webstat-fullscreen") )
-                        item.type = P2P_LOAD_URL_WEBSTAT_FULLSCREEN;
-                }
-                else if( !_param_str.compare( 0, 6, "\"id\": " ) )
-                    item.id = _param_str.substr(7, _param_str.length() - 8);
-                else if( !_param_str.compare( 0, 7, "\"url\": " ) )
-                    item.url = _param_str.substr(8, _param_str.length() - 9);
-                else if( !_param_str.compare( 0, 16, "\"requireFlash\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.require_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 9, "\"width\": " ) )
-                    item.width = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"height\": " ) )
-                    item.height = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 8, "\"left\": " ) )
-                    item.left = atoi(_param_str.substr(8, _param_str.length() - 8).c_str());
-                else if( !_param_str.compare( 0, 7, "\"top\": " ) )
-                    item.top = atoi(_param_str.substr(7, _param_str.length() - 7).c_str());
-                else if( !_param_str.compare( 0, 9, "\"right\": " ) )
-                    item.right = atoi(_param_str.substr(9, _param_str.length() - 9).c_str());
-                else if( !_param_str.compare( 0, 10, "\"bottom\": " ) )
-                    item.bottom = atoi(_param_str.substr(10, _param_str.length() - 10).c_str());
-                else if( !_param_str.compare( 0, 12, "\"minWidth\": " ) )
-                    item.min_width = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
-                else if( !_param_str.compare( 0, 13, "\"minHeight\": " ) )
-                    item.min_height = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
-                else if( !_param_str.compare( 0, 16, "\"allowDialogs\": " ) ) {
-                    string val = _param_str.substr(16, _param_str.length() - 16);
-                    item.allow_dialogs = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 15, "\"enableFlash\": " ) ) {
-                    string val = _param_str.substr(15, _param_str.length() - 15);
-                    item.enable_flash = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 11, "\"cookies\": " ) )
-                    item.cookies = atoi(_param_str.substr(11, _param_str.length() - 11).c_str());
-                else if( !_param_str.compare( 0, 17, "\"embedScripts\": [" ) ) {
-                    if( _delim_pos == 17 ) continue;
-                    string _arr_str = _param_str.substr(18, _param_str.length() - 19);
-                    size_t _arr_delim_pos;
-                    do {
-                        _arr_delim_pos = _arr_str.find("\", \"");
-                        string _arr_item_str = ( _arr_delim_pos == string::npos ) ? _arr_str : _arr_str.substr( 0, _arr_delim_pos );
-                        _arr_str.erase( 0, _arr_delim_pos + 4 );
-                        item.embed_scripts.push_back(_arr_item_str);
-                    }
-                    while( _arr_delim_pos != string::npos );
-                }
-                else if( !_param_str.compare( 0, 13, "\"embedCode\": " ) )
-                    item.embed_code = _param_str.substr(14, _param_str.length() - 15);
-                else if( !_param_str.compare( 0, 11, "\"preload\": " ) ) {
-                    string val = _param_str.substr(11, _param_str.length() - 11);
-                    item.preload = !val.compare("true");
-                }
-                else if( !_param_str.compare( 0, 14, "\"fullscreen\": " ) )
-                    item.fullscreen = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
-                else if( !_param_str.compare( 0, 18, "\"maxImpressions\": " ) ) {
-                    int val = atoi(_param_str.substr(18, _param_str.length() - 18).c_str());
-                    item.max_impressions = val == 0 ? 9999 : val;
-                }
-                else if( !_param_str.compare( 0, 15, "\"contentType\": " ) )
-                    item.content_type = _param_str.substr(16, _param_str.length() - 17);
-                else if( !_param_str.compare( 0, 16, "\"creativeType\": " ) )
-                    item.creative_type = _param_str.substr(17, _param_str.length() - 18);
-                else if( !_param_str.compare( 0, 12, "\"clickUrl\": " ) )
-                    item.click_url = _param_str.substr(13, _param_str.length() - 14);
-                else if( !_param_str.compare( 0, 13, "\"userAgent\": " ) )
-                    item.user_agent = atoi(_param_str.substr(13, _param_str.length() - 13).c_str());
-                else if( !_param_str.compare( 0, 14, "\"closeAfter\": " ) )
-                    item.close_after_seconds = atoi(_param_str.substr(14, _param_str.length() - 14).c_str());
-                else if( !_param_str.compare( 0, 12, "\"showTime\": " ) )
-                    item.show_time = atoi(_param_str.substr(12, _param_str.length() - 12).c_str());
-                else if( !_param_str.compare( 0, 15, "\"startHidden\": " ) ) {
-                    string val = _param_str.substr(15, _param_str.length() - 15);
-                    item.start_hidden = !val.compare("true");
-                }
-            }
-            while( _delim_pos != string::npos );
-            
-            _msg->items.push_back(item);
-        }
-        while( _pos != string::npos );
+    if(!_base.compare(0, 15, "LOAD_URL items=")) {
+        _base.erase(0, 15);
     }
+    
+    Json::Value root;
+    Json::Reader reader;
+    bool parsed = reader.parse(_base, root);
+    if(!parsed) {
+        _msg->error = reader.getFormatedErrorMessages();
+        return _msg;
+    }
+    if(!root.isArray()) {
+        _msg->error = "Not array value";
+        return _msg;
+    }
+    parse_load_url_array(root, 0, _msg);
     
     return _msg;
 }

@@ -162,6 +162,7 @@ static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_v
             event.u.acestream_loadurl.right = p_loadurl->right;
             event.u.acestream_loadurl.bottom = p_loadurl->bottom;
             event.u.acestream_loadurl.allow_dialogs = p_loadurl->allow_dialogs;
+            event.u.acestream_loadurl.allow_window_open = p_loadurl->allow_window_open;
             event.u.acestream_loadurl.enable_flash = p_loadurl->enable_flash;
             event.u.acestream_loadurl.cookies = p_loadurl->cookies;
             event.u.acestream_loadurl.embed_scripts = p_loadurl->embed_scripts;
@@ -179,6 +180,7 @@ static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_v
             event.u.acestream_loadurl.show_time = p_loadurl->show_time;
             
             event.u.acestream_loadurl.start_hidden = p_loadurl->start_hidden;
+            event.u.acestream_loadurl.group_id = p_loadurl->group_id;
         }
         libvlc_event_send( p_ace->p_event_manager, &event );
     }
@@ -371,7 +373,7 @@ static void emit_events(libvlc_acestream_object_t *p_ace )
         event_state.u.acestream_state.state = state;
         libvlc_event_send( p_ace->p_event_manager, &event_state );
 
-        p2p_RequestLoadUrlAd( p_p2p, libvlc_ace_loadurl_Preplay );
+        p2p_RequestLoadUrlAd( p_p2p, libvlc_ace_loadurl_Preplay, 0 );
     }
 }
 
@@ -654,7 +656,14 @@ void libvlc_acestream_object_skip( libvlc_acestream_object_t *p_ace )
 void libvlc_acestream_object_request_loadurl(libvlc_acestream_object_t *p_ace, libvlc_acestream_loadurl_type_t type)
 {
     vlc_mutex_lock( &p_ace->object_lock );
-    p2p_RequestLoadUrlAd( getP2P(p_ace->p_libvlc_instance), type );
+    p2p_RequestLoadUrlAd( getP2P(p_ace->p_libvlc_instance), type, 0 );
+    vlc_mutex_unlock( &p_ace->object_lock );
+}
+
+void libvlc_acestream_object_request_loadurl_from_group(libvlc_acestream_object_t *p_ace, libvlc_acestream_loadurl_type_t type, int group_id)
+{
+    vlc_mutex_lock( &p_ace->object_lock );
+    p2p_RequestLoadUrlAd( getP2P(p_ace->p_libvlc_instance), type, group_id );
     vlc_mutex_unlock( &p_ace->object_lock );
 }
 
@@ -676,4 +685,26 @@ void libvlc_acestream_object_register_loadurl_event(libvlc_acestream_object_t *p
     vlc_mutex_lock( &p_ace->object_lock );
     p2p_RegisterLoadUrlAdEvent( getP2P(p_ace->p_libvlc_instance), type, event_type, id );
     vlc_mutex_unlock( &p_ace->object_lock );
+}
+
+char *libvlc_acestream_object_get_engine_http_host( libvlc_acestream_object_t *p_ace, char *out )
+{
+    char *host = NULL;
+    vlc_mutex_lock( &p_ace->object_lock );
+    host = var_GetString( getP2P( p_ace->p_libvlc_instance ), "engine-http-host" );
+    vlc_mutex_unlock( &p_ace->object_lock );
+    if(host) {
+        strcpy(out, host);
+        free(host);
+    }
+    return out;
+}
+
+int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_object_t *p_ace )
+{
+    int port = 0;
+    vlc_mutex_lock( &p_ace->object_lock );    
+    port = var_GetInteger( getP2P( p_ace->p_libvlc_instance ), "engine-http-port" );
+    vlc_mutex_unlock( &p_ace->object_lock );
+    return port;
 }

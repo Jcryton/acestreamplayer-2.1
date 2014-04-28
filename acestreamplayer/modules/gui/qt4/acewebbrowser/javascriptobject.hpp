@@ -34,7 +34,7 @@ signals:
     void jsoHideBrowser();
     void jsoShowBrowser();
     void jsoCloseBrowserAfter(unsigned int);
-    void jsoLinkOpen(QString url, bool openInNewWindow);
+    void jsoLinkOpen(QString url, bool openInNewWindow, bool openInAceWeb, QString arguments);
     void jsoPlayerPlay();
     void jsoPlayerPause();
     void jsoPlayerStop();
@@ -51,7 +51,7 @@ public slots:
     void browserShow();
     void browserCloseAfter(unsigned int);
 
-    void linkOpen(QString url, bool openInNewWindow);
+    void linkOpen(QString url, bool openInNewWindow, bool openInAceWeb = false, QString arguments = "");
     void playerPlay();
     void playerPause();
     void playerStop();
@@ -71,9 +71,9 @@ public slots:
     unsigned int playerHeight() { return mPlayerSize.height(); }
     unsigned int browserWidth() { return mBrowserSize.width(); }
     unsigned int browserHeight() { return mBrowserSize.height(); }
-    
+
     void debug(QString msg);
-    
+
     void handlePlayerSizeChanged(const QSize &);
     void handleBrowserSizeChanged(const QSize &);
 };

@@ -165,6 +165,7 @@ struct p2p_load_url_item_t {
     int right;
     int bottom;
     bool allow_dialogs;
+    bool allow_window_open;
     bool enable_flash;
     int cookies;
     const char *embed_scripts;
@@ -185,6 +186,8 @@ struct p2p_load_url_item_t {
     bool start_hidden;
     int user_agent;
     bool clear;
+    
+    int group_id;
 };
 
 struct p2p_showdialog_item_t {
@@ -250,7 +253,7 @@ struct p2p_object_t {
     bool (*pf_save_option) (p2p_object_t*, const char*, const char*, const char*);
     
     void (*pf_register_load_url_ad_stat) (p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
-    void (*pf_request_load_url_ad) (p2p_object_t*, p2p_load_url_type_t);
+    void (*pf_request_load_url_ad) (p2p_object_t*, p2p_load_url_type_t, int);
     void (*pf_register_load_url_ad_event) (p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
 };
 
@@ -286,7 +289,7 @@ VLC_API bool p2p_SaveOption(p2p_object_t*, const char*, const char*, const char*
 VLC_API void p2p_VideoClickActivate( p2p_object_t*, bool );
 
 VLC_API void p2p_RegisterLoadUrlAdStatistics(p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
-VLC_API void p2p_RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t);
+VLC_API void p2p_RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t, int);
 VLC_API void p2p_RegisterLoadUrlAdEvent(p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
 
 # ifdef __cplusplus

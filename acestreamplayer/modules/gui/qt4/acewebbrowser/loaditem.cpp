@@ -27,7 +27,8 @@ QDebug operator<<(QDebug debug, const LoadItem &item)
         << "\r  UserAgent: " << (int)item.userAgent()
         << "\r  CloseAfter: " << item.closeAfterSeconds()
         << "\r  ShowTime: " << item.showTime()
-        << "\r  StartHidden: " << item.startHidden();
+        << "\r  StartHidden: " << item.startHidden()
+        << "\r  AllowWindowOpen: " << item.allowWindowOpen();
     return debug.space();
 }
 
@@ -40,7 +41,7 @@ LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
                                  bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
                                  bool _preload,
                                  QString _contentT, QString _creativeT, QString _clickU,
-                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH)
+                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group)
     : mType(_type)
     , mId(_id)
     , mUrl(_url)
@@ -69,6 +70,10 @@ LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
     , mCloseAfterSeconds(_cA)
     , mShowTime(_sT)
     , mStartHidden(_sH)
+    , mAllowWindowOpen(_allowWO)
+    , mEngineHttpHost("")
+    , mEngineHttpPort(0)
+    , mGroupId(_group)
 {
 }
 
@@ -99,8 +104,12 @@ LoadItem::LoadItem(const LoadItem &other)
     , mEventHideRegistered(false)
     , mEventCompleteRegistered(false)
     , mCloseAfterSeconds(other.closeAfterSeconds())
-    , mShowTime(other.showTime())
     , mStartHidden(other.startHidden())
+    , mShowTime(other.showTime())
+    , mAllowWindowOpen(other.allowWindowOpen())
+    , mEngineHttpHost(other.engineHttpHost())
+    , mEngineHttpPort(other.engineHttpPort())
+    , mGroupId(other.groupId())
 {
 }
 
@@ -172,6 +181,11 @@ bool LoadItem::allowDialogs() const
     return mAllowDialogs;
 }
 
+bool LoadItem::allowWindowOpen() const
+{
+    return mAllowWindowOpen;
+}
+
 bool LoadItem::enableFlash() const
 {
     return mEnableFlash;
@@ -238,6 +252,31 @@ void LoadItem::clear()
 bool LoadItem::isCleared() const
 {
     return mType == BTYPE_UNDEFINED && mId == "" && mUrl == "";
+}
+
+void LoadItem::setEngineHttpHost(const QString &host)
+{
+    mEngineHttpHost = host;
+}
+
+void LoadItem::setEngineHttpPort(int port)
+{
+    mEngineHttpPort = port;
+}
+
+QString LoadItem::engineHttpHost() const
+{
+    return mEngineHttpHost;
+}
+
+int LoadItem::engineHttpPort() const
+{
+    return mEngineHttpPort;
+}
+
+int LoadItem::groupId() const
+{
+    return mGroupId;
 }
 
 QString AceWebBrowser::LoadItem::hostUserAgent() const

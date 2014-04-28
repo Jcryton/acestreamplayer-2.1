@@ -86,10 +86,10 @@ static int P2PDisplaySizeCallback(vlc_object_t *p_this, char const *psz_cmd, vlc
     int w, h;    
     var_GetCoords(p_p2p, "vout-display-size", &w, &h);
     msg_P2PLog( p_p2p, "[p2p_object.c] requesting new interactive because off resize %d %d", w, h );
-    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_OVERLAY);
-    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_PAUSE);
+    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_OVERLAY, 0);
+    p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_PAUSE, 0);
     if( w!=0 && h!=0 ) {
-        p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_STOP);
+        p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_STOP, 0);
     }
     
     return VLC_SUCCESS;
@@ -111,6 +111,10 @@ static void VariablesInit( p2p_object_t *p_p2p )
     var_SetString( p_p2p, "error", "" );
     var_Create( p_p2p, "engine-version", VLC_VAR_STRING );
     var_SetString( p_p2p, "engine-version", "" );
+    var_Create( p_p2p, "engine-http-host", VLC_VAR_STRING );
+    var_SetString( p_p2p, "engine-http-host", "127.0.0.1" );
+    var_Create( p_p2p, "engine-http-port", VLC_VAR_INTEGER );
+    var_SetInteger( p_p2p, "engine-http-port", 0 );
     
     var_Create( p_p2p, "vout-display-size", VLC_VAR_COORDS );
     var_SetCoords( p_p2p, "vout-display-size", 0, 0 );
@@ -149,6 +153,8 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     var_Destroy( p_p2p, "status-raw" );
     var_Destroy( p_p2p, "error" );
     var_Destroy( p_p2p, "engine-version" );
+    var_Destroy( p_p2p, "engine-http-host" );
+    var_Destroy( p_p2p, "engine-http-port" );
 
     var_DelCallback( p_p2p, "vout-display-size", P2PDisplaySizeCallback, NULL );
     var_Destroy( p_p2p, "vout-display-size" );
@@ -429,11 +435,11 @@ void p2p_RegisterLoadUrlAdStatistics(p2p_object_t *p_p2p, p2p_load_url_type_t ty
     vlc_mutex_unlock( &p_p2p->lock );
 }
 
-void p2p_RequestLoadUrlAd(p2p_object_t *p_p2p, p2p_load_url_type_t type)
+void p2p_RequestLoadUrlAd(p2p_object_t *p_p2p, p2p_load_url_type_t type, int group_id)
 {
     vlc_mutex_lock( &p_p2p->lock );
     if( p_p2p->pf_request_load_url_ad )
-        p_p2p->pf_request_load_url_ad( p_p2p, (int)type );
+        p_p2p->pf_request_load_url_ad( p_p2p, (int)type, group_id );
     vlc_mutex_unlock( &p_p2p->lock );
 }
 

@@ -47,6 +47,7 @@ JSObject::JSObject()
     idMap.insert(std::make_pair(L"browserHeight", DISPID_USER_BROWSER_HEIGHT));
 
     idMap.insert(std::make_pair(L"debug", DISPID_USER_DEBUG));
+
     idMap.insert(std::make_pair(L"playerToggleFullscreen", DISPID_USER_PLAYER_TOGGLE_FULLSCREEN));
 }
 
@@ -171,8 +172,16 @@ HRESULT STDMETHODCALLTYPE JSObject::Invoke(DISPID dispIdMember, REFIID riid,
             case DISPID_USER_LINK_OPEN: {
                 QString url = args.at(0).toString();
                 bool newwindow = args.at(1).toInt();
-                qDebug() << "JSObject::Invoke: linkOpen" << url << newwindow;
-                emit jsoLinkOpen(url, newwindow);
+                bool aceweb = false;
+                QString cmdline = "";
+                if(args.size() > 2)  {
+                    aceweb = args.at(2).toInt();
+                }
+                if(args.size() > 3)  {
+                    cmdline = args.at(3).toString();
+                }
+                qDebug() << "JSObject::Invoke: linkOpen" << url << newwindow << aceweb << cmdline;
+                emit jsoLinkOpen(url, newwindow, aceweb, cmdline);
                 break;
             }
             case DISPID_USER_PLAYER_PLAY: {
@@ -345,9 +354,17 @@ void JSObject::invokeJSMethod(const QString &raw)
     }
     else if(!params.at(0).compare("linkOpen") && params.size() >= 3) {
         QString url = params.at(1);
-        bool newwindow = !params.at(2).compare("true", Qt::CaseInsensitive);;
-        qDebug() << "JSObject::invokeJSMethod: linkOpen" << url << newwindow;
-        emit jsoLinkOpen(url, newwindow);
+        bool newwindow = !params.at(2).compare("true", Qt::CaseInsensitive);
+        bool aceweb = false;
+        QString cmdline = "";
+        if(params.size() > 3) {
+            aceweb = !params.at(3).compare("true", Qt::CaseInsensitive);
+        }
+        if(params.size() > 4) {
+            cmdline = params.at(4);
+        }
+        qDebug() << "JSObject::invokeJSMethod: linkOpen" << url << newwindow << aceweb << cmdline;
+        emit jsoLinkOpen(url, newwindow, aceweb, cmdline);
     }
     else if(!params.at(0).compare("playerPlay")) {
         qDebug() << "JSObject::invokeJSMethod: playerPlay";

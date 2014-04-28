@@ -25,6 +25,7 @@ private:
     QList<QString> mTrustedSSLHosts;
     Browser *mBrowser;
     QString mReferer;
+    QNetworkAccessManager *mFilterNAM;
 
 private slots:
 #ifndef QT_NO_OPENSSL

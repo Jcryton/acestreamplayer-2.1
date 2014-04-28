@@ -99,6 +99,11 @@ void WebView::setScrollbarsEnable(bool enable)
 QWebView *WebView::createWindow(QWebPage::WebWindowType type)
 {
     Q_UNUSED(type)
+    Browser *parentBrowser = qobject_cast<Browser *>(parentWidget());
+    if(parentBrowser && !parentBrowser->allowWindowOpen()) {
+        qDebug() << "WebView::createWindow: creating new windows disabled";
+        return NULL;
+    }
     if(mDelegationPolicy == QWebPage::DelegateAllLinks) {
         // hack for window.open(...);
         DummyBrowser *dummy = new DummyBrowser(this);

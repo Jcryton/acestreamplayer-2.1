@@ -4,6 +4,21 @@ SOURCES_p2p_access = \
     api/out.cpp \
     api/in.h \
     api/in.cpp \
+    jsoncpp/autolink.h \
+    jsoncpp/config.h \
+    jsoncpp/features.h \
+    jsoncpp/forwards.h \
+    jsoncpp/json.h \
+    jsoncpp/json_batchallocator.h \
+    jsoncpp/reader.h \
+    jsoncpp/value.h \
+    jsoncpp/writer.h \
+    jsoncpp/json_internalarray.inl \
+    jsoncpp/json_internalmap.inl \
+    jsoncpp/json_reader.cpp \
+    jsoncpp/json_value.cpp \
+    jsoncpp/json_valueiterator.inl \
+    jsoncpp/json_writer.cpp \
     developer.h \
     connection.h \
     connection.cpp \

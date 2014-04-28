@@ -280,7 +280,7 @@ diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
 +    add_bool( "audio-mute-saved", 0, N_( "Saved mute value" ), N_( "Saved mute value" ), false )
 +    change_safe ()
 +    change_private ()
-+    add_float( "audio-volume-saved", 2., N_( "Saved volume value" ), N_( "Saved volume value" ), false )
++    add_float( "audio-volume-saved", 0.6, N_( "Saved volume value" ), N_( "Saved volume value" ), false )
 +    change_safe ()
 +    change_private ()
  

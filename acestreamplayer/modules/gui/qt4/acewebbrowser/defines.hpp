@@ -12,6 +12,12 @@
 
 namespace AceWebBrowser {
 
+#ifdef TORRENT_STREAM
+#define ACE_INSTALL_KEY "\\Software\\TorrentStream\\"
+#else
+#define ACE_INSTALL_KEY "\\Software\\ACEStream\\"
+#endif
+
 enum BrowserType {
     BTYPE_UNDEFINED = -1,
     BTYPE_PAUSE = 0,

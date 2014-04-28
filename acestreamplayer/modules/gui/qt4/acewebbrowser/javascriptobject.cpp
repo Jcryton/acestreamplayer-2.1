@@ -68,9 +68,9 @@ void JavaScriptObject::browserCloseAfter(unsigned int secs)
     emit jsoCloseBrowserAfter(secs);
 }
 
-void JavaScriptObject::linkOpen(QString url, bool openInNewWindow)
+void JavaScriptObject::linkOpen(QString url, bool openInNewWindow, bool openInAceWeb, QString arguments)
 {
-    emit jsoLinkOpen(url, openInNewWindow);
+    emit jsoLinkOpen(url, openInNewWindow, openInAceWeb, arguments);
 }
 
 void JavaScriptObject::linkOpenLater(QString url, bool high_priority)
