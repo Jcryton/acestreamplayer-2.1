@@ -56,6 +56,8 @@ public:
 
     bool isAlreadyLoading(const LoadItem &item);
     void load(const LoadItem &item);
+    
+    bool needsReshowing() const { return mNeedsReshowing; }
 
 protected:
     void showEvent(QShowEvent *event);
@@ -115,6 +117,7 @@ private:
     QTimer *mHideIntHiddenTimer;
     
     static QString engine_location;
+    bool mNeedsReshowing;
 
 signals:
     void notifyBrowserClosed(); // for manager

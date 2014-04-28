@@ -2,14 +2,13 @@
 # include "config.h"
 #endif
 
-#include "acewebbrowser/proxyreply.hpp"
+#include "acewebbrowser/proxyreply2.hpp"
 #include "acewebbrowser/fake.hpp"
+#include "acewebbrowser/browser.hpp"
+#include "acewebbrowser/browsermanager.hpp"
 
 #include <QNetworkCookie>
 #include <QDebug>
-#include <QWebPage>
-#include <QWebFrame>
-#include <QWebElement>
 
 using namespace AceWebBrowser;
 
@@ -110,7 +109,7 @@ void ProxyReply2::setReadBufferSize(qint64 size)
 
 qint64 ProxyReply2::bytesAvailable() const
 {
-    return QIODevice::bytesAvailable();
+    return mRealReply->bytesAvailable() + QIODevice::bytesAvailable();
 }
 
 qint64 ProxyReply2::readData(char *data, qint64 maxlen)

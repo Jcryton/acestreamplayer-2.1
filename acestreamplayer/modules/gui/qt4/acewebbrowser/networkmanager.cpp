@@ -39,8 +39,6 @@ QNetworkReply *NetworkManager::createRequest(QNetworkAccessManager::Operation op
         qDebug() << "NetworkManager::createRequest referer:" << mReferer;
         request.setRawHeader("Referer", mReferer.toUtf8());
     }
-    QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-
     //QString url = req.url().toString();
 
     QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);

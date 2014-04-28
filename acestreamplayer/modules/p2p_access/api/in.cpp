@@ -666,10 +666,10 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
     load_item.require_flash = value.get("requireFlash", false).asBool();
     load_item.width = value.get("width", 0).asInt();
     load_item.height = value.get("height", 0).asInt();
-    load_item.left = value.get("left", 0).asInt();
-    load_item.top = value.get("top", 0).asInt();
-    load_item.right = value.get("right", 0).asInt();
-    load_item.bottom = value.get("bottom", 0).asInt();
+    load_item.left = value.get("left", -1).asInt();
+    load_item.top = value.get("top", -1).asInt();
+    load_item.right = value.get("right", -1).asInt();
+    load_item.bottom = value.get("bottom", -1).asInt();
     load_item.min_width = value.get("minWidth", 0).asInt();
     load_item.min_height = value.get("minHeight", 0).asInt();
     load_item.allow_dialogs = value.get("allowDialogs", false).asBool();

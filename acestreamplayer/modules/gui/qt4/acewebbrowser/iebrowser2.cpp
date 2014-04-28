@@ -15,6 +15,7 @@
 #include <QCoreApplication>
 #include <QProcess>
 #include <QSettings>
+#include <QDir>
 
 using namespace AceWebBrowser;
 

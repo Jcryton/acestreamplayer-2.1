@@ -22,6 +22,7 @@
 #include <QTimer>
 #include <QProcess>
 #include <QSettings>
+#include <QDir>
 
 using namespace AceWebBrowser;
 
@@ -73,6 +74,7 @@ Browser::Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent)
   , mDeferredTimer(0)
   , mCloseAfterIntHiddenTimer(0)
   , mHideIntHiddenTimer(0)
+  , mNeedsReshowing(false)
 {
     setObjectName("Browser");
 
@@ -554,6 +556,7 @@ void Browser::showBrowser()
             (!mIsAd || type() == AceWebBrowser::BTYPE_PREROLL || type() == BTYPE_PREPLAY)) {
         qDebug() << "Browser::showBrowser: showing parent visible" << parentWidget()->isVisible();
         emit notifyParentCommandToShow(type());
+        mNeedsReshowing = true;
         show();
         raise();
     }
@@ -573,7 +576,7 @@ void Browser::closeBrowser(bool failed)
 
     mDieing = true;
     if(!mItem.hideRegistered()) {
-        emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled);
+        emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled, mItem.groupId());
         mItem.setHideRegistered(true);
     }
     hideBrowser();
@@ -667,6 +670,7 @@ void Browser::handleParentStopClicked()
  ******************************/
 void Browser::showEvent(QShowEvent *event)
 {
+    mNeedsReshowing = false;
     if(mVisiabilityProcessingEnable) {
         emit notifyBrowserVisiabilityChanged(mItem.type(), true);
 
@@ -687,6 +691,7 @@ void Browser::showEvent(QShowEvent *event)
 
 void Browser::hideEvent(QHideEvent *event)
 {
+    mNeedsReshowing = false;
     if(mVisiabilityProcessingEnable) {
         emit notifyBrowserVisiabilityChanged(mItem.type(), false);
 
@@ -695,9 +700,11 @@ void Browser::hideEvent(QHideEvent *event)
             WebPage *page = qobject_cast<WebPage*>(mWebView->page());
             page->setDialogsCanBeShown(false);
         }
-        if(!mItem.hideRegistered()) {
-            emit registerBrowserHideEvent(mItem.type(), mItem.id());
-            mItem.setHideRegistered(true);
+        if(type() != BTYPE_HIDDEN) {
+            if(!mItem.hideRegistered()) {
+                emit registerBrowserHideEvent(mItem.type(), mItem.id());
+                mItem.setHideRegistered(true);
+            }
         }
     }
     event->accept();

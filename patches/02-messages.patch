@@ -52,7 +52,7 @@ diff -ru vlc-2.1.2.orig/src/misc/messages.c vlc-2.1.2/src/misc/messages.c
 +    if( b_log_enable && psz_filepath ) {
 +        FILE *file = vlc_fopen( psz_filepath, "at" );
 +        vfprintf( file, msg, args );
-+        fputs( "\r\n", file );
++        fputs( "\n", file );
 +        fclose( file );
 +        free(psz_filepath);
 +    }
