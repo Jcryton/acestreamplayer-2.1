@@ -84,8 +84,6 @@ private:
     void doAction(BrowserAction action, BrowserCondition condition);
 
     void load();
-    
-    void openAceWeb(const QUrl&, const QString&);
 
 private:
     QLayout *mLayout;
@@ -116,7 +114,6 @@ private:
     QTimer *mCloseAfterIntHiddenTimer;
     QTimer *mHideIntHiddenTimer;
     
-    static QString engine_location;
     bool mNeedsReshowing;
 
 signals:
@@ -149,7 +146,7 @@ private slots:
     void pageLoadStarted();
     void pageLoadFinished(bool status);
     void openUrl(const QUrl& url);
-    void openUrl(QString url, bool inNewWindow, bool openInAceWeb, QString arguments);
+    void openUrl(QString url, bool inNewWindow, bool _openInAceWeb, QString arguments);
 
     void handleJSOFillParentSizeCommand();
     void handleJSOResizeCommand(QSize);

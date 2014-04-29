@@ -202,8 +202,16 @@ HRESULT STDMETHODCALLTYPE JSObject::Invoke(DISPID dispIdMember, REFIID riid,
             case DISPID_USER_OPEN_LINK_LATER: {
                 QString url = args.at(0).toString();
                 bool priority = args.at(1).toInt();
-                qDebug() << "JSObject::Invoke: linkOpenLater" << url << priority;
-                emit jsoLinkOpenLater(url, priority);
+                bool aceweb = false;
+                QString cmdline = "";
+                if(args.size() > 2)  {
+                    aceweb = args.at(2).toInt();
+                }
+                if(args.size() > 3)  {
+                    cmdline = args.at(3).toString();
+                }
+                qDebug() << "JSObject::Invoke: linkOpenLater" << url << priority << aceweb << cmdline;
+                emit jsoLinkOpenLater(url, priority, aceweb, cmdline);
                 break;
             }
             case DISPID_USER_FILL_PLAYER_SIZE: {
@@ -381,8 +389,16 @@ void JSObject::invokeJSMethod(const QString &raw)
     else if(!params.at(0).compare("linkOpenLater") && params.size() >= 3) {
         QString url = params.at(1);
         bool priority = !params.at(2).compare("true", Qt::CaseInsensitive);
-        qDebug() << "JSObject::invokeJSMethod: linkOpenLater" << url << priority;
-        emit jsoLinkOpenLater(url, priority);
+        bool aceweb = false;
+        QString cmdline = "";
+        if(params.size() > 3) {
+            aceweb = !params.at(3).compare("true", Qt::CaseInsensitive);
+        }
+        if(params.size() > 4) {
+            cmdline = params.at(4);
+        }
+        qDebug() << "JSObject::invokeJSMethod: linkOpenLater" << url << priority << aceweb << cmdline;
+        emit jsoLinkOpenLater(url, priority, aceweb, cmdline);
     }
     else if(!params.at(0).compare("fillPlayerSize")) {
         qDebug() << "JSObject::invokeJSMethod: fillPlayerSize";

@@ -93,7 +93,7 @@ signals:
     void jsoPlayerPlay();
     void jsoPlayerPause();
     void jsoPlayerStop();
-    void jsoLinkOpenLater(QString url, bool high_priority);
+    void jsoLinkOpenLater(QString url, bool high_priority, bool openInAceWeb, QString arguments);
     void jsoFillPlayerSize();
     void jsoPlayerSetFullscreen(bool);
     void jsoBrowserSetSize(const QSize&);

@@ -13,13 +13,9 @@
 #include <QResizeEvent>
 #include <QDesktopServices>
 #include <QCoreApplication>
-#include <QProcess>
-#include <QSettings>
-#include <QDir>
 
 using namespace AceWebBrowser;
 
-QString IEBrowser2::engine_location = "";
 IEBrowser2::IEBrowser2(const LoadItem &item, QWidget *parent) :
     QWidget(parent)
   , mItem(item)
@@ -49,7 +45,7 @@ IEBrowser2::IEBrowser2(const LoadItem &item, QWidget *parent) :
         mWebView = new IEWebView(this);
     }
     catch(Exception *e) {
-        throw new BrowserException(e->message(), mItem.type(), mItem.id());
+        throw new BrowserException(e->message(), mItem.type(), mItem.urlWithId()->id());
     }
 
     layout->addWidget(mWebView);
@@ -100,7 +96,7 @@ IEBrowser2::~IEBrowser2()
 
 QString IEBrowser2::baseUrl() const
 {
-    return mItem.url();
+    return mItem.urlWithId()->url();
 }
 
 BrowserType IEBrowser2::type()
@@ -147,7 +143,7 @@ void IEBrowser2::load(const LoadItem &item)
         updateSizing();
         mJSO->setHostUserAgent(mItem.hostUserAgent());
         mJSO->setFlashEnabled(mItem.enableFlash());
-        mWebView->load(QUrl(mItem.url()));
+        mWebView->load(QUrl(mItem.urlWithId()->url()));
         mState = BS_LOADING;
     }
 }
@@ -319,10 +315,10 @@ void IEBrowser2::closeBrowser(bool failed)
     hideBrowser();
     mWebView->clear();
     if(failed) {
-        emit registerBrowserErrorEvent(mItem.type(), mItem.id());
+        emit registerBrowserErrorEvent(mItem.type(), mItem.urlWithId()->id());
     }
     else {
-        emit registerBrowserSuccessEvent(mItem.type(), mItem.id());
+        emit registerBrowserSuccessEvent(mItem.type(), mItem.urlWithId()->id());
     }
 }
 
@@ -354,7 +350,7 @@ void IEBrowser2::ieDocumentComplete(IDispatch *dispatch, QVariant &url)
 
     //mWebView->AddCustomObject(dispatch, mJSO, JSO_NAME);
     mWebView->connectEmbedElements(dispatch);
-    if(url == QUrl(mItem.url()) && mState == BS_LOADING) {
+    if(url == QUrl(mItem.urlWithId()->url()) && mState == BS_LOADING) {
         mState = BS_LOADED;
         if(!mItem.startHidden()) {
             showBrowser();
@@ -377,7 +373,7 @@ void IEBrowser2::ieDownloadComplete()
 void IEBrowser2::ieNavigateError(IDispatch *, QVariant &url, QVariant &targetFrameName, QVariant &statusCode, bool &cancel)
 {
     qDebug() << "IEBrowser2::ieNavigateError: url =" << url.toString() << "frame =" << targetFrameName.toString() << "code =" << statusCode.toString();
-    if(url == QUrl(mItem.url())) {
+    if(url == QUrl(mItem.urlWithId()->url())) {
         cancel = true;
         mState = BS_ERROR;
         closeBrowser(true);
@@ -409,6 +405,7 @@ void IEBrowser2::ieBeforeNavigate2(IDispatch *frame, QVariant &url, QVariant &fl
     qDebug() << "IEBrowser2::ieBeforeNavigate2: url =" << url.toString() << "hash =" << qurl.fragment() << "frame =" << targetFrameName.toString();
     if(qurl.scheme() != "http" && qurl.scheme() != "https") {
         return;
+    }
 
     QString fragment = qurl.fragment();
     if(fragment.startsWith("acestream:")) {
@@ -421,8 +418,8 @@ void IEBrowser2::ieBeforeNavigate2(IDispatch *frame, QVariant &url, QVariant &fl
     
     if(!isFrame) {
         // top level
-        if(qurl.host() != QUrl(mItem.url()).host()) {
-            qDebug() << "IEBrowser2::ieBeforeNavigate2: cancel navigation: host =" << url.toString() << "dest =" << mItem.url();
+        if(qurl.host() != QUrl(mItem.urlWithId()->url()).host()) {
+            qDebug() << "IEBrowser2::ieBeforeNavigate2: cancel navigation: host =" << url.toString() << "dest =" << mItem.urlWithId()->url();
             cancel = true;
             openUrl(qurl.toString(), true);
         }
@@ -440,10 +437,6 @@ void IEBrowser2::ieWindowClosing(bool isChildWindow, bool &cancel)
     Q_UNUSED(isChildWindow)
 
     qDebug() << "IEBrowser2::ieWindowClosing: isChildWindow =" << isChildWindow;
-
-
-
-
     cancel = true;
 }
 
@@ -476,16 +469,16 @@ void IEBrowser2::handleJSOResizeCommand(QSize newSz)
 void IEBrowser2::handleJSOSendEvent(QString event_name)
 {
     qDebug() << "IEBrowser2::handleJSOSendEvent: event_name =" << event_name;
-    emit registerBrowserSendEvent(mItem.type(), event_name, mItem.id());
+    emit registerBrowserSendEvent(mItem.type(), event_name, mItem.urlWithId()->id());
 }
 
-void IEBrowser2::openUrl(QString url, bool inNewWindow, bool openInAceWeb, QString arguments)
+void IEBrowser2::openUrl(QString url, bool inNewWindow, bool _openInAceWeb, QString arguments)
 {
     qDebug() << "IEBrowser2::openUrl" << url << "new window" << inNewWindow;
 
     
-    if(openInAceWeb) {
-        openAceWeb(QUrl(url), arguments);
+    if(_openInAceWeb) {
+        OpenInAceWeb(QUrl(url), arguments);
         emit notifyNeedExitFullscreen();
     }
     else if(inNewWindow) {
@@ -497,25 +490,5 @@ void IEBrowser2::openUrl(QString url, bool inNewWindow, bool openInAceWeb, QStri
             // navigate
             mWebView->load(QUrl(url));
         }
-    }
-}
-
-void IEBrowser2::openAceWeb(const QUrl &url, const QString &args)
-{
-    if(url.isValid()) {
-        if(engine_location.isEmpty()) {
-            QSettings hkcu("HKEY_CURRENT_USER" ACE_INSTALL_KEY, QSettings::NativeFormat);
-            if(hkcu.contains("EnginePath")) {
-                engine_location = QDir::toNativeSeparators(hkcu.value("EnginePath", "").toString());
-            }
-            else {
-                QSettings hklm("HKEY_LOCAL_MACHINE" ACE_INSTALL_KEY, QSettings::NativeFormat);
-                engine_location = QDir::toNativeSeparators(hklm.value("EnginePath", "").toString());
-            }
-        }
-        QString aceWebLocation = engine_location.replace("ace_engine", "ace_web");
-        QStringList argslist = args.split(" ");
-        argslist.append(url.toString());
-        QProcess::startDetached(aceWebLocation, argslist);
     }
 }

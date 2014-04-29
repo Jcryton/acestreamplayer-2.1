@@ -73,9 +73,9 @@ void JavaScriptObject::linkOpen(QString url, bool openInNewWindow, bool openInAc
     emit jsoLinkOpen(url, openInNewWindow, openInAceWeb, arguments);
 }
 
-void JavaScriptObject::linkOpenLater(QString url, bool high_priority)
+void JavaScriptObject::linkOpenLater(QString url, bool high_priority, bool openInAceWeb, QString arguments)
 {
-    emit jsoLinkOpenLater(url, high_priority);
+    emit jsoLinkOpenLater(url, high_priority, openInAceWeb, arguments);
 }
 
 void JavaScriptObject::fillPlayerSize()

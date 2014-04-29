@@ -9,6 +9,10 @@
 
 #include <QMetaType>
 #include <QDebug>
+#include <QSettings>
+#include <QProcess>
+#include <QDir>
+#include <QUrl>
 
 namespace AceWebBrowser {
 
@@ -17,6 +21,29 @@ namespace AceWebBrowser {
 #else
 #define ACE_INSTALL_KEY "\\Software\\ACEStream\\"
 #endif
+
+static QString engine_location = "";
+static void OpenInAceWeb(const QUrl &url, const QString &args)
+{
+    if(url.isValid()) {
+#ifdef Q_OS_WIN
+        if(engine_location.isEmpty()) {
+            QSettings hkcu("HKEY_CURRENT_USER" ACE_INSTALL_KEY, QSettings::NativeFormat);
+            if(hkcu.contains("EnginePath")) {
+                engine_location = QDir::toNativeSeparators(hkcu.value("EnginePath", "").toString());
+            }
+            else {
+                QSettings hklm("HKEY_LOCAL_MACHINE" ACE_INSTALL_KEY, QSettings::NativeFormat);
+                engine_location = QDir::toNativeSeparators(hklm.value("EnginePath", "").toString());
+            }
+        }
+        QString aceWebLocation = engine_location.replace("ace_engine", "ace_web");
+        QStringList argslist = args.split(" ");
+        argslist.append(url.toString());
+        QProcess::startDetached(aceWebLocation, argslist);
+#endif
+    }
+}
 
 enum BrowserType {
     BTYPE_UNDEFINED = -1,

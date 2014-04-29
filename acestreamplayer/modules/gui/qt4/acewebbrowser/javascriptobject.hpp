@@ -38,7 +38,7 @@ signals:
     void jsoPlayerPlay();
     void jsoPlayerPause();
     void jsoPlayerStop();
-    void jsoLinkOpenLater(QString url, bool high_priority);
+    void jsoLinkOpenLater(QString url, bool high_priority, bool openInAceWeb, QString arguments);
     void jsoFillPlayerSize();
     void jsoPlayerSetFullscreen(bool);
     void jsoBrowserSetSize(const QSize&);
@@ -55,7 +55,7 @@ public slots:
     void playerPlay();
     void playerPause();
     void playerStop();
-    void linkOpenLater(QString url, bool high_priority);
+    void linkOpenLater(QString url, bool high_priority, bool openInAceWeb = false, QString arguments = "");
     void fillPlayerSize();
     void playerSetFullscreen(bool);
     void browserSetSize(unsigned int, unsigned int);

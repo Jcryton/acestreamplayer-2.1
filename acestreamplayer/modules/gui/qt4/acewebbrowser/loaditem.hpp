@@ -11,11 +11,39 @@
 
 namespace AceWebBrowser {
 
+class UrlWithId {
+public:
+    UrlWithId() {}
+    UrlWithId(QStringList _url, QStringList _id)
+        : urls(_url), ids(_id), index(0) {}
+
+    QString url() const { return urls.at(index); }
+    QString urlsString() const { return urls.join(";"); }
+    QString id() const { return ids.at(index); }
+    QString idsString() const { return ids.join(";"); }
+    bool next() const {
+        if(index < urls.size() - 1) { ++index; return true; }
+        else { return false; }
+    }
+
+    bool operator==(const UrlWithId &other) const {
+        return !urls.join(".").compare(other.urls.join(".")) && !ids.join(".").compare(other.ids.join("."));
+    }
+    bool operator!=(const UrlWithId &other) const {
+        return urls.join(".").compare(other.urls.join(".")) || ids.join(".").compare(other.ids.join("."));
+    }
+
+private:
+    QStringList urls;
+    QStringList ids;
+    mutable int index;
+};
+
 class LoadItem
 {
 public:
     LoadItem();
-    LoadItem(BrowserType _type, QString _id, QString _url,
+    LoadItem(BrowserType _type, UrlWithId _uwid,
             int _w, int _h, int _l, int _t, int _r, int _b,
             bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
             bool _preload,
@@ -28,8 +56,7 @@ public:
     bool operator!=(const LoadItem &other) const;
 
     BrowserType type() const;
-    QString id() const;
-    QString url() const;
+    const UrlWithId *urlWithId() const;
     int width() const;
     int height() const;
     int left() const;
@@ -83,8 +110,7 @@ public:
 
 private:
     BrowserType mType;
-    QString mId;
-    QString mUrl;
+    UrlWithId mUrlWithId;
     int mWidth;
     int mHeight;
     int mLeft;

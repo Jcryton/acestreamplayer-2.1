@@ -20,9 +20,6 @@
 #include <QNetworkAccessManager>
 #include <QDesktopServices>
 #include <QTimer>
-#include <QProcess>
-#include <QSettings>
-#include <QDir>
 
 using namespace AceWebBrowser;
 
@@ -51,7 +48,6 @@ bool OverlayNotInBrowserMode(const Browser *browser) {
 }
 */
 
-QString Browser::engine_location = "";
 Browser::Browser(const LoadItem &item, BrowserManager *manager, QWidget *parent) :
     QWidget(parent)
   , mWebView(0)
@@ -139,7 +135,7 @@ void Browser::setPlayerState(int state, bool isAd)
 
 QString Browser::baseUrl() const
 {
-    return mItem.url();
+    return mItem.urlWithId()->url();
 }
 
 BrowserType Browser::type()
@@ -149,7 +145,7 @@ BrowserType Browser::type()
 
 QString Browser::id()
 {
-    return mItem.id();
+    return mItem.urlWithId()->id();
 }
 
 bool Browser::allowWindowOpen()
@@ -241,7 +237,7 @@ bool Browser::isAlreadyLoading(const LoadItem &item)
 void Browser::load(const LoadItem &item)
 {
     if(dieing()) {
-        qDebug() << "Browser::load: dieing, skip load: url =" << item.url();
+        qDebug() << "Browser::load: dieing, skip load: url =" << item.urlWithId()->url();
         return;
     }
 
@@ -321,9 +317,15 @@ void Browser::pageLoadFinished(bool status)
         processPlayerActiveStatesAfterLoading();
     }
     else {
-        if(!mBrowserModeEnabled) {
-            emit registerBrowserErrorEvent(mItem.type(), mItem.id());
-            closeBrowser(true);
+        if(mItem.urlWithId()->next()) {
+            qDebug() << "Browser::pageLoadFinished: loading next priopity url";
+            load();
+        }
+        else {
+            if(!mBrowserModeEnabled) {
+                emit registerBrowserErrorEvent(mItem.type(), mItem.urlWithId()->id());
+                closeBrowser(true);
+            }
         }
     }
 }
@@ -346,12 +348,12 @@ void Browser::openUrl(const QUrl &url)
     }
 }
 
-void Browser::openUrl(QString url, bool inNewWindow, bool openInAceWeb, QString arguments)
+void Browser::openUrl(QString url, bool inNewWindow, bool _openInAceWeb, QString arguments)
 {
     qDebug() << "Browser::openUrl2: " << url;
 
-    if(openInAceWeb) {
-        openAceWeb(QUrl(url), arguments);
+    if(_openInAceWeb) {
+        OpenInAceWeb(QUrl(url), arguments);
         emit notifyNeedExitFullscreen();
     }
     else if(inNewWindow) {
@@ -527,14 +529,14 @@ void Browser::load()
         activateBrowserMode(false);
         updateSizing();
         configureWebPage();
-        mWebView->load(QUrl(mItem.url()));
+        mWebView->load(QUrl(mItem.urlWithId()->url()));
         mIsContentRequested = true;
     }
 }
 
 void Browser::handleJSOSendEvent(QString event_name)
 {
-    emit registerSendEvent(mItem.type(), event_name, mItem.id());
+    emit registerSendEvent(mItem.type(), event_name, mItem.urlWithId()->id());
 }
 
 /******************************
@@ -576,7 +578,7 @@ void Browser::closeBrowser(bool failed)
 
     mDieing = true;
     if(!mItem.hideRegistered()) {
-        emit registerBrowserClosedEvent(mItem.type(), mItem.id(), failed, mBrowserModeEnabled, mItem.groupId());
+        emit registerBrowserClosedEvent(mItem.type(), mItem.urlWithId()->id(), failed, mBrowserModeEnabled, mItem.groupId());
         mItem.setHideRegistered(true);
     }
     hideBrowser();
@@ -680,7 +682,7 @@ void Browser::showEvent(QShowEvent *event)
             page->setDialogsCanBeShown(true);
         }
         if(!mItem.shownRegistered()) {
-            emit registerBrowserShownEvent(mItem.type(), mItem.id());
+            emit registerBrowserShownEvent(mItem.type(), mItem.urlWithId()->id());
             mItem.setShownRegistered(true);
         }
 
@@ -702,7 +704,7 @@ void Browser::hideEvent(QHideEvent *event)
         }
         if(type() != BTYPE_HIDDEN) {
             if(!mItem.hideRegistered()) {
-                emit registerBrowserHideEvent(mItem.type(), mItem.id());
+                emit registerBrowserHideEvent(mItem.type(), mItem.urlWithId()->id());
                 mItem.setHideRegistered(true);
             }
         }
@@ -742,7 +744,7 @@ void Browser::updateSizing(const QSize &size)
         setMaximumWidth(pWidth);
     }
 
-    int bottomSpace = type() == (type() == BTYPE_PREROLL || type() == BTYPE_PREPLAY)
+    int bottomSpace = (type() == BTYPE_PREROLL || type() == BTYPE_PREPLAY)
             ? 0
             : mParentFullscreen
               ? mItem.fixedFullscreenBottomSpace()
@@ -943,26 +945,4 @@ void Browser::updateActionButtons()
 {
     enableNavigationButton(mBackAction, mWebView->history()->canGoBack());
     enableNavigationButton(mFwdAction, mWebView->history()->canGoForward());
-}
-
-void Browser::openAceWeb(const QUrl &url, const QString &args)
-{
-    if(url.isValid()) {
-#ifdef Q_OS_WIN
-        if(engine_location.isEmpty()) {
-            QSettings hkcu("HKEY_CURRENT_USER" ACE_INSTALL_KEY, QSettings::NativeFormat);
-            if(hkcu.contains("EnginePath")) {
-                engine_location = QDir::toNativeSeparators(hkcu.value("EnginePath", "").toString());
-            }
-            else {
-                QSettings hklm("HKEY_LOCAL_MACHINE" ACE_INSTALL_KEY, QSettings::NativeFormat);
-                engine_location = QDir::toNativeSeparators(hklm.value("EnginePath", "").toString());
-            }
-        }
-        QString aceWebLocation = engine_location.replace("ace_engine", "ace_web");
-        QStringList argslist = args.split(" ");
-        argslist.append(url.toString());
-        QProcess::startDetached(aceWebLocation, argslist);
-#endif
-    }
 }

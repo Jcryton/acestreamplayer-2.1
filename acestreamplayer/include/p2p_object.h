@@ -39,8 +39,8 @@ extern "C" {
 #define P2P_APP_NAME "Ace Player HD"
 #endif
 
-#define P2P_APP_VERSION "2.2.4"
-#define P2P_STD_VERSION "2.2.4.0"
+#define P2P_APP_VERSION "2.2.5"
+#define P2P_STD_VERSION "2.2.5.0"
 
 typedef enum p2p_state_t {
     P2P_STATE_NOTLAUNCHED = -1,

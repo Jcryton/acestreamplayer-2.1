@@ -10,8 +10,8 @@ QDebug operator<<(QDebug debug, const LoadItem &item)
 {
     debug.nospace() << "LoadItem:"
         << "\r  Type: " << (int)item.type()
-        << "\r  ID: " << item.id()
-        << "\r  Url: " << item.url()
+        << "\r  ID: " << item.urlWithId()->idsString()
+        << "\r  Url: " << item.urlWithId()->urlsString()
         << "\r  Width: " << item.width()
         << "\r  Height: " << item.height()
         << "\r  Left: " << item.left()
@@ -36,15 +36,14 @@ LoadItem::LoadItem()
 {
 }
 
-LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
+LoadItem::LoadItem(BrowserType _type, UrlWithId _uwid,
                                  int _w, int _h, int _l, int _t, int _r, int _b,
                                  bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
                                  bool _preload,
                                  QString _contentT, QString _creativeT, QString _clickU,
                                  BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group)
     : mType(_type)
-    , mId(_id)
-    , mUrl(_url)
+    , mUrlWithId(_uwid)
     , mWidth(_w)
     , mHeight(_h)
     , mLeft(_l)
@@ -79,8 +78,7 @@ LoadItem::LoadItem(BrowserType _type, QString _id, QString _url,
 
 LoadItem::LoadItem(const LoadItem &other)
     : mType(other.type())
-    , mId(other.id())
-    , mUrl(other.url())
+    , mUrlWithId(*other.urlWithId())
     , mWidth(other.width())
     , mHeight(other.height())
     , mLeft(other.left())
@@ -119,16 +117,12 @@ LoadItem::~LoadItem()
 
 bool LoadItem::operator ==(const LoadItem &other) const
 {
-    return type()==other.type()
-            && !id().compare(other.id())
-            && !url().compare(other.url());
+    return type()==other.type() && (*urlWithId())==(*other.urlWithId());
 }
 
 bool LoadItem::operator !=(const LoadItem &other) const
 {
-    return type()!=other.type()
-            || id().compare(other.id())
-            || url().compare(other.url());
+    return type()!=other.type() || (*urlWithId())!=(*other.urlWithId());
 }
 
 BrowserType LoadItem::type() const
@@ -136,14 +130,9 @@ BrowserType LoadItem::type() const
     return mType;
 }
 
-QString LoadItem::id() const
+const UrlWithId *LoadItem::urlWithId() const
 {
-    return mId;
-}
-
-QString LoadItem::url() const
-{
-    return mUrl;
+    return &mUrlWithId;
 }
 
 int LoadItem::width() const
@@ -235,23 +224,6 @@ void LoadItem::setSize(int w, int h)
 {
     mWidth = w;
     mHeight = h;
-}
-
-void LoadItem::clear()
-{
-    mType = BTYPE_UNDEFINED;
-    mId = "";
-    mUrl = "";
-    mEmbedScripts.clear();
-    mEmbedCode = "";
-    mContentType = "";
-    mCreativeType = "";
-    mClickUrl = "";
-}
-
-bool LoadItem::isCleared() const
-{
-    return mType == BTYPE_UNDEFINED && mId == "" && mUrl == "";
 }
 
 void LoadItem::setEngineHttpHost(const QString &host)

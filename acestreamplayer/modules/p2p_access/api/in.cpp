@@ -661,8 +661,27 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
     else if( !_type.compare("webstat-fullscreen") )
         load_item.type = P2P_LOAD_URL_WEBSTAT_FULLSCREEN;
 
-    load_item.id = value.get("id", "").asString();
-    load_item.url = value.get("url", "").asString();
+    Json::Value urlList = value.get("urlList", Json::Value::null);
+    if(urlList.isNull()) {
+        load_item.ids.push_back(value.get("id", "").asString());
+        load_item.urls.push_back(value.get("url", "").asString());
+    }
+    else {
+        if(urlList.isArray()) {
+            for(int j = 0; j < urlList.size(); ++j) {
+                Json::Value urlListItem = urlList.get(j, Json::Value::null);
+                if(!urlListItem.isNull() && urlListItem.isObject()) {
+                    string id = urlListItem.get("id", "").asString();
+                    string url = urlListItem.get("url", "").asString();
+                    if(url.compare("")) {
+                        load_item.ids.push_back(id);
+                        load_item.urls.push_back(url);
+                    }
+                }
+            }
+        }
+    }
+    
     load_item.require_flash = value.get("requireFlash", false).asBool();
     load_item.width = value.get("width", 0).asInt();
     load_item.height = value.get("height", 0).asInt();
@@ -698,10 +717,12 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
     load_item.group_id = group;
 
     Json::Value eScripts = value.get("embedScripts", Json::Value::null);
-    for(int j = 0; j < eScripts.size(); ++j) {
-        string val = eScripts.get(j, "").asString();
-        if(val.compare("")) {
-            load_item.embed_scripts.push_back(val);
+    if(!eScripts.isNull()) {
+        for(int j = 0; j < eScripts.size(); ++j) {
+            string val = eScripts.get(j, "").asString();
+            if(val.compare("")) {
+                load_item.embed_scripts.push_back(val);
+            }
         }
     }
 

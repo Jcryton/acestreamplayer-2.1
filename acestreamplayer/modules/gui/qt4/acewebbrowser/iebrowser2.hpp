@@ -50,8 +50,6 @@ private:
     void updatePosition();
 
     void registryCheck();
-    
-    void openAceWeb(const QUrl&, const QString&);
 
 private:
     IEWebView *mWebView;
@@ -67,8 +65,6 @@ private:
     bool mVisiabilityProcessingEnable;
 
     QTimer *mDeferredTimer;
-    
-    static QString engine_location;
 
 signals:
     void notifyBrowserVisiabilityChanged(AceWebBrowser::BrowserType, bool);
@@ -103,7 +99,7 @@ private slots:
     void handleJSOResizeCommand(QSize);
     void handleJSOSendEvent(QString);
 
-    void openUrl(QString url, bool inNewWindow, bool openInAceWeb = false, QString arguments = "");
+    void openUrl(QString url, bool inNewWindow, bool _openInAceWeb = false, QString arguments = "");
 
 public slots:
     void handleParentSize(const QSize &size);
