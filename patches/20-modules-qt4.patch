@@ -3421,7 +3421,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
  void MainInputManager::menusUpdateAudio( const QString& data )
  {
      audio_output_t *aout = getAout();
-@@ -1259,3 +1650,170 @@
+@@ -1259,3 +1650,171 @@
      }
      return VLC_SUCCESS;
  }
@@ -3526,7 +3526,8 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.cpp vlc-2.1.4/modules/gui/
 +                    p_loadurl->show_time,
 +                    p_loadurl->start_hidden,
 +                    p_loadurl->allow_window_open,
-+                    p_loadurl->group_id
++                    p_loadurl->group_id,
++                    p_loadurl->url_filter
 +                    );
 +
 +            LoadUrlEvent *event = new LoadUrlEvent(*item);

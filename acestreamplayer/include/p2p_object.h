@@ -186,6 +186,7 @@ struct p2p_load_url_item_t {
     bool start_hidden;
     int user_agent;
     bool clear;
+    bool url_filter;
     
     int group_id;
 };

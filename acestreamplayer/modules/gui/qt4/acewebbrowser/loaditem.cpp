@@ -28,7 +28,8 @@ QDebug operator<<(QDebug debug, const LoadItem &item)
         << "\r  CloseAfter: " << item.closeAfterSeconds()
         << "\r  ShowTime: " << item.showTime()
         << "\r  StartHidden: " << item.startHidden()
-        << "\r  AllowWindowOpen: " << item.allowWindowOpen();
+        << "\r  AllowWindowOpen: " << item.allowWindowOpen()
+        << "\r  UrlFilter: " << item.urlFilter();
     return debug.space();
 }
 
@@ -41,7 +42,7 @@ LoadItem::LoadItem(BrowserType _type, UrlWithId _uwid,
                                  bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
                                  bool _preload,
                                  QString _contentT, QString _creativeT, QString _clickU,
-                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group)
+                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF)
     : mType(_type)
     , mUrlWithId(_uwid)
     , mWidth(_w)
@@ -73,6 +74,7 @@ LoadItem::LoadItem(BrowserType _type, UrlWithId _uwid,
     , mEngineHttpHost("")
     , mEngineHttpPort(0)
     , mGroupId(_group)
+    , mUrlFilter(_uF)
 {
 }
 
@@ -108,6 +110,7 @@ LoadItem::LoadItem(const LoadItem &other)
     , mEngineHttpHost(other.engineHttpHost())
     , mEngineHttpPort(other.engineHttpPort())
     , mGroupId(other.groupId())
+    , mUrlFilter(other.urlFilter())
 {
 }
 
@@ -320,4 +323,19 @@ int LoadItem::showTime() const
 bool LoadItem::startHidden() const
 {
     return mStartHidden;
+}
+
+int LoadItem::showTime() const
+{
+    return mShowTime;
+}
+
+bool LoadItem::startHidden() const
+{
+    return mStartHidden;
+}
+
+bool LoadItem::urlFilter() const
+{
+    return mUrlFilter;
 }

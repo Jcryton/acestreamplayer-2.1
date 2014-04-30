@@ -168,6 +168,11 @@ int Browser::groupId() const
     return mItem.groupId();
 }
 
+bool Browser::urlFilter() const
+{
+    return mItem.urlFilter();
+}
+
 BrowserCookies Browser::cookiesType()
 {
     return mItem.cookies();

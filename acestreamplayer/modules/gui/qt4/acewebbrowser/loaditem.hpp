@@ -48,7 +48,7 @@ public:
             bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
             bool _preload,
             QString _contentT, QString _creativeT, QString _clickU,
-            BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group);
+            BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF);
     LoadItem(const LoadItem &other);
     ~LoadItem();
 
@@ -77,6 +77,7 @@ public:
     int closeAfterSeconds() const;
     int showTime() const;
     bool startHidden() const;
+    bool urlFilter() const;
 
     QString hostUserAgent() const;
     unsigned int fixedBottomSpace() const;
@@ -131,6 +132,7 @@ private:
     int mCloseAfterSeconds;
     int mShowTime;
     bool mStartHidden;
+    bool mUrlFilter;
 
     //additional
     QString mHostUserAgent;

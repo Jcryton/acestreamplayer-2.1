@@ -633,10 +633,41 @@ event_in_msg *In::event( const string &msg )
     return _msg;
 }
 
+#define CHECK_GET_INT(a,b,c) \
+{ \
+    Json::Value v = value.get(b, c); \
+    if(v.isInt()) { \
+        a = v.asInt(); \
+    } \
+    else if(v.isString()) { \
+        std::string str = v.asString(); \
+        a = atoi(str.c_str()); \
+    } \
+}
+
+#define CHECK_GET_BOOL(a,b,c) \
+{ \
+    Json::Value v = value.get(b, c); \
+    if(v.isBool()) { \
+        a = v.asBool(); \
+    } \
+    else if(v.isInt()) { \
+        a = (bool)v.asInt(); \
+    } \
+    else if(v.isString()) { \
+        std::string str = v.asString(); \
+        if(!str.compare("true") || !str.compare("false")) { \
+            a = !str.compare("true"); \
+        } \
+        else { \
+            a = (bool)atoi(str.c_str()); \
+        } \
+    } \
+}
 static load_url_item parse_load_url_item(Json::Value value, int group) {
     load_url_item load_item;
     load_item.type = P2P_LOAD_URL_UNDF;
-    
+
     string _type = value.get("type", "").asString();
     if( !_type.compare("overlay") )
         load_item.type = P2P_LOAD_URL_OVERLAY;
@@ -681,27 +712,28 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
             }
         }
     }
-    
-    load_item.require_flash = value.get("requireFlash", false).asBool();
-    load_item.width = value.get("width", 0).asInt();
-    load_item.height = value.get("height", 0).asInt();
-    load_item.left = value.get("left", -1).asInt();
-    load_item.top = value.get("top", -1).asInt();
-    load_item.right = value.get("right", -1).asInt();
-    load_item.bottom = value.get("bottom", -1).asInt();
-    load_item.min_width = value.get("minWidth", 0).asInt();
-    load_item.min_height = value.get("minHeight", 0).asInt();
-    load_item.allow_dialogs = value.get("allowDialogs", false).asBool();
-    load_item.allow_window_open = value.get("allowWindowOpen", true).asBool();
-    load_item.enable_flash = value.get("enableFlash", true).asBool();
-    load_item.cookies = value.get("cookies", 1).asInt();
+
+    CHECK_GET_BOOL(load_item.require_flash, "requireFlash", false);
+    CHECK_GET_INT(load_item.width, "width", 0);
+    CHECK_GET_INT(load_item.height, "height", 0);
+    CHECK_GET_INT(load_item.left, "left", -1);
+    CHECK_GET_INT(load_item.top, "top", -1);
+    CHECK_GET_INT(load_item.right, "right", -1);
+    CHECK_GET_INT(load_item.bottom, "bottom", -1);
+    CHECK_GET_INT(load_item.min_width, "minWidth", 0);
+    CHECK_GET_INT(load_item.min_height, "minHeight", 0);
+    CHECK_GET_BOOL(load_item.allow_dialogs, "allowDialogs", false);
+    CHECK_GET_BOOL(load_item.allow_window_open, "allowWindowOpen", true);
+    CHECK_GET_BOOL(load_item.enable_flash, "enableFlash", true);
+    CHECK_GET_INT(load_item.cookies, "cookies", 1);
 
     load_item.embed_code = value.get("embedCode", "").asString();
 
-    load_item.preload = value.get("preload", true).asBool();
-    load_item.fullscreen = value.get("fullscreen", 0).asInt();
+    CHECK_GET_BOOL(load_item.preload, "preload", true);
+    CHECK_GET_INT(load_item.fullscreen, "fullscreen", 0);
 
-    int maxi = value.get("maxIMpresiions", 0).asInt();
+    int maxi;
+    CHECK_GET_INT(maxi, "maxImpressions", 0);
     load_item.max_impressions = maxi == 0 ? 9999 : maxi;
     load_item.impressions = 0;
 
@@ -709,10 +741,11 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
     load_item.creative_type = value.get("creativeType", "").asString();
     load_item.click_url = value.get("clickUrl", "").asString();
 
-    load_item.user_agent = value.get("userAgent", 1).asInt();
-    load_item.close_after_seconds = value.get("closeAfter", 0).asInt();
-    load_item.show_time = value.get("showTime", 0).asInt();
-    load_item.start_hidden = value.get("startHidden", false).asBool();
+    CHECK_GET_INT(load_item.user_agent, "userAgent", 1);
+    CHECK_GET_INT(load_item.close_after_seconds, "closeAfter", 0);
+    CHECK_GET_INT(load_item.show_time, "showTime", 0);
+    CHECK_GET_BOOL(load_item.start_hidden, "startHidden", false);
+    CHECK_GET_BOOL(load_item.url_filter, "enableUrlFilter", false);
 
     load_item.group_id = group;
 
@@ -728,6 +761,8 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
 
     return load_item;
 }
+#undef CHECK_GET_BOOL
+#undef CHECK_GET_INT
 
 static void parse_load_url_array(Json::Value value, int group_id, load_url_msg *_msg) {
     for(int i = 0; i < value.size(); ++i) {
@@ -754,7 +789,7 @@ load_url_msg *In::load_url( const string &msg )
     if(!_base.compare(0, 15, "LOAD_URL items=")) {
         _base.erase(0, 15);
     }
-    
+
     Json::Value root;
     Json::Reader reader;
     bool parsed = reader.parse(_base, root);

@@ -180,6 +180,7 @@ static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_v
             event.u.acestream_loadurl.show_time = p_loadurl->show_time;
             
             event.u.acestream_loadurl.start_hidden = p_loadurl->start_hidden;
+            event.u.acestream_loadurl.url_filter = p_loadurl->url_filter;
             event.u.acestream_loadurl.group_id = p_loadurl->group_id;
         }
         libvlc_event_send( p_ace->p_event_manager, &event );

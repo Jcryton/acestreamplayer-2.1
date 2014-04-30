@@ -19,8 +19,8 @@ NetworkManager::NetworkManager(Browser *browser, QObject *parent) :
   , mReferer("")
   , mFilterNAM(new QNetworkAccessManager(this))
 {
-     mTrustedSSLHosts.append("acestream.net");
-     setCookieJar(CookieManager::getInstanse()->createCookieJar(mBrowser->cookiesType()));
+    mTrustedSSLHosts.append("acestream.net");
+    setCookieJar(CookieManager::getInstanse()->createCookieJar(mBrowser->cookiesType()));
 
 #ifndef QT_NO_OPENSSL
     connect(this, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError>&)), SLOT(sslErrors(QNetworkReply*, const QList<QSslError>&)));
@@ -39,11 +39,16 @@ QNetworkReply *NetworkManager::createRequest(QNetworkAccessManager::Operation op
         qDebug() << "NetworkManager::createRequest referer:" << mReferer;
         request.setRawHeader("Referer", mReferer.toUtf8());
     }
-    //QString url = req.url().toString();
 
     QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-    return new ProxyReply2(reply, mFilterNAM, mBrowser, this);
+    if(mBrowser->urlFilter()) {
+        return new ProxyReply2(reply, mFilterNAM, mBrowser, this);
+    }
+    else {
+        return reply;
+    }
 
+    //QString url = req.url().toString();
     //TODO: replace with regex
     //if(url.startsWith("http://www.youtube.com/watch?v=") || url.startsWith("https://www.youtube.com/watch?v=")) {
     //    return new ProxyReply(reply, this);

@@ -41,6 +41,7 @@ public:
     QString engineHost();
     int enginePort();
     int groupId() const;
+    bool urlFilter() const;
 
     void setShowAvailable(bool);
     bool showAvailable() const;
