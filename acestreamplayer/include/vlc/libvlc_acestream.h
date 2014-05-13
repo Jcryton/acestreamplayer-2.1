@@ -238,6 +238,15 @@ LIBVLC_API bool libvlc_acestream_object_live_seek( libvlc_acestream_object_t *p_
 LIBVLC_API bool libvlc_acestream_object_user_data( libvlc_acestream_object_t *p_ace, int gender, int age );
 
 /**
+ * Command for engine to save user data after libvlc_AcestreamShowUserDataMiningDialog event
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ * \param value
+ * \return success
+ */
+LIBVLC_API bool libvlc_acestream_object_user_data_mining( libvlc_acestream_object_t *p_ace, int value );
+
+/**
  * Get engine version ( for js extensions )
  *
  * \param p_ace a libvlc_acestream_object instance

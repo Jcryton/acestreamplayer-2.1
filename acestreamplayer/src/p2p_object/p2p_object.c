@@ -83,7 +83,7 @@ static int P2PDisplaySizeCallback(vlc_object_t *p_this, char const *psz_cmd, vlc
     VLC_UNUSED(psz_cmd);  VLC_UNUSED(oldval);  VLC_UNUSED(newval);
     p2p_object_t *p_p2p = (p2p_object_t*)p_this;
 
-    int w, h;    
+    int w, h;
     var_GetCoords(p_p2p, "vout-display-size", &w, &h);
     msg_P2PLog( p_p2p, "[p2p_object.c] requesting new interactive because off resize %d %d", w, h );
     p2p_RequestLoadUrlAd(p_p2p, P2P_LOAD_URL_OVERLAY, 0);
@@ -142,6 +142,9 @@ static void VariablesInit( p2p_object_t *p_p2p )
     var_SetBool( p_p2p, "ad-skipped", false );
     
     var_Create( p_p2p, "load-url", VLC_VAR_ADDRESS ); // load url event
+
+    var_Create( p_p2p, "show-mining-dialog", VLC_VAR_INTEGER );
+    var_SetInteger( p_p2p, "show-mining-dialog", 0 );
 }
 
 static void VariablesUninit( p2p_object_t *p_p2p )
@@ -170,6 +173,8 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     var_Destroy( p_p2p, "ad-skipped" );
     
     var_Destroy( p_p2p, "load-url" );
+
+    var_Destroy( p_p2p, "show-mining-dialog" );
 }
 
 static void ClearMethods( p2p_object_t *p_p2p )
@@ -186,6 +191,7 @@ static void ClearMethods( p2p_object_t *p_p2p )
     p_p2p->pf_get_ad_url = NULL;
     p_p2p->pf_live_seek = NULL;
     p_p2p->pf_user_data = NULL;
+    p_p2p->pf_user_data_mining = NULL;
     p_p2p->pf_stat_event = NULL;
     p_p2p->pf_save_option = NULL;
     p_p2p->pf_set_callback = NULL;
@@ -386,6 +392,16 @@ bool p2p_UserData( p2p_object_t *p_p2p, int gender, int age )
     vlc_mutex_lock( &p_p2p->lock );
     if( p_p2p->pf_user_data )
         ret = p_p2p->pf_user_data( p_p2p, gender, age );
+    vlc_mutex_unlock( &p_p2p->lock );
+	return ret;
+}
+
+bool p2p_UserDataMining( p2p_object_t *p_p2p, int value )
+{
+    bool ret = false;
+    vlc_mutex_lock( &p_p2p->lock );
+    if( p_p2p->pf_user_data_mining )
+        ret = p_p2p->pf_user_data_mining( p_p2p, value );
     vlc_mutex_unlock( &p_p2p->lock );
 	return ret;
 }

@@ -48,7 +48,7 @@ public:
             bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
             bool _preload,
             QString _contentT, QString _creativeT, QString _clickU,
-            BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF);
+            BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF, bool _uIE);
     LoadItem(const LoadItem &other);
     ~LoadItem();
 
@@ -79,6 +79,8 @@ public:
     bool startHidden() const;
     bool urlFilter() const;
 
+    bool useIE() const;
+    
     QString hostUserAgent() const;
     unsigned int fixedBottomSpace() const;
     unsigned int fixedFullscreenBottomSpace() const;
@@ -146,6 +148,8 @@ private:
     int mEngineHttpPort;
 
     int mGroupId;
+    
+    bool mUseIE;
 };
 
 }

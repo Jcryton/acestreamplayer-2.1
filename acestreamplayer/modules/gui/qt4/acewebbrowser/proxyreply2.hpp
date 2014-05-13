@@ -1,5 +1,5 @@
-#ifndef AWB_PROXYREPLY_H
-#define AWB_PROXYREPLY_H
+#ifndef AWB_PROXYREPLY2_H
+#define AWB_PROXYREPLY2_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,4 +53,4 @@ private slots:
 
 }
 
-#endif // AWB_PROXYREPLY_H
+#endif // AWB_PROXYREPLY2_H

@@ -1,7 +1,7 @@
 diff -ru vlc-2.1.4.orig/lib/libvlc.sym vlc-2.1.4/lib/libvlc.sym
 --- vlc-2.1.4.orig/lib/libvlc.sym	2013-09-12 18:18:33.000000000 +0300
 +++ vlc-2.1.4/lib/libvlc.sym	2014-04-11 13:48:57.423602881 +0300
-@@ -255,3 +255,79 @@
+@@ -255,3 +255,80 @@
  libvlc_audio_filter_list_get
  libvlc_video_filter_list_get
  libvlc_module_description_list_release
@@ -81,3 +81,4 @@ diff -ru vlc-2.1.4.orig/lib/libvlc.sym vlc-2.1.4/lib/libvlc.sym
 +libvlc_acestream_object_get_engine_http_host
 +libvlc_acestream_object_get_engine_http_port
 +libvlc_acestream_object_request_loadurl_from_group
++libvlc_acestream_object_user_data_mining

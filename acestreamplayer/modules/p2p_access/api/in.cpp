@@ -629,6 +629,16 @@ event_in_msg *In::event( const string &msg )
         _msg->event_type = IN_EVENT_MSG_GET_USER_DATA;
         _msg->event.user_data_event = new user_data_in_event_msg;
     }
+    else if( !_options[0].compare( "mining_notify_1" ) ) {
+        _msg->event_type = IN_EVENT_MSG_GET_USER_DATA_MINING;
+        _msg->event.user_data_mining_event = new user_data_mining_in_event_msg;
+        _msg->event.user_data_mining_event->type = 1;
+    }
+    else if( !_options[0].compare( "mining_notify_2" ) ) {
+        _msg->event_type = IN_EVENT_MSG_GET_USER_DATA_MINING;
+        _msg->event.user_data_mining_event = new user_data_mining_in_event_msg;
+        _msg->event.user_data_mining_event->type = 2;
+    }
     
     return _msg;
 }
@@ -746,6 +756,7 @@ static load_url_item parse_load_url_item(Json::Value value, int group) {
     CHECK_GET_INT(load_item.show_time, "showTime", 0);
     CHECK_GET_BOOL(load_item.start_hidden, "startHidden", false);
     CHECK_GET_BOOL(load_item.url_filter, "enableUrlFilter", false);
+    CHECK_GET_BOOL(load_item.useIE, "useIE", false);
 
     load_item.group_id = group;
 

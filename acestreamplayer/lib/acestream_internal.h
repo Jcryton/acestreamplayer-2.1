@@ -15,6 +15,8 @@ struct libvlc_acestream_object_t
     
 	int i_refcount;  	
 	vlc_mutex_t object_lock;
+    
+    bool b_preplay_got;
 };
 
 #endif

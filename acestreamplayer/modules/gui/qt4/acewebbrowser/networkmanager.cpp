@@ -39,22 +39,21 @@ QNetworkReply *NetworkManager::createRequest(QNetworkAccessManager::Operation op
         qDebug() << "NetworkManager::createRequest referer:" << mReferer;
         request.setRawHeader("Referer", mReferer.toUtf8());
     }
+    
+    QString url = req.url().toString();
 
     QNetworkReply *reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-    if(mBrowser->urlFilter()) {
+
+    //TODO: replace with regex
+    if(url.startsWith("http://www.youtube.com/watch?v=") || url.startsWith("https://www.youtube.com/watch?v=")) {
+        return new ProxyReply(reply, this);
+    }
+    else if(mBrowser->urlFilter()) {
         return new ProxyReply2(reply, mFilterNAM, mBrowser, this);
     }
     else {
         return reply;
     }
-
-    //QString url = req.url().toString();
-    //TODO: replace with regex
-    //if(url.startsWith("http://www.youtube.com/watch?v=") || url.startsWith("https://www.youtube.com/watch?v=")) {
-    //    return new ProxyReply(reply, this);
-    //}
-
-    //return reply;
 }
 
 #ifndef QT_NO_OPENSSL

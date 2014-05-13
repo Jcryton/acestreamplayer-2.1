@@ -136,6 +136,19 @@ static int acestream_showerror_dialog( vlc_object_t * p_this, char const * psz_c
     return VLC_SUCCESS;
 }
 
+static int acestream_showmining_dialog( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
+{
+    VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
+    libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
+    libvlc_event_t event;
+
+    event.type = libvlc_AcestreamShowMiningDialog;
+    event.u.acestream_showminingdialog.type = newval.i_int;
+
+    libvlc_event_send( p_ace->p_event_manager, &event );
+    return VLC_SUCCESS;
+}
+
 static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
 {
     VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
@@ -182,6 +195,13 @@ static int acestream_loadurl( vlc_object_t * p_this, char const * psz_cmd, vlc_v
             event.u.acestream_loadurl.start_hidden = p_loadurl->start_hidden;
             event.u.acestream_loadurl.url_filter = p_loadurl->url_filter;
             event.u.acestream_loadurl.group_id = p_loadurl->group_id;
+            
+            event.u.acestream_loadurl.useIE = p_loadurl->useIE;
+            
+            msg_P2PLog(p_this, "[acestream_loadurl] load url callback with type %d", p_loadurl->type);
+            if(p_loadurl->type == libvlc_ace_loadurl_Preplay) {
+                p_ace->b_preplay_got = true;
+            }
         }
         libvlc_event_send( p_ace->p_event_manager, &event );
     }
@@ -331,6 +351,7 @@ static void bind_callbacks( libvlc_acestream_object_t *p_ace )
         var_AddCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_AddCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
         var_AddCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
+        var_AddCallback( p_p2p, "show-mining-dialog", acestream_showmining_dialog, p_ace );
         
         p2p_SetCallback( p_p2p, P2P_LOAD_CALLBACK, acestream_load_callback, p_ace );
         p2p_SetCallback( p_p2p, P2P_PLAY_CALLBACK, acestream_play_callback, p_ace );
@@ -355,6 +376,7 @@ static void unbind_callbacks( libvlc_acestream_object_t *p_ace )
         var_DelCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_DelCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
         var_DelCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
+        var_DelCallback( p_p2p, "show-mining-dialog", acestream_showmining_dialog, p_ace );
     }
 }
 
@@ -374,7 +396,10 @@ static void emit_events(libvlc_acestream_object_t *p_ace )
         event_state.u.acestream_state.state = state;
         libvlc_event_send( p_ace->p_event_manager, &event_state );
 
-        p2p_RequestLoadUrlAd( p_p2p, libvlc_ace_loadurl_Preplay, 0 );
+        if(!p_ace->b_preplay_got) {
+            msg_P2PLog( p_p2p, "[emit_events] Requesting preplay load url" );    
+            p2p_RequestLoadUrlAd( p_p2p, libvlc_ace_loadurl_Preplay, 0 );
+        }
     }
 }
 
@@ -396,6 +421,7 @@ libvlc_acestream_object_t *libvlc_acestream_object_new( libvlc_instance_t *p_ins
     p_ace->p_mlist_player = NULL;
     p_ace->p_libvlc_instance = p_instance;
     p_ace->i_refcount = 1;
+    p_ace->b_preplay_got = false;
     
     vlc_mutex_init( &p_ace->object_lock );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamAuth );
@@ -411,6 +437,7 @@ libvlc_acestream_object_t *libvlc_acestream_object_new( libvlc_instance_t *p_ins
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamAdParams );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamLoadUrl );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamClearLoadUrl );
+    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowMiningDialog );
     bind_callbacks( p_ace );
 
     return p_ace;
@@ -610,6 +637,17 @@ bool libvlc_acestream_object_user_data( libvlc_acestream_object_t *p_ace, int ge
     vlc_mutex_lock( &p_ace->object_lock );
     
     ret = p2p_UserData( getP2P( p_ace->p_libvlc_instance ), gender, age );
+    
+    vlc_mutex_unlock( &p_ace->object_lock );
+    return ret;
+}
+
+bool libvlc_acestream_object_user_data_mining( libvlc_acestream_object_t *p_ace, int value )
+{
+    bool ret = false;
+    vlc_mutex_lock( &p_ace->object_lock );
+    
+    ret = p2p_UserDataMining( getP2P( p_ace->p_libvlc_instance ), value );
     
     vlc_mutex_unlock( &p_ace->object_lock );
     return ret;

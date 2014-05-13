@@ -189,7 +189,9 @@ struct p2p_load_url_item_t {
     bool url_filter;
     
     int group_id;
+    bool useIE;
 };
+
 
 struct p2p_showdialog_item_t {
     const char *title;
@@ -249,6 +251,7 @@ struct p2p_object_t {
     bool (*pf_get_ad_url) (p2p_object_t*, const char*/*infohash*/, const char*/*action*/, int /*video window width*/, int /*video window height*/);
     bool (*pf_live_seek) (p2p_object_t*, int/*position*/);
     bool (*pf_user_data) (p2p_object_t*, int/*gender*/, int/*age*/);
+    bool (*pf_user_data_mining) (p2p_object_t*, int/*value*/);
     
     bool (*pf_stat_event) (p2p_object_t*, p2p_statistics_event_type_t/*event type*/, int/*value*/);
     bool (*pf_save_option) (p2p_object_t*, const char*, const char*, const char*);
@@ -283,6 +286,7 @@ VLC_API bool p2p_Save(p2p_object_t*, const char*, int, const char*);
 VLC_API bool p2p_GetAdUrl(p2p_object_t*, const char*, const char*, int, int);
 VLC_API bool p2p_LiveSeek(p2p_object_t*, int);
 VLC_API bool p2p_UserData( p2p_object_t*, int, int );
+VLC_API bool p2p_UserDataMining( p2p_object_t*, int );
 
 VLC_API bool p2p_StatEvent(p2p_object_t*, p2p_statistics_event_type_t, int);
 VLC_API bool p2p_SaveOption(p2p_object_t*, const char*, const char*, const char*);

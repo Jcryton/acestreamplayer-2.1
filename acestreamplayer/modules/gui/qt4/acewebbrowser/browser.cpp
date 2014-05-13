@@ -680,6 +680,9 @@ void Browser::showEvent(QShowEvent *event)
     mNeedsReshowing = false;
     if(mVisiabilityProcessingEnable) {
         emit notifyBrowserVisiabilityChanged(mItem.type(), true);
+        
+        // reset hideRegistered when browser is shown
+        mItem.setHideRegistered(false);
 
         mJSO->setVisiability(true);
         if(mWebView) {

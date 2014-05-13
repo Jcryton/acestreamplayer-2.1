@@ -42,7 +42,7 @@ LoadItem::LoadItem(BrowserType _type, UrlWithId _uwid,
                                  bool _allowD, bool _enableF, BrowserCookies _cook, QStringList _embedS, QString _embedC,
                                  bool _preload,
                                  QString _contentT, QString _creativeT, QString _clickU,
-                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF)
+                                 BrowserUserAgent _uA, int _cA, int _sT, bool _sH, bool _allowWO, int _group, bool _uF, bool _uIE)
     : mType(_type)
     , mUrlWithId(_uwid)
     , mWidth(_w)
@@ -75,6 +75,7 @@ LoadItem::LoadItem(BrowserType _type, UrlWithId _uwid,
     , mEngineHttpPort(0)
     , mGroupId(_group)
     , mUrlFilter(_uF)
+    , mUseIE(_uIE)
 {
 }
 
@@ -111,6 +112,7 @@ LoadItem::LoadItem(const LoadItem &other)
     , mEngineHttpPort(other.engineHttpPort())
     , mGroupId(other.groupId())
     , mUrlFilter(other.urlFilter())
+    , mUseIE(other.useIE())
 {
 }
 
@@ -315,11 +317,6 @@ int LoadItem::closeAfterSeconds() const
     return mCloseAfterSeconds;
 }
 
-int LoadItem::showTime() const
-{
-    return mShowTime;
-}
-
 bool LoadItem::startHidden() const
 {
     return mStartHidden;
@@ -328,14 +325,14 @@ bool LoadItem::startHidden() const
 int LoadItem::showTime() const
 {
     return mShowTime;
-}
-
-bool LoadItem::startHidden() const
-{
-    return mStartHidden;
 }
 
 bool LoadItem::urlFilter() const
 {
     return mUrlFilter;
+}
+
+bool LoadItem::useIE() const
+{
+    return mUseIE;
 }

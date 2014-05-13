@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc_events.h
 --- vlc-2.1.4.orig/include/vlc/libvlc_events.h	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-04-11 11:33:33.575723516 +0300
++++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-05-13 14:40:36.287657849 +0300
 @@ -73,11 +73,16 @@
      libvlc_MediaPlayerSnapshotTaken,
      libvlc_MediaPlayerLengthChanged,
@@ -18,7 +18,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
      libvlc_MediaListViewItemAdded=0x300,
      libvlc_MediaListViewWillAddItem,
-@@ -101,9 +106,72 @@
+@@ -101,9 +106,73 @@
      libvlc_VlmMediaInstanceStatusPlaying,
      libvlc_VlmMediaInstanceStatusPause,
      libvlc_VlmMediaInstanceStatusEnd,
@@ -39,6 +39,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +    libvlc_AcestreamStatusRaw,                  // acestream engine STATUS raw data (for js extensions)
 +    libvlc_AcestreamLoadUrl,                    //
 +    libvlc_AcestreamClearLoadUrl,               //
++    libvlc_AcestreamShowMiningDialog,           //
  };
  
 +typedef enum libvlc_hotkey_action_t {
@@ -92,7 +93,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  /**
   * A LibVLC event
   */
-@@ -172,6 +240,10 @@
+@@ -172,6 +241,10 @@
          {
              int new_count;
          } media_player_vout;
@@ -103,7 +104,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
          /* media list */
          struct
-@@ -225,6 +297,104 @@
+@@ -225,6 +298,109 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -200,11 +201,16 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +            bool start_hidden;
 +            bool url_filter;
 +            int group_id;
++            bool useIE;
 +        } acestream_loadurl;
 +
 +        struct {
 +            int type;
 +        } acestream_clearloadurl;
++        struct {
++            int type;
++        } acestream_showminingdialog;
++
      } u; /**< Type-dependent event description */
  } libvlc_event_t;
  
@@ -1092,7 +1098,7 @@ diff -ru vlc-2.1.4.orig/lib/event.c vlc-2.1.4/lib/event.c
  
      DEF(MediaListViewItemAdded)
      DEF(MediaListViewWillAddItem)
-@@ -309,6 +314,21 @@
+@@ -309,6 +314,22 @@
      DEF(VlmMediaInstanceStatusPause)
      DEF(VlmMediaInstanceStatusEnd)
      DEF(VlmMediaInstanceStatusError)
@@ -1111,6 +1117,7 @@ diff -ru vlc-2.1.4.orig/lib/event.c vlc-2.1.4/lib/event.c
 +    DEF(AcestreamStatusRaw)
 +    DEF(AcestreamLoadUrl)
 +    DEF(AcestreamClearLoadUrl)
++    DEF(AcestreamShowMiningDialog)
  };
  #undef DEF
  

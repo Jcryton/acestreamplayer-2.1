@@ -111,8 +111,14 @@ void ProxyReply::finishedProxy()
 {
     QString contentType = mRealReply->header(QNetworkRequest::ContentTypeHeader).toString();
     QString url = mRealReply->url().toString();
+    bool removeElements = false;
+    
+    // hack to switch between removing elements and hiding them
+    if(url.contains("&r=0.78")) {
+        removeElements = true;
+    }
 
-    qDebug() << "finishedProxy" << url << contentType;
+    qDebug() << "finishedProxy" << url << contentType << removeElements;
 
     if(contentType.indexOf("text/html") != -1) {
         //QTextCodec *codec = QTextCodec::codecForHtml(mRealData, QTextCodec::codecForName("UTF-8"));
@@ -221,7 +227,12 @@ void ProxyReply::finishedProxy()
         div = fakePage.mainFrame()->findFirstElement("div#content");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
         else {
             qDebug() << "div not found";
@@ -230,7 +241,12 @@ void ProxyReply::finishedProxy()
         div = fakePage.mainFrame()->findFirstElement("#footer-container");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
         else {
             qDebug() << "div not found";
@@ -239,7 +255,12 @@ void ProxyReply::finishedProxy()
         div = fakePage.mainFrame()->findFirstElement("#guide");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
         else {
             qDebug() << "div not found";
@@ -248,7 +269,12 @@ void ProxyReply::finishedProxy()
         div = fakePage.mainFrame()->findFirstElement("#yt-masthead-container");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
         else {
             qDebug() << "div not found";
@@ -257,13 +283,23 @@ void ProxyReply::finishedProxy()
         div = fakePage.mainFrame()->findFirstElement("#sb-wrapper");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
 
         div = fakePage.mainFrame()->findFirstElement("#alerts");
         if(!div.isNull()) {
             qDebug() << "div found, remove from document";
-            div.removeFromDocument();
+            if(removeElements) {
+                div.removeFromDocument();
+            }
+            else {
+                div.setStyleProperty("display", "none");
+            }
         }
 
         div = fakePage.mainFrame()->findFirstElement("#yt-player-api");
