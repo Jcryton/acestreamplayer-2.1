@@ -548,6 +548,7 @@ event_in_msg *In::event( const string &msg )
     _msg->event.dialog_event = NULL;
     _msg->event.live_pos_event = NULL;
     _msg->event.user_data_event = NULL;
+    _msg->event.infowindow_event = NULL;
     
     string _base = msg.substr(6);
     vector<string> _options = In::split( _base, ' ' );
@@ -629,15 +630,58 @@ event_in_msg *In::event( const string &msg )
         _msg->event_type = IN_EVENT_MSG_GET_USER_DATA;
         _msg->event.user_data_event = new user_data_in_event_msg;
     }
-    else if( !_options[0].compare( "mining_notify_1" ) ) {
-        _msg->event_type = IN_EVENT_MSG_GET_USER_DATA_MINING;
-        _msg->event.user_data_mining_event = new user_data_mining_in_event_msg;
-        _msg->event.user_data_mining_event->type = 1;
-    }
-    else if( !_options[0].compare( "mining_notify_2" ) ) {
-        _msg->event_type = IN_EVENT_MSG_GET_USER_DATA_MINING;
-        _msg->event.user_data_mining_event = new user_data_mining_in_event_msg;
-        _msg->event.user_data_mining_event->type = 2;
+    else if( !_options[0].compare( "infowindow" ) ) {
+        _msg->event_type = IN_EVENT_MSG_SHOW_INFOWINDOW;
+        _msg->event.infowindow_event = new show_infowindow_in_event_msg;
+        _msg->event.infowindow_event->type = P2P_INFOW_TYPE_UNDEF;
+        _msg->event.infowindow_event->text = "";
+        _msg->event.infowindow_event->height = 0;
+        _msg->event.infowindow_event->btn1_text = "";
+        _msg->event.infowindow_event->btn1_url = "";
+        _msg->event.infowindow_event->btn2_text = "";
+        _msg->event.infowindow_event->btn2_url = "";
+
+        for( size_t _i = 1; _i < _options.size(); ++_i ) {
+            if( !_options[_i].compare(0, 4, "type") ) {
+                string type_str = decode_url(_options[_i].substr(5));
+                if( !type_str.compare("m1") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_1;
+                }
+                else if( !type_str.compare("m2") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_2;
+                }
+                else if( !type_str.compare("m3") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_3;
+                }
+                else if( !type_str.compare("m4") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_4;
+                }
+                else if( !type_str.compare("m5") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_5;
+                }
+                else if( !type_str.compare("m6") ) {
+                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_6;
+                }
+            }
+            else if( !_options[_i].compare(0, 4, "text") ) {
+                _msg->event.infowindow_event->text = decode_url(_options[_i].substr(5));
+            }
+            else if( !_options[_i].compare(0, 6, "height") ) {
+                _msg->event.infowindow_event->height = atoi(_options[_i].substr(7).c_str());
+            }
+            else if( !_options[_i].compare(0, 9, "btn1_text") ) {
+                _msg->event.infowindow_event->btn1_text = decode_url(_options[_i].substr(10));
+            }
+            else if( !_options[_i].compare(0, 8, "btn1_url") ) {
+                _msg->event.infowindow_event->btn1_url = decode_url(_options[_i].substr(9));
+            }
+            else if( !_options[_i].compare(0, 9, "btn2_text") ) {
+                _msg->event.infowindow_event->btn2_text = decode_url(_options[_i].substr(10));
+            }
+            else if( !_options[_i].compare(0, 8, "btn2_url") ) {
+                _msg->event.infowindow_event->btn2_url = decode_url(_options[_i].substr(9));
+            }
+        }
     }
     
     return _msg;

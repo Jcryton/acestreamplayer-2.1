@@ -131,6 +131,16 @@ typedef enum p2p_load_url_statistics_event_type_t {
     P2P_LOAD_URL_STAT_EVENT_ERROR_HIDDEN,
 } p2p_load_url_statistics_event_type_t;
 
+typedef enum p2p_infowindow_type_t {
+    P2P_INFOW_TYPE_UNDEF = -1,
+    P2P_INFOW_TYPE_1,
+    P2P_INFOW_TYPE_2,
+    P2P_INFOW_TYPE_3,
+    P2P_INFOW_TYPE_4,
+    P2P_INFOW_TYPE_5,
+    P2P_INFOW_TYPE_6
+} p2p_infowindow_type_t;
+
 // callback structs
 struct p2p_load_item_t {
     input_item_t *p_input_item;
@@ -191,11 +201,19 @@ struct p2p_load_url_item_t {
     int group_id;
     bool useIE;
 };
-
-
 struct p2p_showdialog_item_t {
     const char *title;
     const char *text;
+};
+
+struct p2p_showinfowindow_item_t {
+    p2p_infowindow_type_t type;
+    const char *text;
+    int height;
+    const char *btn1_text;
+    const char *btn1_url;
+    const char *btn2_text;
+    const char *btn2_url;
 };
 
 struct p2p_ad_params_t {
@@ -259,6 +277,8 @@ struct p2p_object_t {
     void (*pf_register_load_url_ad_stat) (p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
     void (*pf_request_load_url_ad) (p2p_object_t*, p2p_load_url_type_t, int);
     void (*pf_register_load_url_ad_event) (p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
+    
+    void (*pf_restart_last) (p2p_object_t*);
 };
 
 VLC_API p2p_object_t *p2p_Get( vlc_object_t * ) VLC_USED;
@@ -296,6 +316,8 @@ VLC_API void p2p_VideoClickActivate( p2p_object_t*, bool );
 VLC_API void p2p_RegisterLoadUrlAdStatistics(p2p_object_t*, p2p_load_url_type_t, p2p_load_url_statistics_event_type_t, const char*);
 VLC_API void p2p_RequestLoadUrlAd(p2p_object_t*, p2p_load_url_type_t, int);
 VLC_API void p2p_RegisterLoadUrlAdEvent(p2p_object_t*, p2p_load_url_type_t, const char*, const char*);
+
+VLC_API void p2p_RestartLast(p2p_object_t*);
 
 # ifdef __cplusplus
 }

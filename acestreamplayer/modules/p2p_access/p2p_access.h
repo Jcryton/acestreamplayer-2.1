@@ -78,5 +78,6 @@ int generate_new_group_id( p2p_object_t* );
 bool check_load_response( p2p_object_t *, load_in_msg *, std::string );
 void set_message_for_error_dialog( p2p_object_t *, std::string, const char *, ... );
 
+void RestartLast( p2p_object_t* );
 
 #endif

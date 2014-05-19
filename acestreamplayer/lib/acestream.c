@@ -136,16 +136,25 @@ static int acestream_showerror_dialog( vlc_object_t * p_this, char const * psz_c
     return VLC_SUCCESS;
 }
 
-static int acestream_showmining_dialog( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
+static int acestream_showinfowindow( vlc_object_t * p_this, char const * psz_cmd, vlc_value_t oldval, vlc_value_t newval, void * p_userdata )
 {
     VLC_UNUSED( oldval ); VLC_UNUSED( p_this ); VLC_UNUSED( psz_cmd );
     libvlc_acestream_object_t *p_ace = ( libvlc_acestream_object_t* )p_userdata;
     libvlc_event_t event;
+    event.type = libvlc_AcestreamShowInfoWindow;
+    
+    if(newval.p_address) {
+        p2p_showinfowindow_item_t *p_showinfownd = (p2p_showinfowindow_item_t *)newval.p_address;
+        event.u.acestream_showinfowindow.type = p_showinfownd->type;
+        event.u.acestream_showinfowindow.text = p_showinfownd->text;
+        event.u.acestream_showinfowindow.height = p_showinfownd->height;
+        event.u.acestream_showinfowindow.btn1_text = p_showinfownd->btn1_text;
+        event.u.acestream_showinfowindow.btn1_url = p_showinfownd->btn1_url;
+        event.u.acestream_showinfowindow.btn2_text = p_showinfownd->btn2_text;
+        event.u.acestream_showinfowindow.btn2_url = p_showinfownd->btn2_url;
 
-    event.type = libvlc_AcestreamShowMiningDialog;
-    event.u.acestream_showminingdialog.type = newval.i_int;
-
-    libvlc_event_send( p_ace->p_event_manager, &event );
+        libvlc_event_send( p_ace->p_event_manager, &event );
+    }
     return VLC_SUCCESS;
 }
 
@@ -351,7 +360,7 @@ static void bind_callbacks( libvlc_acestream_object_t *p_ace )
         var_AddCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_AddCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
         var_AddCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
-        var_AddCallback( p_p2p, "show-mining-dialog", acestream_showmining_dialog, p_ace );
+        var_AddCallback( p_p2p, "showinfowindow", acestream_showinfowindow, p_ace );
         
         p2p_SetCallback( p_p2p, P2P_LOAD_CALLBACK, acestream_load_callback, p_ace );
         p2p_SetCallback( p_p2p, P2P_PLAY_CALLBACK, acestream_play_callback, p_ace );
@@ -376,7 +385,7 @@ static void unbind_callbacks( libvlc_acestream_object_t *p_ace )
         var_DelCallback( p_p2p, "adparams", acestream_adparams, p_ace );
         var_DelCallback( p_p2p, "exit-fullscreen", acestream_exit_fullscreen, p_ace );
         var_DelCallback( p_p2p, "load-url", acestream_loadurl, p_ace );
-        var_DelCallback( p_p2p, "show-mining-dialog", acestream_showmining_dialog, p_ace );
+        var_DelCallback( p_p2p, "showinfowindow", acestream_showinfowindow, p_ace );
     }
 }
 
@@ -437,7 +446,7 @@ libvlc_acestream_object_t *libvlc_acestream_object_new( libvlc_instance_t *p_ins
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamAdParams );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamLoadUrl );
     libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamClearLoadUrl );
-    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowMiningDialog );
+    libvlc_event_manager_register_event_type( p_ace->p_event_manager, libvlc_AcestreamShowInfoWindow );
     bind_callbacks( p_ace );
 
     return p_ace;
@@ -746,4 +755,11 @@ int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_object_t *p_a
     port = var_GetInteger( getP2P( p_ace->p_libvlc_instance ), "engine-http-port" );
     vlc_mutex_unlock( &p_ace->object_lock );
     return port;
+}
+
+void libvlc_acestream_object_restart_last(libvlc_acestream_object_t *p_ace)
+{
+    vlc_mutex_lock( &p_ace->object_lock );
+    p2p_RestartLast( getP2P(p_ace->p_libvlc_instance) );
+    vlc_mutex_unlock( &p_ace->object_lock );
 }

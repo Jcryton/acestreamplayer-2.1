@@ -3,6 +3,7 @@
 #endif
 
 #include "dialogs/mininginfo.hpp"
+#include "actions_manager.hpp" 
 
 #include <QString>
 #include <QVBoxLayout>
@@ -13,10 +14,12 @@
 #include <QDesktopServices>
 #include <QUrl>
 
-MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _type ) : 
+MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _type, const QString &_text, const QString &_text1, const QString &_url1, const QString &_text2, const QString &_url2 ) : 
     QWidget( _p )
   , p_intf( _p_intf )
   , mType(_type)
+  , mBtn1Url(_url1)
+  , mBtn2Url(_url2)
 {
     setWindowTitle("");
     setWindowModality( Qt::ApplicationModal );
@@ -25,22 +28,21 @@ MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _typ
     
     QVBoxLayout *main = new QVBoxLayout(this);
     QLabel *lblText = new QLabel(this);
+    lblText->setMaximumWidth(250);
     QHBoxLayout *buttons = new QHBoxLayout(this);
     QPushButton *button0 = new QPushButton(this);
     QPushButton *button1 = new QPushButton(this);
-    if(mType == 1)  {
-        lblText->setText(qtr("Buy account or activate mining to use AceStream."));
-        button0->setText(qtr("Buy"));
-        button1->setText(qtr("Activate"));
-    }
-    else if(mType == 2) {
-        lblText->setText(qtr("Activate mining to get bonuses."));
-        button0->setText(qtr("Activate"));
-        button1->setText(qtr("Skip"));
-    }
+    lblText->setText(_text);
+    button0->setText(_text1);
+    button1->setText(_text2);
     main->addWidget(lblText);
-    buttons->addWidget(button0);
-    buttons->addWidget(button1);
+    if(mType < P2P_INFOW_TYPE_5) {
+        buttons->addWidget(button0);
+        buttons->addWidget(button1);
+    }
+    else if(mType < P2P_INFOW_TYPE_6) {
+        buttons->addWidget(button0);
+    }
     main->addLayout(buttons);
     
     setLayout(main);
@@ -55,17 +57,47 @@ MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _typ
 
 void MiningInfoWidget::button0Clicked()
 {
-    if(mType == 1) {
-        QDesktopServices::openUrl(QUrl("https://accounts.acestream.net/wizard/noads"));
-    }
-    else {
+    switch(mType) {
+    case P2P_INFOW_TYPE_1:
+        QDesktopServices::openUrl(QUrl(mBtn1Url));
+        close();
+        break;
+    case P2P_INFOW_TYPE_2:
+        QDesktopServices::openUrl(QUrl(mBtn1Url));
+        close();
+        THEAM->play();
+        break;
+    case P2P_INFOW_TYPE_3:
         p2p_UserDataMining(THEP2P, 1);
+        close();
+        THEAM->play();
+        break;
+    case P2P_INFOW_TYPE_4:
+    case P2P_INFOW_TYPE_5:
+        QDesktopServices::openUrl(QUrl(mBtn1Url));
+        break;
+    default:
+        break;
     }
-    close();
 }
 
 void MiningInfoWidget::button1Clicked()
 {
-    p2p_UserDataMining(THEP2P, mType == 1 ? 1 : 0);
-    close();
+    switch(mType) {
+    case P2P_INFOW_TYPE_1:
+    case P2P_INFOW_TYPE_2:
+        p2p_UserDataMining(THEP2P, 1);
+        close();
+        THEAM->play();
+        break;
+    case P2P_INFOW_TYPE_3:
+        close();
+        THEAM->play();
+        break;
+    case P2P_INFOW_TYPE_4:
+        QDesktopServices::openUrl(QUrl(mBtn1Url));
+        break;
+    default:
+        break;
+    }
 }

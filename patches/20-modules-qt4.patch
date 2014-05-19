@@ -3922,7 +3922,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
 +    CONNECT( this, askUserData(), this, showUserData() );
 +    CONNECT( this, askErrorDialog(QString, QString), this, showErrorDialog(QString, QString) );
-+    CONNECT( this, askMiningDialog(int), this, showMiningDialog(int) );
++    CONNECT( this, askMiningDialog(int, QString, QString, QString, QString, QString), this, showMiningDialog(int, QString, QString, QString, QString, QString) );
 +    
 +    CONNECT( THEMIM, p2pInfoChanged(const QString&), this, p2pUpdateInfo(const QString&) );
 +    CONNECT( THEMIM, p2pStatusChanged(const QString&), this, p2pUpdateStatus(const QString&) );
@@ -3951,7 +3951,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
 +    var_AddCallback( THEP2P, "show-userdata-dialog", IntfShowUserDataCB, p_intf );
 +    var_AddCallback( THEP2P, "showdialog", IntfShowErrorDialogCB, p_intf );
-+    var_AddCallback( THEP2P, "show-mining-dialog", IntfShowMiningDialogCB, p_intf );
++    var_AddCallback( THEP2P, "showinfowindow", IntfShowMiningDialogCB, p_intf );
  
      /* Final Sizing, restoration and placement of the interface */
      if( settings->value( "MainWindow/playlist-visible", false ).toBool() )
@@ -3978,7 +3978,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
 +    var_DelCallback( THEP2P, "show-userdata-dialog", IntfShowUserDataCB, p_intf );
 +    var_DelCallback( THEP2P, "showdialog", IntfShowErrorDialogCB, p_intf );
-+    var_DelCallback( THEP2P, "show-mining-dialog", IntfShowMiningDialogCB, p_intf );
++    var_DelCallback( THEP2P, "showinfowindow", IntfShowMiningDialogCB, p_intf );
 +
 +    if(browserManager) {
 +        delete browserManager;
@@ -5013,7 +5013,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1521,3 +2299,47 @@
+@@ -1521,3 +2299,66 @@
  
      return VLC_SUCCESS;
  }
@@ -5057,7 +5057,26 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    VLC_UNUSED( p_this ); VLC_UNUSED( psz_variable ); VLC_UNUSED( old_val );
 +    
 +    intf_thread_t *p_intf = (intf_thread_t *)param;
-+    p_intf->p_sys->p_mi->p2pMiningDialogShow(new_val.i_int);
++    p2p_showinfowindow_item_t *p_showinfownd = (p2p_showinfowindow_item_t *)new_val.p_address;
++    if(p_showinfownd) {
++        int type = p_showinfownd->type;
++        QString text = "";
++        if( p_showinfownd->text )
++            text.sprintf( "%s", p_showinfownd->text );
++        QString text1 = "";
++        if( p_showinfownd->btn1_text )
++            text1.sprintf( "%s", p_showinfownd->btn1_text );
++        QString url1 = "";
++        if( p_showinfownd->btn1_url )
++            url1.sprintf( "%s", p_showinfownd->btn1_url );
++        QString text2 = "";
++        if( p_showinfownd->btn2_text )
++            text2.sprintf( "%s", p_showinfownd->btn2_text );
++        QString url2 = "";
++        if( p_showinfownd->btn2_url )
++            url2.sprintf( "%s", p_showinfownd->btn2_url );
++        p_intf->p_sys->p_mi->p2pMiningDialogShow(type, text, text1, url1, text2, url2);
++    }
 +    
 +    return VLC_SUCCESS;
 +}
@@ -5111,7 +5130,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +public slots:
 +    void p2pUserDataDialogShow();
 +    void p2pErrorDialogShow(const QString&, const QString&);
-+    void p2pMiningDialogShow(int);
++    void p2pMiningDialogShow(int type, const QString &text, const QString &text1, const QString &url1, const QString &text2, const QString &url2);
 +    void p2pUpdateInfo(const QString&);
 +    void p2pUpdateStatus(const QString&);
 +    void p2pUpdateError(const QString&);
@@ -5120,7 +5139,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +private slots:
 +    void showUserData();
 +    void showErrorDialog(QString, QString);
-+    void showMiningDialog(int);
++    void showMiningDialog(int type, const QString &text, const QString &text1, const QString &url1, const QString &text2, const QString &url2);
 +    void updateTextLabels();
 +    void imNothongToPlay();
 +    void toogleAdvertisementPanel(bool);
@@ -5166,7 +5185,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +signals:
 +    void askUserData();
 +    void askErrorDialog(QString, QString);
-+    void askMiningDialog(int);
++    void askMiningDialog(int, QString, QString, QString, QString, QString);
 +    void setFullscreenVideo( bool );
 +    void backgroundText( QString );
 +

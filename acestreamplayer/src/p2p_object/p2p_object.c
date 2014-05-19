@@ -143,8 +143,7 @@ static void VariablesInit( p2p_object_t *p_p2p )
     
     var_Create( p_p2p, "load-url", VLC_VAR_ADDRESS ); // load url event
 
-    var_Create( p_p2p, "show-mining-dialog", VLC_VAR_INTEGER );
-    var_SetInteger( p_p2p, "show-mining-dialog", 0 );
+    var_Create( p_p2p, "showinfowindow", VLC_VAR_ADDRESS );
 }
 
 static void VariablesUninit( p2p_object_t *p_p2p )
@@ -174,7 +173,7 @@ static void VariablesUninit( p2p_object_t *p_p2p )
     
     var_Destroy( p_p2p, "load-url" );
 
-    var_Destroy( p_p2p, "show-mining-dialog" );
+    var_Destroy( p_p2p, "showinfowindow" );
 }
 
 static void ClearMethods( p2p_object_t *p_p2p )
@@ -198,6 +197,7 @@ static void ClearMethods( p2p_object_t *p_p2p )
     p_p2p->pf_register_load_url_ad_stat = NULL;
     p_p2p->pf_register_load_url_ad_event = NULL;
     p_p2p->pf_request_load_url_ad = NULL;
+    p_p2p->pf_restart_last = NULL;
 }
 
 p2p_object_t *p2p_Create( vlc_object_t *p_parent )
@@ -464,6 +464,14 @@ void p2p_RegisterLoadUrlAdEvent(p2p_object_t *p_p2p, p2p_load_url_type_t type, c
     vlc_mutex_lock( &p_p2p->lock );
     if( p_p2p->pf_register_load_url_ad_event )
         p_p2p->pf_register_load_url_ad_event( p_p2p, (int)type, event_type, id );
+    vlc_mutex_unlock( &p_p2p->lock );
+}
+
+void p2p_RestartLast(p2p_object_t *p_p2p)
+{
+    vlc_mutex_lock( &p_p2p->lock );
+    if( p_p2p->pf_restart_last )
+        p_p2p->pf_restart_last( p_p2p );
     vlc_mutex_unlock( &p_p2p->lock );
 }
 

@@ -80,6 +80,16 @@ typedef enum libvlc_acestream_loadurl_event_type_t {
     libvlc_ace_loadurl_event_ErrorHidden
 } libvlc_acestream_loadurl_event_type_t;
 
+typedef enum libvlc_acestream_showinfowindow_type_t {
+    libvlc_ace_showinfowindow_Undf = -1,
+    libvlc_ace_showinfowindow_Type1,
+    libvlc_ace_showinfowindow_Type2,
+    libvlc_ace_showinfowindow_Type3,
+    libvlc_ace_showinfowindow_Type4,
+    libvlc_ace_showinfowindow_Type5,
+    libvlc_ace_showinfowindow_Type6
+} libvlc_acestream_showinfowindow_type_t;
+
 /**
  * Create an libvlc_acestream_object instance
  *
@@ -324,7 +334,7 @@ LIBVLC_API void libvlc_acestream_object_register_loadurl_event(libvlc_acestream_
  * \param result pointer to allocated mamory for writing result (memory must be allocated and free by caller)
  * \return same as result
  */
-char *libvlc_acestream_object_get_engine_http_host( libvlc_acestream_object_t *p_ace, char *out );
+LIBVLC_API char *libvlc_acestream_object_get_engine_http_host( libvlc_acestream_object_t *p_ace, char *out );
 
 /**
  * Get engine http port
@@ -332,7 +342,14 @@ char *libvlc_acestream_object_get_engine_http_host( libvlc_acestream_object_t *p
  * \param p_ace a libvlc_acestream_object instance
  * \return port value
  */
-int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_object_t *p_ace );
+LIBVLC_API int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_object_t *p_ace );
+
+/**
+ * Resend last start command
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ */
+LIBVLC_API void libvlc_acestream_object_restart_last(libvlc_acestream_object_t *p_ace);
                                             
 /** @} acestream */
 

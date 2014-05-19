@@ -39,7 +39,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +    libvlc_AcestreamStatusRaw,                  // acestream engine STATUS raw data (for js extensions)
 +    libvlc_AcestreamLoadUrl,                    //
 +    libvlc_AcestreamClearLoadUrl,               //
-+    libvlc_AcestreamShowMiningDialog,           //
++    libvlc_AcestreamShowInfoWindow,             //
  };
  
 +typedef enum libvlc_hotkey_action_t {
@@ -104,7 +104,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
          /* media list */
          struct
-@@ -225,6 +298,109 @@
+@@ -225,6 +298,115 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -209,7 +209,13 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +        } acestream_clearloadurl;
 +        struct {
 +            int type;
-+        } acestream_showminingdialog;
++            const char *text;
++            int height;
++            const char *btn1_text;
++            const char *btn1_url;
++            const char *btn2_text;
++            const char *btn2_url;
++        } acestream_showinfowindow;
 +
      } u; /**< Type-dependent event description */
  } libvlc_event_t;
@@ -1117,7 +1123,7 @@ diff -ru vlc-2.1.4.orig/lib/event.c vlc-2.1.4/lib/event.c
 +    DEF(AcestreamStatusRaw)
 +    DEF(AcestreamLoadUrl)
 +    DEF(AcestreamClearLoadUrl)
-+    DEF(AcestreamShowMiningDialog)
++    DEF(AcestreamShowInfoWindow)
  };
  #undef DEF
  
