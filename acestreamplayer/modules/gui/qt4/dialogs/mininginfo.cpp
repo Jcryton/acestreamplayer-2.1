@@ -30,6 +30,7 @@ MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _typ
     QLabel *lblText = new QLabel(this);
     lblText->setMaximumWidth(450);
     lblText->setWordWrap(true);
+    lblText->setOpenExternalLinks(true);
     QHBoxLayout *buttons = new QHBoxLayout(this);
     QPushButton *button0 = new QPushButton(this);
     QPushButton *button1 = new QPushButton(this);
