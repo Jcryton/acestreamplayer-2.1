@@ -633,35 +633,20 @@ event_in_msg *In::event( const string &msg )
     else if( !_options[0].compare( "infowindow" ) ) {
         _msg->event_type = IN_EVENT_MSG_SHOW_INFOWINDOW;
         _msg->event.infowindow_event = new show_infowindow_in_event_msg;
-        _msg->event.infowindow_event->type = P2P_INFOW_TYPE_UNDEF;
+        _msg->event.infowindow_event->type = "";
         _msg->event.infowindow_event->text = "";
         _msg->event.infowindow_event->height = 0;
+        _msg->event.infowindow_event->buttons = 0;
+        _msg->event.infowindow_event->btn1_action = 0;
         _msg->event.infowindow_event->btn1_text = "";
         _msg->event.infowindow_event->btn1_url = "";
+        _msg->event.infowindow_event->btn2_action = 0;
         _msg->event.infowindow_event->btn2_text = "";
         _msg->event.infowindow_event->btn2_url = "";
 
         for( size_t _i = 1; _i < _options.size(); ++_i ) {
             if( !_options[_i].compare(0, 4, "type") ) {
-                string type_str = decode_url(_options[_i].substr(5));
-                if( !type_str.compare("m1") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_1;
-                }
-                else if( !type_str.compare("m2") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_2;
-                }
-                else if( !type_str.compare("m3") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_3;
-                }
-                else if( !type_str.compare("m4") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_4;
-                }
-                else if( !type_str.compare("m5") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_5;
-                }
-                else if( !type_str.compare("m6") ) {
-                    _msg->event.infowindow_event->type = P2P_INFOW_TYPE_6;
-                }
+                _msg->event.infowindow_event->type = decode_url(_options[_i].substr(5));
             }
             else if( !_options[_i].compare(0, 4, "text") ) {
                 _msg->event.infowindow_event->text = decode_url(_options[_i].substr(5));
@@ -669,11 +654,20 @@ event_in_msg *In::event( const string &msg )
             else if( !_options[_i].compare(0, 6, "height") ) {
                 _msg->event.infowindow_event->height = atoi(_options[_i].substr(7).c_str());
             }
+            else if( !_options[_i].compare(0, 7, "buttons") ) {
+                _msg->event.infowindow_event->buttons = atoi(_options[_i].substr(8).c_str());
+            }
+            else if( !_options[_i].compare(0, 11, "btn1_action") ) {
+                _msg->event.infowindow_event->btn1_action = atoi(_options[_i].substr(12).c_str());
+            }
             else if( !_options[_i].compare(0, 9, "btn1_text") ) {
                 _msg->event.infowindow_event->btn1_text = decode_url(_options[_i].substr(10));
             }
             else if( !_options[_i].compare(0, 8, "btn1_url") ) {
                 _msg->event.infowindow_event->btn1_url = decode_url(_options[_i].substr(9));
+            }
+            else if( !_options[_i].compare(0, 11, "btn2_action") ) {
+                _msg->event.infowindow_event->btn2_action = atoi(_options[_i].substr(12).c_str());
             }
             else if( !_options[_i].compare(0, 9, "btn2_text") ) {
                 _msg->event.infowindow_event->btn2_text = decode_url(_options[_i].substr(10));

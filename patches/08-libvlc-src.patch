@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc_events.h
 --- vlc-2.1.4.orig/include/vlc/libvlc_events.h	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-05-13 14:40:36.287657849 +0300
++++ vlc-2.1.4/include/vlc/libvlc_events.h	2014-06-12 17:46:19.000000000 +0300
 @@ -73,11 +73,16 @@
      libvlc_MediaPlayerSnapshotTaken,
      libvlc_MediaPlayerLengthChanged,
@@ -39,7 +39,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +    libvlc_AcestreamStatusRaw,                  // acestream engine STATUS raw data (for js extensions)
 +    libvlc_AcestreamLoadUrl,                    //
 +    libvlc_AcestreamClearLoadUrl,               //
-+    libvlc_AcestreamShowInfoWindow,             //
++    libvlc_AcestreamShowInfoWindow,           //
  };
  
 +typedef enum libvlc_hotkey_action_t {
@@ -104,7 +104,7 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
  
          /* media list */
          struct
-@@ -225,6 +298,115 @@
+@@ -225,6 +298,117 @@
          {
              libvlc_media_t * new_media;
          } media_player_media_changed;
@@ -208,15 +208,17 @@ diff -ru vlc-2.1.4.orig/include/vlc/libvlc_events.h vlc-2.1.4/include/vlc/libvlc
 +            int type;
 +        } acestream_clearloadurl;
 +        struct {
-+            int type;
++            const char *type;
 +            const char *text;
 +            int height;
++            int buttons;
++            int btn1_action;
 +            const char *btn1_text;
 +            const char *btn1_url;
++            int btn2_action;
 +            const char *btn2_text;
 +            const char *btn2_url;
 +        } acestream_showinfowindow;
-+
      } u; /**< Type-dependent event description */
  } libvlc_event_t;
  

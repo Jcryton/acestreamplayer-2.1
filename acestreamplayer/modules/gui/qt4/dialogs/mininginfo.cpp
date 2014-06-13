@@ -4,6 +4,7 @@
 
 #include "dialogs/mininginfo.hpp"
 #include "actions_manager.hpp" 
+#include "input_manager.hpp" 
 
 #include <QString>
 #include <QVBoxLayout>
@@ -14,10 +15,15 @@
 #include <QDesktopServices>
 #include <QUrl>
 
-MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _type, const QString &_text, const QString &_text1, const QString &_url1, const QString &_text2, const QString &_url2 ) : 
+MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, const QString &_type, const QString &_text, 
+    int _buttons,
+    int _action1, const QString &_text1, const QString &_url1, 
+    int _action2, const QString &_text2, const QString &_url2 ) : 
     QWidget( _p )
-  , p_intf( _p_intf )
+  , p_intf(_p_intf)
   , mType(_type)
+  , mAction1(_action1)
+  , mAction2(_action2)
   , mBtn1Url(_url1)
   , mBtn2Url(_url2)
 {
@@ -31,75 +37,78 @@ MiningInfoWidget::MiningInfoWidget(QWidget *_p, intf_thread_t *_p_intf, int _typ
     lblText->setMaximumWidth(450);
     lblText->setWordWrap(true);
     lblText->setOpenExternalLinks(true);
-    QHBoxLayout *buttons = new QHBoxLayout(this);
-    QPushButton *button0 = new QPushButton(this);
-    QPushButton *button1 = new QPushButton(this);
     lblText->setText(_text);
-    button0->setText(_text1);
-    button1->setText(_text2);
     main->addWidget(lblText);
-    if(mType < P2P_INFOW_TYPE_5) {
-        buttons->addWidget(button0);
-        buttons->addWidget(button1);
-    }
-    else if(mType < P2P_INFOW_TYPE_6) {
-        buttons->addWidget(button0);
-    }
-    main->addLayout(buttons);
     
+    QHBoxLayout *loutbuttons = new QHBoxLayout(this);
+    
+    if(_buttons == 0) {
+        QPushButton *button = new QPushButton(this);
+        button->setText("Ok");
+        CONNECT(button, clicked(), this, close());
+        loutbuttons->addWidget(button);
+    }
+    else if(_buttons == 1) {
+        QPushButton *button1 = new QPushButton(this);
+        button1->setText(_text1);
+        CONNECT(button1, clicked(), this, button0Clicked());
+        loutbuttons->addWidget(button1);
+    }
+    else if(_buttons == 2) {
+        QPushButton *button1 = new QPushButton(this);
+        QPushButton *button2 = new QPushButton(this);
+        button1->setText(_text1);
+        button2->setText(_text2);
+        CONNECT(button1, clicked(), this, button0Clicked());
+        CONNECT(button2, clicked(), this, button1Clicked());
+        loutbuttons->addWidget(button1);
+        loutbuttons->addWidget(button2);
+    }
+    
+    main->addLayout(loutbuttons);
     setLayout(main);
-    CONNECT(button0, clicked(), this, button0Clicked());
-    CONNECT(button1, clicked(), this, button1Clicked());
-    setVisible(true);
+    
+    if(_buttons >= 0 && _buttons <= 2) {
+        setVisible(true);
+        
+        if( _p ) {
+            move(_p->x() + _p->width() / 2 - width() / 2, _p->y() + _p->height() / 2 - height() / 2);
+        }
+    }
+}
 
-    if( _p ) {
-        move(_p->x() + _p->width() / 2 - width() / 2, _p->y() + _p->height() / 2 - height() / 2);
+void MiningInfoWidget::processButtonClick(int btn)
+{
+    int action = btn == 1 ? mAction1 : mAction2;
+    QString url = btn == 1 ? mBtn1Url : mBtn2Url;
+    if(action & P2P_IW_BTN_ACTION_MINIGACTIVATE) {
+        p2p_UserDataMining(THEP2P, 1);
+    }
+    if(action & P2P_IW_BTN_ACTION_SENDEVENT) {
+        p2p_InfoWindowsResponse(THEP2P, qtu(mType), btn);
+    }
+    if(action & P2P_IW_BTN_ACTION_STOP) {
+        THEMIM->stop();
+    }
+    if(action & P2P_IW_BTN_ACTION_PLAY) {
+        THEAM->play();
+    }
+    if(action & P2P_IW_BTN_ACTION_OPENLINK) {
+        if(!url.isEmpty()) {
+            QDesktopServices::openUrl(QUrl(url));
+        }
+    }
+    if(action & P2P_IW_BTN_ACTION_CLOSE) {
+        close();
     }
 }
 
 void MiningInfoWidget::button0Clicked()
 {
-    switch(mType) {
-    case P2P_INFOW_TYPE_1:
-        QDesktopServices::openUrl(QUrl(mBtn1Url));
-        close();
-        break;
-    case P2P_INFOW_TYPE_2:
-        QDesktopServices::openUrl(QUrl(mBtn1Url));
-        close();
-        THEAM->play();
-        break;
-    case P2P_INFOW_TYPE_3:
-        p2p_UserDataMining(THEP2P, 1);
-        close();
-        THEAM->play();
-        break;
-    case P2P_INFOW_TYPE_4:
-    case P2P_INFOW_TYPE_5:
-        QDesktopServices::openUrl(QUrl(mBtn1Url));
-        break;
-    default:
-        break;
-    }
+    processButtonClick(1);
 }
 
 void MiningInfoWidget::button1Clicked()
 {
-    switch(mType) {
-    case P2P_INFOW_TYPE_1:
-    case P2P_INFOW_TYPE_2:
-        p2p_UserDataMining(THEP2P, 1);
-        close();
-        THEAM->play();
-        break;
-    case P2P_INFOW_TYPE_3:
-        close();
-        THEAM->play();
-        break;
-    case P2P_INFOW_TYPE_4:
-        QDesktopServices::openUrl(QUrl(mBtn1Url));
-        break;
-    default:
-        break;
-    }
+    processButtonClick(2);
 }

@@ -3817,7 +3817,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/
  #endif
 diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui/qt4/main_interface.cpp
 --- vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-05-13 15:19:51.000000000 +0300
++++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-06-12 17:48:22.000000000 +0300
 @@ -41,12 +41,20 @@
  #include "components/playlist/playlist.hpp"     // plWidget
  #include "dialogs/firstrun.hpp"                 // First Run
@@ -3916,13 +3916,14 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  
      CONNECT( THEDP, toolBarConfUpdated(), this, toolBarConfUpdated() );
-@@ -229,8 +267,28 @@
+@@ -229,8 +267,29 @@
      CONNECT( this, askBoss(), this, setBoss() );
      CONNECT( this, askRaise(), this, setRaise() );
  
 +    CONNECT( this, askUserData(), this, showUserData() );
 +    CONNECT( this, askErrorDialog(QString, QString), this, showErrorDialog(QString, QString) );
-+    CONNECT( this, askMiningDialog(int, QString, QString, QString, QString, QString), this, showMiningDialog(int, QString, QString, QString, QString, QString) );
++    CONNECT( this, askMiningDialog(QString, QString, int, int, QString, QString, int, QString, QString), 
++            this, showMiningDialog(QString, QString, int, int, QString, QString, int, QString, QString) );
 +    
 +    CONNECT( THEMIM, p2pInfoChanged(const QString&), this, p2pUpdateInfo(const QString&) );
 +    CONNECT( THEMIM, p2pStatusChanged(const QString&), this, p2pUpdateStatus(const QString&) );
@@ -3945,7 +3946,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /************
       * Callbacks
-@@ -242,6 +300,9 @@
+@@ -242,6 +301,9 @@
      /* Register callback for the intf-popupmenu variable */
      var_AddCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
@@ -3955,7 +3956,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /* Final Sizing, restoration and placement of the interface */
      if( settings->value( "MainWindow/playlist-visible", false ).toBool() )
-@@ -269,6 +330,16 @@
+@@ -269,6 +331,16 @@
      if( videoWidget )
          releaseVideoSlot();
  
@@ -3972,7 +3973,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  #ifdef _WIN32
      if( himl )
          ImageList_Destroy( himl );
-@@ -311,6 +382,14 @@
+@@ -311,6 +383,14 @@
      var_DelCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
      var_DelCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
@@ -3987,7 +3988,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      p_intf->p_sys->p_mi = NULL;
  }
  
-@@ -342,9 +421,14 @@
+@@ -342,9 +422,14 @@
      if( fullscreenControls )
      {
          delete fullscreenControls;
@@ -4003,7 +4004,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          THEMIM->requestVoutUpdate();
      }
  
-@@ -378,14 +462,14 @@
+@@ -378,14 +463,14 @@
      stackCentralW = new QVLCStackedWidget( main );
  
      /* Bg Cone */
@@ -4021,7 +4022,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      stackCentralW->addWidget( bgWidget );
      if ( !var_InheritBool( p_intf, "qt-bgcone" ) )
-@@ -395,11 +479,15 @@
+@@ -395,11 +480,15 @@
              bgWidget->setExpandstoHeight( true );
  
      /* And video Outputs */
@@ -4038,7 +4039,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      mainLayout->insertWidget( 1, stackCentralW );
  
      stackWidgetsSizes[bgWidget] =
-@@ -434,9 +522,14 @@
+@@ -434,9 +523,14 @@
          /* Create the FULLSCREEN CONTROLS Widget */
          if( var_InheritBool( p_intf, "qt-fs-controller" ) )
          {
@@ -4054,7 +4055,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          }
  }
  
-@@ -535,7 +628,13 @@
+@@ -535,7 +629,13 @@
  #endif
  }
  
@@ -4069,7 +4070,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  inline void MainInterface::restoreStackOldWidget()
              { showTab( stackCentralOldWidget ); }
  
-@@ -549,42 +648,51 @@
+@@ -549,42 +649,51 @@
                   stackCentralW->indexOf( stackCentralOldWidget ) );
      msg_Dbg( p_intf, "ShowTab request for %s", widget->metaObject()->className() );
  #endif
@@ -4147,7 +4148,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          }
      }
  
-@@ -689,19 +797,27 @@
+@@ -689,19 +798,27 @@
      assert( videoWidget );
      videoWidget->release();
      setVideoOnTop( false );
@@ -4184,7 +4185,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  }
  
  void MainInterface::setVideoSize( unsigned int w, unsigned int h )
-@@ -719,6 +835,7 @@
+@@ -719,6 +836,7 @@
  void MainInterface::setVideoFullScreen( bool fs )
  {
      b_videoFullScreen = fs;
@@ -4192,7 +4193,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      if( fs )
      {
          int numscreen = var_InheritInteger( p_intf, "qt-fullscreen-screennumber" );
-@@ -746,15 +863,31 @@
+@@ -746,15 +864,31 @@
  
          /* */
          setMinimalView( true );
@@ -4226,7 +4227,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      videoWidget->sync();
  }
  
-@@ -1002,6 +1135,13 @@
+@@ -1002,6 +1136,13 @@
  void MainInterface::setName( const QString& name )
  {
      input_name = name; /* store it for the QSystray use */
@@ -4240,7 +4241,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      /* Display it in the status bar, but also as a Tooltip in case it doesn't
         fit in the label */
      nameLabel->setText( name );
-@@ -1016,11 +1156,11 @@
+@@ -1016,11 +1157,11 @@
  {
      if( aTitle.isEmpty() )
      {
@@ -4254,7 +4255,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  }
  
-@@ -1059,9 +1199,9 @@
+@@ -1059,9 +1200,9 @@
      else
          iconVLC = QIcon::fromTheme( "vlc", QIcon( ":/logo/vlc256.png" ) );
      sysTray = new QSystemTrayIcon( iconVLC, this );
@@ -4266,7 +4267,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      systrayMenu->setIcon( iconVLC );
  
      VLCMenuBar::updateSystrayMenu( this, p_intf, true );
-@@ -1161,7 +1301,7 @@
+@@ -1161,7 +1302,7 @@
  #endif
              break;
          case QSystemTrayIcon::MiddleClick:
@@ -4275,7 +4276,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      qtr( "Control menu for the player" ),
                      QSystemTrayIcon::Information, 3000 );
              break;
-@@ -1178,7 +1318,7 @@
+@@ -1178,7 +1319,7 @@
  {
      if( name.isEmpty() )
      {
@@ -4284,7 +4285,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      else
      {
-@@ -1186,7 +1326,7 @@
+@@ -1186,7 +1327,7 @@
          if( ( i_notificationSetting == NOTIFICATION_ALWAYS ) ||
              ( i_notificationSetting == NOTIFICATION_MINIMIZED && (isMinimized() || isHidden()) ) )
          {
@@ -4293,7 +4294,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      QSystemTrayIcon::NoIcon, 3000 );
          }
      }
-@@ -1209,7 +1349,7 @@
+@@ -1209,7 +1350,7 @@
          sysTray->setToolTip( input_name + " - " + qtr( "Paused") );
          break;
      default:
@@ -4302,7 +4303,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          break;
      }
      VLCMenuBar::updateSystrayMenu( this, p_intf );
-@@ -1308,9 +1448,18 @@
+@@ -1308,9 +1449,18 @@
              }
              if( mrl.length() > 0 )
              {
@@ -4324,7 +4325,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                  first = false;
                  RecentsMRL::getInstance( p_intf )->addRecent( mrl );
              }
-@@ -1323,10 +1472,20 @@
+@@ -1323,10 +1473,20 @@
      if( !mimeData->hasUrls() && mimeData->hasText() &&
          QUrl(mimeData->text()).isValid() )
      {
@@ -4349,7 +4350,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      event->accept();
  }
-@@ -1351,7 +1510,7 @@
+@@ -1351,7 +1511,7 @@
      handleKeyPress( e );
  
      /* easter eggs sequence handling */
@@ -4358,7 +4359,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          i_kc_offset++;
      else
          i_kc_offset = 0;
-@@ -1360,7 +1519,7 @@
+@@ -1360,7 +1520,7 @@
      {
          i_kc_offset = 0;
          emit kc_pressed();
@@ -4367,7 +4368,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  }
  
  void MainInterface::handleKeyPress( QKeyEvent *e )
-@@ -1375,7 +1534,16 @@
+@@ -1375,7 +1535,16 @@
      int i_vlck = qtEventToVLCKey( e );
      if( i_vlck > 0 )
      {
@@ -4385,7 +4386,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          e->accept();
      }
      else
-@@ -1385,10 +1553,20 @@
+@@ -1385,10 +1554,20 @@
  void MainInterface::wheelEvent( QWheelEvent *e )
  {
      int i_vlckey = qtWheelEventToVLCKey( e );
@@ -4406,7 +4407,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  void MainInterface::closeEvent( QCloseEvent *e )
  {
  //  hide();
-@@ -1455,6 +1633,606 @@
+@@ -1455,6 +1634,606 @@
      raise();
  }
  
@@ -4420,9 +4421,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    emit askErrorDialog(title, text);
 +}
 +
-+void MainInterface::p2pMiningDialogShow(int type) 
++void MainInterface::p2pMiningDialogShow(const QString &type, const QString &text, int buttons, int action1, const QString &text1, const QString &url1, int action2, const QString &text2, const QString &url2) 
 +{
-+    emit askMiningDialog(type);
++    emit askMiningDialog(type, text, buttons, action1, text1, url1, action2, text2, url2);
 +}
 +
 +void MainInterface::showUserData()
@@ -4437,9 +4438,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    dialog_Fatal( THEP2P, qtu(title), qtu(text) );
 +}
 +
-+void MainInterface::showMiningDialog(int type)
++void MainInterface::showMiningDialog(const QString &type, const QString &text, int buttons, int action1, const QString &text1, const QString &url1, int action2, const QString &text2, const QString &url2)
 +{
-+    MiningInfoWidget::ShowMiningDialog( this, p_intf, type );
++    MiningInfoWidget::ShowMiningDialog( this, p_intf, type, text, buttons, action1, text1, url1, action2, text2, url2 );
 +}
 +
 +void MainInterface::p2pUpdateInfo( const QString &info )
@@ -5013,7 +5014,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1521,3 +2299,66 @@
+@@ -1521,3 +2300,72 @@
  
      return VLC_SUCCESS;
  }
@@ -5057,32 +5058,38 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    VLC_UNUSED( p_this ); VLC_UNUSED( psz_variable ); VLC_UNUSED( old_val );
 +    
 +    intf_thread_t *p_intf = (intf_thread_t *)param;
++ 
 +    p2p_showinfowindow_item_t *p_showinfownd = (p2p_showinfowindow_item_t *)new_val.p_address;
 +    if(p_showinfownd) {
-+        int type = p_showinfownd->type;
++        QString type = "";
++        if( p_showinfownd->type )
++            type.sprintf( "%s", p_showinfownd->type );
 +        QString text = "";
 +        if( p_showinfownd->text )
 +            text.sprintf( "%s", p_showinfownd->text );
++        int buttons = p_showinfownd->buttons;
++        int action1 = p_showinfownd->btn1_action;
 +        QString text1 = "";
 +        if( p_showinfownd->btn1_text )
 +            text1.sprintf( "%s", p_showinfownd->btn1_text );
 +        QString url1 = "";
 +        if( p_showinfownd->btn1_url )
 +            url1.sprintf( "%s", p_showinfownd->btn1_url );
++        int action2 = p_showinfownd->btn2_action;
 +        QString text2 = "";
 +        if( p_showinfownd->btn2_text )
 +            text2.sprintf( "%s", p_showinfownd->btn2_text );
 +        QString url2 = "";
 +        if( p_showinfownd->btn2_url )
 +            url2.sprintf( "%s", p_showinfownd->btn2_url );
-+        p_intf->p_sys->p_mi->p2pMiningDialogShow(type, text, text1, url1, text2, url2);
++        p_intf->p_sys->p_mi->p2pMiningDialogShow(type, text, buttons, action1, text1, url1, action2, text2, url2);
 +    }
 +    
 +    return VLC_SUCCESS;
 +}
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui/qt4/main_interface.hpp
 --- vlc-2.1.4.orig/modules/gui/qt4/main_interface.hpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/main_interface.hpp	2014-05-13 15:08:24.000000000 +0300
++++ vlc-2.1.4/modules/gui/qt4/main_interface.hpp	2014-06-12 17:49:04.000000000 +0300
 @@ -33,6 +33,10 @@
   #include <vlc_windows_interfaces.h>
  #endif
@@ -5122,7 +5129,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
  
  public slots:
      void dockPlaylist( bool b_docked = true );
-@@ -266,6 +277,86 @@
+@@ -266,6 +277,87 @@
      void askBoss();
      void askRaise();
      void kc_pressed(); /* easter eggs */
@@ -5130,7 +5137,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +public slots:
 +    void p2pUserDataDialogShow();
 +    void p2pErrorDialogShow(const QString&, const QString&);
-+    void p2pMiningDialogShow(int type, const QString &text, const QString &text1, const QString &url1, const QString &text2, const QString &url2);
++    void p2pMiningDialogShow(const QString &type, const QString &text, int buttons, int action1, const QString &text1, const QString &url1, int action2, const QString &text2, const QString &url2);
 +    void p2pUpdateInfo(const QString&);
 +    void p2pUpdateStatus(const QString&);
 +    void p2pUpdateError(const QString&);
@@ -5139,7 +5146,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +private slots:
 +    void showUserData();
 +    void showErrorDialog(QString, QString);
-+    void showMiningDialog(int type, const QString &text, const QString &text1, const QString &url1, const QString &text2, const QString &url2);
++    void showMiningDialog(const QString &type, const QString &text, int buttons, int action1, const QString &text1, const QString &url1, int action2, const QString &text2, const QString &url2);
 +    void updateTextLabels();
 +    void imNothongToPlay();
 +    void toogleAdvertisementPanel(bool);
@@ -5148,6 +5155,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    void handleClearLoadUrlEvent(AceWebBrowser::BrowserType type);
 +    void createBrowser(AceWebBrowser::LoadItem conf);
 +    void createIEBrowser(AceWebBrowser::LoadItem conf, QWidget *parent); //tmp
++
 +
 +
 +
@@ -5185,7 +5193,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +signals:
 +    void askUserData();
 +    void askErrorDialog(QString, QString);
-+    void askMiningDialog(int, QString, QString, QString, QString, QString);
++    void askMiningDialog(QString, QString, int, int, QString, QString, int, QString, QString);
 +    void setFullscreenVideo( bool );
 +    void backgroundText( QString );
 +

@@ -80,15 +80,14 @@ typedef enum libvlc_acestream_loadurl_event_type_t {
     libvlc_ace_loadurl_event_ErrorHidden
 } libvlc_acestream_loadurl_event_type_t;
 
-typedef enum libvlc_acestream_showinfowindow_type_t {
-    libvlc_ace_showinfowindow_Undf = -1,
-    libvlc_ace_showinfowindow_Type1,
-    libvlc_ace_showinfowindow_Type2,
-    libvlc_ace_showinfowindow_Type3,
-    libvlc_ace_showinfowindow_Type4,
-    libvlc_ace_showinfowindow_Type5,
-    libvlc_ace_showinfowindow_Type6
-} libvlc_acestream_showinfowindow_type_t;
+typedef enum libvlc_acestream_infowindow_button_action_t {
+    libvlc_ace_btn_action_Close = 1,
+    libvlc_ace_btn_action_OpenUrl = 2,
+    libvlc_ace_btn_action_Play = 4,
+    libvlc_ace_btn_action_Stop = 8,
+    libvlc_ace_btn_action_SendEvent = 16,
+    libvlc_ace_btn_action_MiningActivate = 32,
+} libvlc_acestream_infowindow_button_action_t;
 
 /**
  * Create an libvlc_acestream_object instance
@@ -257,6 +256,16 @@ LIBVLC_API bool libvlc_acestream_object_user_data( libvlc_acestream_object_t *p_
 LIBVLC_API bool libvlc_acestream_object_user_data_mining( libvlc_acestream_object_t *p_ace, int value );
 
 /**
+ * Command for engine to send response after libvlc_AcestreamShowUserDataMiningDialog event
+ *
+ * \param p_ace a libvlc_acestream_object instance
+ * \param type
+ * \param button
+ * \return success
+ */
+LIBVLC_API bool libvlc_acestream_object_infowindow_response( libvlc_acestream_object_t *p_ace, const char *type, int button );
+
+/**
  * Get engine version ( for js extensions )
  *
  * \param p_ace a libvlc_acestream_object instance
@@ -350,7 +359,7 @@ LIBVLC_API int libvlc_acestream_object_get_engine_http_port( libvlc_acestream_ob
  * \param p_ace a libvlc_acestream_object instance
  */
 LIBVLC_API void libvlc_acestream_object_restart_last(libvlc_acestream_object_t *p_ace);
-                                            
+
 /** @} acestream */
 
 # ifdef __cplusplus

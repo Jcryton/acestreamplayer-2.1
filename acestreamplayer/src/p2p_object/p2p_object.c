@@ -191,6 +191,7 @@ static void ClearMethods( p2p_object_t *p_p2p )
     p_p2p->pf_live_seek = NULL;
     p_p2p->pf_user_data = NULL;
     p_p2p->pf_user_data_mining = NULL;
+    p_p2p->pf_info_window_response = NULL;
     p_p2p->pf_stat_event = NULL;
     p_p2p->pf_save_option = NULL;
     p_p2p->pf_set_callback = NULL;
@@ -402,6 +403,16 @@ bool p2p_UserDataMining( p2p_object_t *p_p2p, int value )
     vlc_mutex_lock( &p_p2p->lock );
     if( p_p2p->pf_user_data_mining )
         ret = p_p2p->pf_user_data_mining( p_p2p, value );
+    vlc_mutex_unlock( &p_p2p->lock );
+	return ret;
+}
+
+bool p2p_InfoWindowsResponse( p2p_object_t *p_p2p, const char *type, int button)
+{
+    bool ret = false;
+    vlc_mutex_lock( &p_p2p->lock );
+    if( p_p2p->pf_info_window_response )
+        ret = p_p2p->pf_info_window_response( p_p2p, type, button );
     vlc_mutex_unlock( &p_p2p->lock );
 	return ret;
 }

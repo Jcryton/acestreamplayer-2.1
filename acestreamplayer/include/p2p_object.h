@@ -131,15 +131,14 @@ typedef enum p2p_load_url_statistics_event_type_t {
     P2P_LOAD_URL_STAT_EVENT_ERROR_HIDDEN,
 } p2p_load_url_statistics_event_type_t;
 
-typedef enum p2p_infowindow_type_t {
-    P2P_INFOW_TYPE_UNDEF = -1,
-    P2P_INFOW_TYPE_1,
-    P2P_INFOW_TYPE_2,
-    P2P_INFOW_TYPE_3,
-    P2P_INFOW_TYPE_4,
-    P2P_INFOW_TYPE_5,
-    P2P_INFOW_TYPE_6
-} p2p_infowindow_type_t;
+typedef enum p2p_infowindow_button_action_t {
+    P2P_IW_BTN_ACTION_CLOSE = 1,
+    P2P_IW_BTN_ACTION_OPENLINK = 2,
+    P2P_IW_BTN_ACTION_PLAY = 4,
+    P2P_IW_BTN_ACTION_STOP = 8,
+    P2P_IW_BTN_ACTION_SENDEVENT = 16,
+    P2P_IW_BTN_ACTION_MINIGACTIVATE = 32,
+} p2p_infowindow_button_action_t;
 
 // callback structs
 struct p2p_load_item_t {
@@ -201,17 +200,30 @@ struct p2p_load_url_item_t {
     int group_id;
     bool useIE;
 };
+
+
+
+
+
+
+
+
+
+
 struct p2p_showdialog_item_t {
     const char *title;
     const char *text;
 };
 
 struct p2p_showinfowindow_item_t {
-    p2p_infowindow_type_t type;
+    const char *type;
     const char *text;
     int height;
+    int buttons;
+    int btn1_action;
     const char *btn1_text;
     const char *btn1_url;
+    int btn2_action;
     const char *btn2_text;
     const char *btn2_url;
 };
@@ -270,6 +282,7 @@ struct p2p_object_t {
     bool (*pf_live_seek) (p2p_object_t*, int/*position*/);
     bool (*pf_user_data) (p2p_object_t*, int/*gender*/, int/*age*/);
     bool (*pf_user_data_mining) (p2p_object_t*, int/*value*/);
+    bool (*pf_info_window_response) (p2p_object_t*, const char*/*type*/, int/*button*/);
     
     bool (*pf_stat_event) (p2p_object_t*, p2p_statistics_event_type_t/*event type*/, int/*value*/);
     bool (*pf_save_option) (p2p_object_t*, const char*, const char*, const char*);
@@ -307,6 +320,7 @@ VLC_API bool p2p_GetAdUrl(p2p_object_t*, const char*, const char*, int, int);
 VLC_API bool p2p_LiveSeek(p2p_object_t*, int);
 VLC_API bool p2p_UserData( p2p_object_t*, int, int );
 VLC_API bool p2p_UserDataMining( p2p_object_t*, int );
+VLC_API bool p2p_InfoWindowsResponse( p2p_object_t*, const char*, int );
 
 VLC_API bool p2p_StatEvent(p2p_object_t*, p2p_statistics_event_type_t, int);
 VLC_API bool p2p_SaveOption(p2p_object_t*, const char*, const char*, const char*);

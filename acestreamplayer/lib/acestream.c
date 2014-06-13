@@ -148,8 +148,11 @@ static int acestream_showinfowindow( vlc_object_t * p_this, char const * psz_cmd
         event.u.acestream_showinfowindow.type = p_showinfownd->type;
         event.u.acestream_showinfowindow.text = p_showinfownd->text;
         event.u.acestream_showinfowindow.height = p_showinfownd->height;
+        event.u.acestream_showinfowindow.buttons = p_showinfownd->buttons;
+        event.u.acestream_showinfowindow.btn1_action = p_showinfownd->btn1_action;
         event.u.acestream_showinfowindow.btn1_text = p_showinfownd->btn1_text;
         event.u.acestream_showinfowindow.btn1_url = p_showinfownd->btn1_url;
+        event.u.acestream_showinfowindow.btn2_action = p_showinfownd->btn2_action;
         event.u.acestream_showinfowindow.btn2_text = p_showinfownd->btn2_text;
         event.u.acestream_showinfowindow.btn2_url = p_showinfownd->btn2_url;
 
@@ -658,6 +661,15 @@ bool libvlc_acestream_object_user_data_mining( libvlc_acestream_object_t *p_ace,
     
     ret = p2p_UserDataMining( getP2P( p_ace->p_libvlc_instance ), value );
     
+    vlc_mutex_unlock( &p_ace->object_lock );
+    return ret;
+}
+
+bool libvlc_acestream_object_infowindow_response( libvlc_acestream_object_t *p_ace, const char *type, int button )
+{
+    bool ret = false;
+    vlc_mutex_lock( &p_ace->object_lock );    
+    ret = p2p_InfoWindowsResponse( getP2P( p_ace->p_libvlc_instance ), type, button );
     vlc_mutex_unlock( &p_ace->object_lock );
     return ret;
 }

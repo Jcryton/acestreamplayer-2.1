@@ -62,6 +62,7 @@ bool GetAdUrl(p2p_object_t*, const char*, const char*, int, int);
 bool LiveSeek(p2p_object_t*, int);
 bool UserData( p2p_object_t*, int, int );
 bool UserDataMining( p2p_object_t*, int );
+bool InfoWindowResponse( p2p_object_t*, const char*, int );
 
 bool StatisticsEvent(p2p_object_t*, p2p_statistics_event_type_t, int);
 
