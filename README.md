@@ -23,7 +23,7 @@ Known problems:
 
 *Error: "Failed to download contribs"* - [download] contribs manually and put into vlc-{version}/contrib folder.
 
-**Cross compile for Linux:** 
+**Compile for Linux:** 
 
 *Tested only on Ubuntu*
 
