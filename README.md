@@ -29,7 +29,7 @@ Known problems:
 
 Check out all required [libraries] to build vlc
 
-Also install `libqt4-weblit`, `openssl`, `sqlite3`
+Also install *libqt4-webkit*, *openssl*, *sqlite3*
 
 Edit config.sh, set HOST="", to build for your system.
 
