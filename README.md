@@ -23,4 +23,25 @@ Known problems:
 
 *Error: "Failed to download contribs"* - [download] contribs manually and put into vlc-{version}/contrib folder.
 
+**Cross compile for Linux:** 
+
+*Tested only on Ubuntu*
+
+Check out all required [libraries] to build vlc
+
+Also install `libqt4-weblit`, `openssl`, `sqlite3`
+
+Edit config.sh, set HOST="", to build for your system.
+
+`./bootstrap.sh`
+
+`./configure.sh`
+
+`cd build-ace`
+
+`make`
+
+`make install`
+
 [download]:https://bitbucket.org/AceStream/acestreamplayer/downloads/i686-w64-mingw32.tar.gz
+[libraries]:https://wiki.videolan.org/Contrib_Status/

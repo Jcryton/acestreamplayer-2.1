@@ -4,9 +4,22 @@ PWD_DIR=$(readlink -f $(dirname $0))
 . "${PWD_DIR}/config.sh"
 . "${PWD_DIR}/functions.sh"
 
-check_required_package mingw-w64
-check_required_package mingw-w64-dev
-check_required_package mingw-w64-tools
+LINUX="0"
+WINDOWS="0"
+case "${HOST}" in
+  *mingw32*)
+    WINDOWS="1"
+  ;;
+  *)
+    LINUX="1"
+  ;;
+esac
+
+if [ ${WINDOWS} = "1" ]; then
+    check_required_package mingw-w64
+    check_required_package mingw-w64-dev
+    check_required_package mingw-w64-tools
+fi
 
 # download and unpack
 if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION} ]; then
@@ -70,21 +83,23 @@ for i in `seq 1 24`; do
     fi
 done
 
-# prebuilt contribs
-if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST} ]; then
-    cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib
-    
-    if [ ! -f ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.* ]; then
-        info "Downloading contribs"
-        # TODO
-        download ${CONTRIBS_URL} || error "Failed to download contribs"
+if [ ${WINDOWS} = "1" ]; then
+    # prebuilt contribs
+    if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST} ]; then
+        cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib
+        
+        if [ ! -f ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.* ]; then
+            info "Downloading contribs"
+            # TODO
+            download ${CONTRIBS_URL} || error "Failed to download contribs"
+        fi
+        
+        unpack ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.*
+        cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}
+        ./change_prefix.sh
+        
+        cd ${PWD_DIR}
     fi
-    
-    unpack ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.*
-    cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}
-    ./change_prefix.sh
-    
-    cd ${PWD_DIR}
 fi
 
 # private directory
