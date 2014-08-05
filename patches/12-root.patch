@@ -1,6 +1,6 @@
 diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
 --- vlc-2.1.4.orig/configure.ac	2014-02-21 16:00:00.000000000 +0200
-+++ vlc-2.1.4/configure.ac	2014-04-11 12:02:04.755670836 +0300
++++ vlc-2.1.4/configure.ac	2014-08-05 14:18:55.045222581 +0300
 @@ -2,14 +2,14 @@
  
  AC_COPYRIGHT([Copyright 2002-2014 VLC authors and VideoLAN])
@@ -120,16 +120,39 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
    ])
  ])
  AM_CONDITIONAL([HAVE_ALTIVEC], [test "$have_altivec" = "yes"])
-@@ -3641,7 +3643,7 @@
+@@ -3641,13 +3643,24 @@
  ])
  AS_IF([test "${enable_qt}" != "no"], [
    PKG_CHECK_MODULES([QT], [QtCore >= 5 QtWidgets QtGui],, [
 -    PKG_CHECK_MODULES([QT], [QtCore QtGui >= 4.6.0],, [
-+    PKG_CHECK_MODULES([QT], [QtCore QtGui QtNetwork QtWebKit QAxContainer >= 4.6.0],, [
-       AS_IF([test -n "${enable_qt}"],[
-         AC_MSG_ERROR([${QT_PKG_ERRORS}.])
-       ],[
-@@ -3655,7 +3657,7 @@
+-      AS_IF([test -n "${enable_qt}"],[
+-        AC_MSG_ERROR([${QT_PKG_ERRORS}.])
+-      ],[
+-        AC_MSG_WARN([${QT_PKG_ERRORS}.])
+-      ])
+-      enable_qt="no"
++    AS_IF([test "${SYS}" = "mingw32"], [
++        PKG_CHECK_MODULES([QT], [QtCore QtGui QtNetwork QtWebKit QAxContainer >= 4.6.0],, [
++          AS_IF([test -n "${enable_qt}"],[
++            AC_MSG_ERROR([${QT_PKG_ERRORS}.])
++          ],[
++            AC_MSG_WARN([${QT_PKG_ERRORS}.])
++          ])
++          enable_qt="no"
++        ])
++    ],[
++        PKG_CHECK_MODULES([QT], [QtCore QtGui QtNetwork QtWebKit >= 4.6.0],, [
++          AS_IF([test -n "${enable_qt}"],[
++            AC_MSG_ERROR([${QT_PKG_ERRORS}.])
++          ],[
++            AC_MSG_WARN([${QT_PKG_ERRORS}.])
++          ])
++          enable_qt="no"
++        ])
+     ])
+   ])
+ ])
+@@ -3655,7 +3668,7 @@
    VLC_ADD_PLUGIN([qt4])
    VLC_ADD_LIBS([qt4],[${QT_LIBS}])
    VLC_ADD_CXXFLAGS([qt4],[${QT_CFLAGS}])
@@ -138,7 +161,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
  
    AC_LANG_PUSH([C++])
    VLC_SAVE_FLAGS
-@@ -3749,7 +3751,7 @@
+@@ -3749,7 +3762,7 @@
      enable_skins2="no"
    ], [
      VLC_ADD_PLUGIN([skins2])
@@ -147,7 +170,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
      enable_skins2="yes"
    ])
  ])
-@@ -3828,7 +3830,7 @@
+@@ -3828,7 +3841,7 @@
      VLC_ADD_PLUGIN([ncurses])
      VLC_ADD_CFLAGS([ncurses],[${NCURSES_CFLAGS}])
      VLC_ADD_LIBS([ncurses],[${NCURSES_LIBS}])
@@ -156,7 +179,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
    ], [
      AS_IF([test -n "${enable_ncurses}"], [
        AC_MSG_ERROR([${NCURSES_PKG_ERRORS}.])
-@@ -3979,6 +3981,7 @@
+@@ -3979,6 +3992,7 @@
  ])
  
  
@@ -164,7 +187,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
  dnl
  dnl Taglib plugin
  dnl
-@@ -4006,11 +4009,69 @@
+@@ -4006,11 +4020,69 @@
    then
      AC_MSG_ERROR([libgcrypt is required for update checking system])
    fi
@@ -236,7 +259,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
  dnl
  dnl Growl notification plugin
  dnl
-@@ -4081,7 +4142,7 @@
+@@ -4081,7 +4153,7 @@
  dnl
  dnl  the VLC binary
  dnl
@@ -245,7 +268,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
    [  --enable-vlc            build the VLC media player (default enabled)])
  AM_CONDITIONAL(BUILD_VLC, [test "${enable_vlc}" != "no"])
  
-@@ -4182,6 +4243,8 @@
+@@ -4182,6 +4254,8 @@
    modules/sse2/Makefile
    modules/altivec/Makefile
    modules/arm_neon/Makefile
@@ -254,7 +277,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
  ])
  
  AM_COND_IF([HAVE_WIN32], [
-@@ -4234,9 +4297,9 @@
+@@ -4234,9 +4308,9 @@
  architecture          : ${ARCH}
  optimizations         : ${enable_optimizations}"
  if test "${enable_vlc}" != "no"; then

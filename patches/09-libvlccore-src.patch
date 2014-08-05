@@ -12,9 +12,17 @@ diff -ru vlc-2.1.2.orig/src/libvlc.h vlc-2.1.2/src/libvlc.h
  
  static inline libvlc_priv_t *libvlc_priv (libvlc_int_t *libvlc)
 diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
---- vlc-2.1.2.orig/src/libvlc.c	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/libvlc.c	2014-01-16 18:19:18.484674252 +0200
-@@ -57,6 +57,7 @@
+--- vlc-2.1.4.orig/src/libvlc.c	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.4/src/libvlc.c	2014-08-05 14:36:35.609240036 +0300
+@@ -54,9 +54,15 @@
+ #   include <dbus/dbus.h>
+ #endif
+ 
++#ifndef _WIN32
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <unistd.h>
++#endif
  
  #include <vlc_playlist.h>
  #include <vlc_interface.h>
@@ -22,7 +30,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
  
  #include <vlc_charset.h>
  #include <vlc_fs.h>
-@@ -66,6 +67,7 @@
+@@ -66,6 +72,7 @@
  
  #include "libvlc.h"
  #include "playlist/playlist_internal.h"
@@ -30,7 +38,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
  #include "misc/variables.h"
  
  #include <vlc_vlm.h>
-@@ -110,6 +112,7 @@
+@@ -110,6 +117,7 @@
      priv->p_playlist = NULL;
      priv->p_dialog_provider = NULL;
      priv->p_vlm = NULL;
@@ -38,7 +46,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
  
      vlc_ExitInit( &priv->exit );
  
-@@ -131,6 +134,8 @@
+@@ -131,6 +139,8 @@
      char *       psz_modules = NULL;
      char *       psz_parser = NULL;
      char *       psz_control = NULL;
@@ -47,7 +55,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
      char        *psz_val;
  
      /* System specific initialization code */
-@@ -185,7 +190,7 @@
+@@ -185,7 +195,7 @@
       */
  #if defined( ENABLE_NLS ) \
       && ( defined( HAVE_GETTEXT ) || defined( HAVE_INCLUDED_GETTEXT ) )
@@ -56,7 +64,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
  #endif
      /*xgettext: Translate "C" to the language code: "fr", "en_GB", "nl", "ru"... */
      msg_Dbg( p_libvlc, "translation test: code is \"%s\"", _("C") );
-@@ -402,6 +407,46 @@
+@@ -402,6 +412,46 @@
      var_Create( p_libvlc, "app-version", VLC_VAR_STRING );
      var_SetString( p_libvlc, "app-version", PACKAGE_VERSION );
  
@@ -103,7 +111,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
      /* System specific configuration */
      system_Configure( p_libvlc, i_argc - vlc_optind, ppsz_argv + vlc_optind );
  
-@@ -515,8 +560,25 @@
+@@ -515,8 +565,25 @@
      psz_val = var_InheritString( p_libvlc, "open" );
      if ( psz_val != NULL )
      {
@@ -130,7 +138,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
          free( psz_val );
      }
  
-@@ -549,6 +611,12 @@
+@@ -549,6 +616,12 @@
      if( p_playlist != NULL )
          playlist_Destroy( p_playlist );
  
@@ -143,7 +151,7 @@ diff -ru vlc-2.1.2.orig/src/libvlc.c vlc-2.1.2/src/libvlc.c
      msg_Dbg( p_libvlc, "removing stats" );
  
  #if !defined( _WIN32 ) && !defined( __OS2__ )
-@@ -662,17 +730,37 @@
+@@ -662,17 +735,37 @@
          }
  
          char *mrl = NULL;

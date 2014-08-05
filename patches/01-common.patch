@@ -70,7 +70,16 @@ diff -ru vlc-2.1.2.orig/src/android/dirs.c vlc-2.1.2/src/android/dirs.c
 diff -ru vlc-2.1.2.orig/src/posix/dirs.c vlc-2.1.2/src/posix/dirs.c
 --- vlc-2.1.2.orig/src/posix/dirs.c	2013-06-24 21:00:39.000000000 +0300
 +++ vlc-2.1.2/src/posix/dirs.c	2014-01-16 16:59:08.220564272 +0200
-@@ -91,14 +91,14 @@
+@@ -27,6 +27,8 @@
+ 
+ #include <vlc_common.h>
+ 
++#include <p2p_object.h>
++
+ #include "../libvlc.h"
+ #include "config/configuration.h"
+ 
+@@ -91,14 +93,14 @@
      const char *home = getenv (var);
      if (home != NULL)
      {

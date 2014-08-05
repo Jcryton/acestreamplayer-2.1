@@ -33,7 +33,7 @@ diff -ru vlc-2.1.2.orig/src/misc/messages.c vlc-2.1.2/src/misc/messages.c
      msg_Dbg (vlc, "%s", COPYRIGHT_MESSAGE);
      msg_Dbg (vlc, "revision %s", psz_vlc_changeset);
      msg_Dbg (vlc, "configured with %s", CONFIGURE_LINE);
-@@ -337,3 +339,25 @@
+@@ -337,3 +339,26 @@
  
      vlc_rwlock_destroy (&priv->log.lock);
  }
@@ -41,13 +41,13 @@ diff -ru vlc-2.1.2.orig/src/misc/messages.c vlc-2.1.2/src/misc/messages.c
 +#undef msg_P2PLog
 +void msg_P2PLog(vlc_object_t *obj, const char *module, const char *msg, ...)
 +{
-+    bool b_log_enable = var_InheritBool(obj, "p2p-log-enable");
-+    char *psz_filepath = var_InheritString(obj, "p2p-logfile");
-+
-+
 +    va_list args;
 +    va_start( args, msg );
 +    vlc_vaLog (obj, VLC_MSG_DBG, module, msg, args);
++    
++#ifdef _WIN32
++    bool b_log_enable = var_InheritBool(obj, "p2p-log-enable");
++    char *psz_filepath = var_InheritString(obj, "p2p-logfile");
 +    
 +    if( b_log_enable && psz_filepath ) {
 +        FILE *file = vlc_fopen( psz_filepath, "at" );
@@ -56,6 +56,7 @@ diff -ru vlc-2.1.2.orig/src/misc/messages.c vlc-2.1.2/src/misc/messages.c
 +        fclose( file );
 +        free(psz_filepath);
 +    }
++#endif
 +    
 +    va_end( args );
 +};

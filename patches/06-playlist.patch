@@ -351,7 +351,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +        if( p_load_item->p_input_item ) {
 +            input_item_t *p_input_item_copy = input_item_CopyFull( p_load_item->p_input_item );
 +        
-+            bool playlist_is_empty = playlist_IsEmpty(p_playlist);
++            bool playlist_is_empty = p_playlist->items.i_size == 0;//playlist_IsEmpty(p_playlist);
 +            if( playlist_is_empty ) {
 +                if( input_item_GetP2PQualitySize(p_input_item_copy) > 0 )
 +                    var_TriggerCallback( p_playlist, "playlist-item-show-appended-qualities" );

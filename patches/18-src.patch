@@ -1,7 +1,7 @@
 diff -ru vlc-2.1.2.orig/src/libvlccore.sym vlc-2.1.2/src/libvlccore.sym
 --- vlc-2.1.4.orig/src/libvlccore.sym	2013-06-24 21:00:39.000000000 +0300
 +++ vlc-2.1.4/src/libvlccore.sym	2014-04-11 10:12:35.626011970 +0300
-@@ -637,3 +637,76 @@
+@@ -637,3 +637,77 @@
  vlc_str2keycode
  fingerprinter_Create
  fingerprinter_Destroy
@@ -49,6 +49,7 @@ diff -ru vlc-2.1.2.orig/src/libvlccore.sym vlc-2.1.2/src/libvlccore.sym
 +sql_Create
 +sql_Destroy
 +p2p_Get
++p2p_Deactivate
 +p2p_SetCallback
 +p2p_GetIdTypeWithOptArray
 +p2p_GetIdTypeWithOptString

@@ -959,12 +959,13 @@ diff -ru vlc-2.1.4.orig/lib/audio.c vlc-2.1.4/lib/audio.c
 +    }
 +}
 diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
---- vlc-2.1.2.orig/lib/core.c	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/lib/core.c	2014-01-22 12:57:41.837031023 +0200
-@@ -38,10 +38,53 @@
+--- vlc-2.1.4.orig/lib/core.c	2013-06-24 21:00:38.000000000 +0300
++++ vlc-2.1.4/lib/core.c	2014-08-05 14:22:31.197226134 +0300
+@@ -38,10 +38,55 @@
  
  static const char nomemstr[] = "Insufficient memory";
  
++#ifdef _WIN32
 +static char *FromWide (const wchar_t *wide)
 +{
 +    size_t len;
@@ -1003,6 +1004,7 @@ diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
 +        free(envLang);
 +    }
 +}
++#endif
 +
  libvlc_instance_t * libvlc_new( int argc, const char *const *argv )
  {
@@ -1015,7 +1017,7 @@ diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
      libvlc_instance_t *p_new = malloc (sizeof (*p_new));
      if (unlikely(p_new == NULL))
          return NULL;
-@@ -69,6 +112,13 @@
+@@ -69,6 +114,17 @@
      p_new->ref_count = 1;
      p_new->p_callback_list = NULL;
      vlc_mutex_init(&p_new->instance_lock);
@@ -1024,12 +1026,16 @@ diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
 +    var_SetBool( p_libvlc_int, "web-fullscreen", false );
 +    var_Create( p_libvlc_int, "video-bgcolor", VLC_VAR_STRING | VLC_VAR_DOINHERIT );
 +    var_Create( p_libvlc_int, "flash-enable", VLC_VAR_BOOL );
-+    var_SetBool( p_libvlc_int, "flash-enable", true );
++#ifdef _WIN32
++     var_SetBool( p_libvlc_int, "flash-enable", true );
++#else
++    var_SetBool( p_libvlc_int, "flash-enable", false );
++#endif
 +
      return p_new;
  
  error:
-@@ -257,3 +307,56 @@
+@@ -257,3 +313,61 @@
  {
      return mdate();
  }
@@ -1037,6 +1043,11 @@ diff -ru vlc-2.1.2.orig/lib/core.c vlc-2.1.2/lib/core.c
 +p2p_object_t *getP2P( libvlc_instance_t *inst )
 +{
 +    return p2p_Get( inst->p_libvlc_int );
++}
++
++void deactivateP2P( libvlc_instance_t *inst ) 
++{
++    p2p_Deactivate(inst->p_libvlc_int);
 +}
 +
 +const char* libvlc_tr( const char* base )
@@ -1130,13 +1141,14 @@ diff -ru vlc-2.1.4.orig/lib/event.c vlc-2.1.4/lib/event.c
  #undef DEF
  
 diff -ru vlc-2.1.2.orig/lib/libvlc_internal.h vlc-2.1.2/lib/libvlc_internal.h
---- vlc-2.1.2.orig/lib/libvlc_internal.h	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/lib/libvlc_internal.h	2014-01-16 16:41:09.236334799 +0200
-@@ -120,4 +120,6 @@
+--- vlc-2.1.4.orig/lib/libvlc_internal.h	2013-06-24 21:00:38.000000000 +0300
++++ vlc-2.1.4/lib/libvlc_internal.h	2014-08-05 14:22:42.453226502 +0300
+@@ -120,4 +120,7 @@
      return time * 1000ULL;
  }
  
 +p2p_object_t *getP2P( libvlc_instance_t *inst );
++void deactivateP2P( libvlc_instance_t *inst );
 +
  #endif
 diff -ru vlc-2.1.2.orig/lib/media.c vlc-2.1.2/lib/media.c
