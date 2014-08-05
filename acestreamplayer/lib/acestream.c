@@ -480,6 +480,10 @@ void libvlc_acestream_object_release( libvlc_acestream_object_t *p_ace )
 
     libvlc_event_manager_release( p_ace->p_event_manager );
 
+#ifndef _WIN32
+    deactivateP2P(p_ace->p_libvlc_instance);
+#endif
+    
     libvlc_release( p_ace->p_libvlc_instance );
     free( p_ace );
 }

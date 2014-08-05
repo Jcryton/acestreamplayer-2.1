@@ -294,8 +294,10 @@ struct p2p_object_t {
     void (*pf_restart_last) (p2p_object_t*);
 };
 
-VLC_API p2p_object_t *p2p_Get( vlc_object_t * ) VLC_USED;
+VLC_API p2p_object_t *p2p_Get( vlc_object_t * );
 #define p2p_Get( a ) p2p_Get( VLC_OBJECT(a) )
+VLC_API void p2p_Deactivate( vlc_object_t * );
+#define p2p_Deactivate( a ) p2p_Deactivate( VLC_OBJECT(a) )
 
 VLC_API void p2p_SetCallback(p2p_object_t*, p2p_command_callback_type, p2p_common_callback, void*);
 
