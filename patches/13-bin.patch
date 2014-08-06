@@ -43,10 +43,10 @@ diff -dur vlc-2.1.4.orig/bin/vlc.c vlc-2.1.4/bin/vlc.c
 +    strcat(psz_keyopt, dev_kk);
 +    argv[argc++] = psz_keyopt;
 +#else
-+    char* psz_keyopt = (char *)malloc((dev_key + 21)*sizeof(char));
++    char* psz_keyopt = (char *)malloc((sizeof(dev_key) + 21)*sizeof(char));
 +    strcpy(psz_keyopt, "--ace-developer-key=");
 +    strcat(psz_keyopt, dev_key);
-+    argv[j++] = psz_keyopt;
++    argv[argc++] = psz_keyopt;
 +#endif
 +
      argv[argc] = NULL;
@@ -147,7 +147,7 @@ diff -ru vlc-2.1.2.orig/bin/winvlc.c vlc-2.1.2/bin/winvlc.c
 +    strcat(psz_keyopt, dev_kk);
 +    argv[j++] = psz_keyopt;
 +#else
-+    char* psz_keyopt = (char *)malloc((dev_key + 21)*sizeof(char));
++    char* psz_keyopt = (char *)malloc((sizeof(dev_key) + 21)*sizeof(char));
 +    strcpy(psz_keyopt, "--ace-developer-key=");
 +    strcat(psz_keyopt, dev_key);
 +    argv[j++] = psz_keyopt;
