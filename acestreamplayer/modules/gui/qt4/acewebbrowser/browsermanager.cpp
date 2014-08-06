@@ -49,7 +49,7 @@ void BrowserManager::closeBrowser(BrowserType type)
     deleteBrowser(index);
 }
 
-Browser *BrowserManager::getBrowser(BrowserType type)
+Browser *BrowserManager::getBrowser(BrowserType type, int group)
 {
     Browser *browser = NULL;
     foreach (Browser *b, mBrowsers) {
@@ -65,13 +65,18 @@ void BrowserManager::updateBrowsersOnVoutChanged(bool hasVout)
 {
     if(hasVout) {
         qDebug() << "BrowserManager::updateBrowsersOnVoutChanged: updating browser visiability on vout appeares";
-        Browser *overlay = getBrowser(BTYPE_OVERLAY);
+        /*Browser *overlay = getBrowser(BTYPE_OVERLAY);
         if(overlay) {
             overlay->showBrowser();
         }
         Browser *slider = getBrowser(BTYPE_SLIDER);
         if(slider) {
             slider->showBrowser();
+        }*/
+        foreach (Browser *b, mBrowsers) {
+            if(b->needsReshowing()) {
+                b->showBrowser();
+            }
         }
     }
 }
