@@ -29,6 +29,20 @@ p2p_object_t *p2p_Get (vlc_object_t *obj)
     return p2p;
 }
 
+#undef p2p_Deactivate
+void p2p_Deactivate(vlc_object_t *obj)
+{
+    msg_Dbg(obj, "deactivating p2p");
+    libvlc_int_t *p_libvlc = obj->p_libvlc;
+    if(p_libvlc != NULL) {
+        p2p_object_t *p_p2p = libvlc_priv(p_libvlc)->p_p2p;
+        if( p_p2p != NULL ) {
+            p2p_Destroy( p_p2p );
+            libvlc_priv(p_libvlc)->p_p2p = NULL;
+        }
+    }
+}
+
 p2p_uri_id_type_t p2p_GetIdTypeWithOptArray( const char *id, int optcount, const char* const* options )
 {
     p2p_uri_id_type_t type = P2P_TYPE_UNSUPPORT;
