@@ -27,6 +27,8 @@ Known problems:
 
 *Tested only on Ubuntu*
 
+Install build tools *libtool*, *build-essential*, *pkg-config*, *autoconf*
+
 Check out all required [libraries] to build vlc
 
 Also install *libqt4-webkit*, *openssl*, *sqlite3*
