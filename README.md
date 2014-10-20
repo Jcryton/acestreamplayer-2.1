@@ -29,7 +29,7 @@ Known problems:
 
 Install build tools *libtool*, *build-essential*, *pkg-config*, *autoconf*
 
-Check out all required [libraries] to build vlc
+Checkout all required [libraries] to build vlc
 
 Also install *libqt4-webkit*, *openssl*, *sqlite3*
 
