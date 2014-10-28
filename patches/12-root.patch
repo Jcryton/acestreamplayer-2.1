@@ -1,15 +1,15 @@
-diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
---- vlc-2.1.4.orig/configure.ac	2014-02-21 16:00:00.000000000 +0200
-+++ vlc-2.1.4/configure.ac	2014-08-05 14:18:55.045222581 +0300
+diff -ru vlc-2.1.5.orig/configure.ac vlc-2.1.5/configure.ac
+--- vlc-2.1.5.orig/configure.ac	2014-02-27 17:17:45.000000000 +0200
++++ vlc-2.1.5/configure.ac	2014-10-28 13:01:22.240133209 +0200
 @@ -2,14 +2,14 @@
  
  AC_COPYRIGHT([Copyright 2002-2014 VLC authors and VideoLAN])
  
--AC_INIT(vlc, 2.1.4)
-+AC_INIT(acestreamplayer, 2.1.4)
+-AC_INIT(vlc, 2.1.5)
++AC_INIT(acestreamplayer, 2.1.5)
  VERSION_MAJOR=2
  VERSION_MINOR=1
- VERSION_REVISION=4
+ VERSION_REVISION=5
  VERSION_EXTRA=0
  VERSION_DEV=
  
@@ -179,15 +179,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
    ], [
      AS_IF([test -n "${enable_ncurses}"], [
        AC_MSG_ERROR([${NCURSES_PKG_ERRORS}.])
-@@ -3979,6 +3992,7 @@
- ])
- 
- 
-+
- dnl
- dnl Taglib plugin
- dnl
-@@ -4006,11 +4020,69 @@
+@@ -4006,11 +4019,70 @@
    then
      AC_MSG_ERROR([libgcrypt is required for update checking system])
    fi
@@ -255,6 +247,7 @@ diff -ru vlc-2.1.4.orig/configure.ac vlc-2.1.4/configure.ac
 +    AC_MSG_ERROR([sqlite3 is required for the p2p_access])
 +  ])
 +fi
++
 +
  dnl
  dnl Growl notification plugin

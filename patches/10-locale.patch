@@ -1,7 +1,7 @@
 diff -ru vlc-2.1.2.orig/po/acestreamplayer.pot vlc-2.1.2/po/acestreamplayer.pot
---- vlc-2.1.2.orig/po/acestreamplayer.pot	2013-12-07 18:17:36.000000000 +0200
-+++ vlc-2.1.2/po/acestreamplayer.pot	2014-01-23 17:16:08.687733468 +0200
-@@ -27218,3 +27218,251 @@
+--- vlc-2.1.2.orig/po/acestreamplayer.pot	2014-07-06 19:54:01.000000000 +0300
++++ vlc-2.1.2/po/acestreamplayer.pot	2014-10-28 13:11:31.320150970 +0200
+@@ -27205,3 +27205,251 @@
  #: modules/gui/qt4/ui/vlm.h:302
  msgid "Media Manager List"
  msgstr ""
@@ -255,9 +255,9 @@ diff -ru vlc-2.1.2.orig/po/acestreamplayer.pot vlc-2.1.2/po/acestreamplayer.pot
 +msgstr ""
 
 diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
---- vlc-2.1.2.orig/po/en_GB.po	2013-12-07 18:17:49.000000000 +0200
-+++ vlc-2.1.2/po/en_GB.po	2014-01-23 17:17:26.384866085 +0200
-@@ -10083,9 +10083,8 @@
+--- vlc-2.1.2.orig/po/en_GB.po	2014-07-06 19:54:14.000000000 +0300
++++ vlc-2.1.2/po/en_GB.po	2014-10-28 13:17:49.336161992 +0200
+@@ -10086,9 +10086,8 @@
  msgstr "Language"
  
  #: modules/audio_filter/equalizer_presets.h:42
@@ -268,7 +268,7 @@ diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
  
  #: modules/audio_filter/equalizer_presets.h:42
  #, fuzzy
-@@ -31514,10 +31513,6 @@
+@@ -31524,10 +31523,6 @@
  #~ msgstr "Open &Capture Device…"
  
  #, fuzzy
@@ -279,7 +279,7 @@ diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
  #~ msgid "Error!"
  #~ msgstr "Next file"
  
-@@ -35401,3 +35396,252 @@
+@@ -35411,3 +35406,251 @@
  #~ "if you choose to use SAP."
  #~ msgstr ""
  #~ "Allows you to modify the user name that will be used for the connection."
@@ -531,7 +531,6 @@ diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
 +#: modules/p2p_access/control.cpp:146
 +msgid "Select none"
 +msgstr ""
-+
 
 diff -ru vlc-2.1.2.orig/po/Makevars vlc-2.1.2/po/Makevars
 --- vlc-2.1.2.orig/po/Makevars	2013-06-24 21:00:39.000000000 +0300
@@ -590,9 +589,9 @@ diff -ru vlc-2.1.2.orig/po/POTFILES.in vlc-2.1.2/po/POTFILES.in
  modules/gui/qt4/ui/equalizer.h
 
 diff -ru vlc-2.1.2.orig/po/ru.po vlc-2.1.2/po/ru.po
---- vlc-2.1.2.orig/po/ru.po	2013-12-07 18:18:12.000000000 +0200
-+++ vlc-2.1.2/po/ru.po	2014-01-23 17:18:28.421832576 +0200
-@@ -9704,7 +9704,7 @@
+--- vlc-2.1.2.orig/po/ru.po	2014-07-06 19:54:42.000000000 +0300
++++ vlc-2.1.2/po/ru.po	2014-10-28 13:19:39.596165206 +0200
+@@ -9706,7 +9706,7 @@
  
  #: modules/audio_filter/equalizer_presets.h:42
  msgid "Live"
@@ -872,7 +871,7 @@ diff -ru vlc-2.1.2.orig/po/ru.po vlc-2.1.2/po/ru.po
 diff -ru vlc-2.1.2.orig/po/uk.po vlc-2.1.2/po/uk.po
 --- vlc-2.1.2.orig/po/uk.po	2013-12-07 18:18:16.000000000 +0200
 +++ vlc-2.1.2/po/uk.po	2014-01-23 17:19:55.982031274 +0200
-@@ -9723,7 +9723,7 @@
+@@ -9725,7 +9725,7 @@
  
  #: modules/audio_filter/equalizer_presets.h:42
  msgid "Live"

@@ -1,7 +1,7 @@
 Ace Stream Player
 -----------------
 
-Tested with VLC version **2.1.4**
+Tested with VLC version **2.1.5**
 
 **Cross compile for Windows:**
 

@@ -289,12 +289,12 @@ void Control::processEngineMessage( base_in_message *in_msg )
             event_in_msg *event = static_cast<event_in_msg *>(in_msg);
             switch( event->event_type ) {
             case IN_EVENT_MSG_GET_USER_DATA : {
-                    user_data_in_event_msg *userdata = event->event.user_data_event;
-                    var_TriggerCallback( m_vlcobj, "show-userdata-dialog" );
-                    delete userdata;
-                }
+                user_data_in_event_msg *userdata = event->event.user_data_event;
+                var_TriggerCallback( m_vlcobj, "show-userdata-dialog" );
+                delete userdata;
                 break;
-        case IN_EVENT_MSG_SHOW_INFOWINDOW : {
+            }
+            case IN_EVENT_MSG_SHOW_INFOWINDOW : {
                 show_infowindow_in_event_msg *infownd = event->event.infowindow_event;
 
                 p2p_showinfowindow_item_t p_item;
@@ -311,9 +311,9 @@ void Control::processEngineMessage( base_in_message *in_msg )
 
                 var_SetAddress( m_vlcobj, "showinfowindow", &p_item );
                 delete infownd;
+                break;
             }
-            break;
-        case IN_EVENT_MSG_CANSAVE : {
+            case IN_EVENT_MSG_CANSAVE : {
                 cansave_in_event_msg *cansave = event->event.cansave_event;
                 
                 std::map<p2p_command_callback_type, std::pair<p2p_common_callback, void*> >::iterator it = m_vlcobj->p_sys->callbacks->find(P2P_CANSAVE_CALLBACK);
@@ -331,9 +331,9 @@ void Control::processEngineMessage( base_in_message *in_msg )
                     break;
                 }
                 delete cansave;
+                break;
             }
-            break;
-        case IN_EVENT_MSG_LIVE_POS : {
+            case IN_EVENT_MSG_LIVE_POS : {
                 live_pos_in_event_msg *live_pos = event->event.live_pos_event;
                 
                 vlc_value_t var;
@@ -352,9 +352,9 @@ void Control::processEngineMessage( base_in_message *in_msg )
                 var.p2p_livepos.buffer_pieces = live_pos->buffer_pieces;
                 var_Set( m_vlcobj, "livepos", var );
                 delete live_pos;
+                break;
             }
-            break;
-        case IN_EVENT_MSG_SHOW_DIALOG : {
+            case IN_EVENT_MSG_SHOW_DIALOG : {
                 show_dialog_in_event_msg *show_dialog = event->event.dialog_event;
                 p2p_showdialog_item_t p_item;
                 p_item.title = show_dialog->title.c_str();
@@ -375,11 +375,12 @@ void Control::processEngineMessage( base_in_message *in_msg )
                 var_SetAddress( m_vlcobj, "showdialog", &p_item );
                 //var_SetString( m_vlcobj, "show-error-dialog", decodedtext.c_str() );
                 delete show_dialog;
+                break;
             }
+            
+            msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_EVENT: type: %d", event->event_type );
             break;
         }
-        msg_P2PLog(m_vlcobj, "[control.cpp::processEngineMessage]: IN_MSG_EVENT: type: %d", event->event_type );
-        break;
     }
     case IN_MSG_LOAD_URL: {
         load_url_msg *load_url = static_cast<load_url_msg *>(in_msg);

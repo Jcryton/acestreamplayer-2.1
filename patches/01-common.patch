@@ -1,6 +1,6 @@
-diff -ru vlc-2.1.2.orig/include/vlc_common.h vlc-2.1.2/include/vlc_common.h
---- vlc-2.1.2.orig/include/vlc_common.h	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/include/vlc_common.h	2014-03-04 16:16:34.495940582 +0200
+diff -ru vlc-2.1.5.orig/include/vlc_common.h vlc-2.1.5/include/vlc_common.h
+--- vlc-2.1.5.orig/include/vlc_common.h	2014-02-27 17:17:45.000000000 +0200
++++ vlc-2.1.5/include/vlc_common.h	2014-10-28 13:05:39.504140703 +0200
 @@ -213,6 +213,7 @@
      PLAYLIST_PAUSE,     /**< No arg                             res=can fail*/
      PLAYLIST_STOP,      /**< No arg                             res=can fail*/
@@ -35,10 +35,11 @@ diff -ru vlc-2.1.2.orig/include/vlc_common.h vlc-2.1.2/include/vlc_common.h
  /**
   * VLC value structure
   */
-@@ -354,6 +365,16 @@
+@@ -353,7 +366,16 @@
      vlc_list_t *    p_list;
      mtime_t         i_time;
      struct { int32_t x; int32_t y; } coords;
+-
 +    struct { 
 +        bool is_live;
 +        int32_t live_first;
@@ -49,9 +50,9 @@ diff -ru vlc-2.1.2.orig/include/vlc_common.h vlc-2.1.2/include/vlc_common.h
 +        int32_t last;
 +        int32_t buffer_pieces;
 +    } p2p_livepos;
- 
  } vlc_value_t;
  
+ /**
 diff -ru vlc-2.1.2.orig/src/android/dirs.c vlc-2.1.2/src/android/dirs.c
 --- vlc-2.1.2.orig/src/android/dirs.c	2013-06-24 21:00:39.000000000 +0300
 +++ vlc-2.1.2/src/android/dirs.c	2014-01-16 16:54:46.803340346 +0200
