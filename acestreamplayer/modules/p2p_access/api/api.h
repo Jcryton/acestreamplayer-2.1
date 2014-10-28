@@ -387,6 +387,7 @@ struct play_in_msg : base_in_message {
     int volume;
     std::string noadstext;
     std::string adinfotext;
+    std::string deinterlace_mode;
     
     play_in_msg() : base_in_message() { 
         type = IN_MSG_PLAY; 

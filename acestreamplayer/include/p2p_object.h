@@ -155,6 +155,7 @@ struct p2p_play_item_t {
     const char *url;
     int start_position;
     p2p_play_content_type_t play_content_type;
+    const char *deinterlace;
 };
 
 struct p2p_cansave_item_t {

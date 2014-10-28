@@ -942,9 +942,9 @@ diff -ru vlc-2.1.2.orig/src/input/control.c vlc-2.1.2/src/input/control.c
          case INPUT_GET_POSITION:
              pf = (double*)va_arg( args, double * );
              *pf = var_GetFloat( p_input, "position" );
-diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
---- vlc-2.1.2.orig/src/input/resource.c	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/input/resource.c	2014-01-22 15:56:03.755279959 +0200
+diff -ru vlc-2.1.4.orig/src/input/resource.c vlc-2.1.4/src/input/resource.c
+--- vlc-2.1.4.orig/src/input/resource.c	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.4/src/input/resource.c	2014-10-16 16:00:55.350317782 +0300
 @@ -73,6 +73,8 @@
  
      bool            b_aout_busy;
@@ -965,7 +965,7 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
      char *psz_nowplaying = input_item_GetNowPlaying( p_item );
      if( psz_nowplaying && *psz_nowplaying )
      {
-@@ -239,6 +245,32 @@
+@@ -239,6 +245,41 @@
          if( !p_vout )
              return NULL;
  
@@ -982,7 +982,7 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
 +                    var_SetString( p_vout, "crop", crop );
 +                    free(crop);
 +                }
-+                int deinterlace_status = var_GetString( p_resource->p_input, "deinterlace" );
++                int deinterlace_status = var_GetInteger( p_resource->p_input, "deinterlace" );
 +                if( deinterlace_status ) {
 +                    var_SetInteger( p_vout, "deinterlace", deinterlace_status );
 +                }
@@ -991,6 +991,15 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
 +                    var_SetString( p_vout, "deinterlace-mode", deinterlace_mode );
 +                    free(deinterlace_mode);
 +                }
++                // process start-deinterlace
++                char *start_deinterlace_mode = var_GetString( p_resource->p_input, "start-deinterlace" );
++                if (start_deinterlace_mode && strcmp(start_deinterlace_mode, "")) {
++                    if (var_GetInteger( p_resource->p_input, "deinterlace" ) == 0) {
++                        var_SetInteger( p_vout, "deinterlace", 1 );
++                        var_SetString( p_vout, "deinterlace-mode", start_deinterlace_mode );
++                    }
++                    free(start_deinterlace_mode);
++                }
 +            }
 +            p_resource->b_saved_options_inherited = true;
 +        }
@@ -998,7 +1007,7 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
          DisplayVoutTitle( p_resource, p_vout );
  
          vlc_mutex_lock( &p_resource->lock_hold );
-@@ -251,7 +283,63 @@
+@@ -251,7 +292,63 @@
      {
          assert( p_vout );
  
@@ -1062,7 +1071,7 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
          TAB_REMOVE( p_resource->i_vout, p_resource->pp_vout, p_vout );
          const int i_vout_active = p_resource->i_vout;
          vlc_mutex_unlock( &p_resource->lock_hold );
-@@ -419,6 +507,7 @@
+@@ -419,6 +516,7 @@
  
      atomic_init( &p_resource->refs, 1 );
      p_resource->p_parent = p_parent;
@@ -1070,9 +1079,9 @@ diff -ru vlc-2.1.2.orig/src/input/resource.c vlc-2.1.2/src/input/resource.c
      vlc_mutex_init( &p_resource->lock );
      vlc_mutex_init( &p_resource->lock_hold );
      return p_resource;
-diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
---- vlc-2.1.2.orig/src/input/var.c	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/input/var.c	2014-01-16 16:48:13.887899501 +0200
+diff -ru vlc-2.1.4.orig/src/input/var.c vlc-2.1.4/src/input/var.c
+--- vlc-2.1.4.orig/src/input/var.c	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.4/src/input/var.c	2014-10-16 14:47:39.045607528 +0300
 @@ -34,6 +34,9 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -1115,16 +1124,17 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
  typedef struct
  {
      const char *psz_name;
-@@ -455,6 +483,8 @@
+@@ -455,6 +483,9 @@
          var_Create( p_input, "start-time", VLC_VAR_FLOAT|VLC_VAR_DOINHERIT );
          var_Create( p_input, "stop-time", VLC_VAR_FLOAT|VLC_VAR_DOINHERIT );
          var_Create( p_input, "run-time", VLC_VAR_FLOAT|VLC_VAR_DOINHERIT );
 +        var_Create( p_input, "start-position", VLC_VAR_FLOAT|VLC_VAR_DOINHERIT );
++        var_Create( p_input, "start-deinterlace", VLC_VAR_STRING|VLC_VAR_DOINHERIT );
 +
          var_Create( p_input, "input-fast-seek", VLC_VAR_BOOL|VLC_VAR_DOINHERIT );
  
          var_Create( p_input, "input-slave",
-@@ -568,6 +598,12 @@
+@@ -568,6 +599,12 @@
      input_thread_t *p_input = (input_thread_t*)p_this;
      VLC_UNUSED(oldval); VLC_UNUSED(p_data); VLC_UNUSED(psz_cmd);
  
@@ -1137,7 +1147,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
      newval.i_int = INPUT_RATE_DEFAULT / newval.f_float;
      input_ControlPush( p_input, INPUT_CONTROL_SET_RATE, &newval );
  
-@@ -581,6 +617,12 @@
+@@ -581,6 +618,12 @@
      input_thread_t *p_input = (input_thread_t*)p_this;
      VLC_UNUSED(oldval); VLC_UNUSED(p_data);
  
@@ -1150,7 +1160,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
      if( !strcmp( psz_cmd, "position-offset" ) )
      {
          float f_position = var_GetFloat( p_input, "position" ) + newval.f_float;
-@@ -599,6 +641,19 @@
+@@ -599,6 +642,19 @@
              vlc_value_t val;
  
              val.i_time = i_length * newval.f_float;
@@ -1170,7 +1180,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
              var_Change( p_input, "time", VLC_VAR_SETVALUE, &val, NULL );
          }
  
-@@ -614,6 +669,12 @@
+@@ -614,6 +670,12 @@
      input_thread_t *p_input = (input_thread_t*)p_this;
      VLC_UNUSED(oldval); VLC_UNUSED(p_data);
  
@@ -1183,7 +1193,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
      if( !strcmp( psz_cmd, "time-offset" ) )
      {
          mtime_t i_time = var_GetTime( p_input, "time" ) + newval.i_time;
-@@ -627,6 +688,18 @@
+@@ -627,6 +689,18 @@
          const mtime_t i_length = var_GetTime( p_input, "length" );
          if( i_length > 0 && newval.i_time >= 0 && newval.i_time <= i_length )
          {
@@ -1202,7 +1212,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
              vlc_value_t val;
  
              val.f_float = (double)newval.i_time/(double)i_length;
-@@ -697,6 +770,13 @@
+@@ -697,6 +771,13 @@
      vlc_value_t val, count;
      VLC_UNUSED(oldval); VLC_UNUSED(p_data);
  
@@ -1216,7 +1226,7 @@ diff -ru vlc-2.1.2.orig/src/input/var.c vlc-2.1.2/src/input/var.c
      if( !strcmp( psz_cmd, "next-chapter" ) )
      {
          input_ControlPush( p_input, INPUT_CONTROL_SET_SEEKPOINT_NEXT, NULL );
-@@ -827,3 +907,108 @@
+@@ -827,3 +908,108 @@
      return VLC_SUCCESS;
  }
  

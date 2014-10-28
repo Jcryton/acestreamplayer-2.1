@@ -267,9 +267,9 @@ diff -ru vlc-2.1.2.orig/src/playlist/control.c vlc-2.1.2/src/playlist/control.c
          break;
  
      default:
-diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
---- vlc-2.1.2.orig/src/playlist/engine.c	2013-06-24 21:00:39.000000000 +0300
-+++ vlc-2.1.2/src/playlist/engine.c	2014-03-04 16:44:11.889835766 +0200
+diff -ru vlc-2.1.4.orig/src/playlist/engine.c vlc-2.1.4/src/playlist/engine.c
+--- vlc-2.1.4.orig/src/playlist/engine.c	2013-06-24 21:00:39.000000000 +0300
++++ vlc-2.1.4/src/playlist/engine.c	2014-10-16 14:48:19.945147096 +0300
 @@ -32,12 +32,18 @@
  #include <vlc_sout.h>
  #include <vlc_playlist.h>
@@ -308,7 +308,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
  }
  
  void set_current_status_node( playlist_t * p_playlist,
-@@ -513,6 +524,21 @@
+@@ -513,6 +524,23 @@
      var_Create( p_playlist, "mute", VLC_VAR_BOOL );
      var_Create( p_playlist, "volume", VLC_VAR_FLOAT );
      var_SetFloat( p_playlist, "volume", -1.f );
@@ -322,6 +322,8 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +    /* p2p_object */
 +    var_Create (p_playlist, "start-position", VLC_VAR_FLOAT);
 +    var_SetFloat(p_playlist, "start-position", 0.0);
++    var_Create (p_playlist, "start-deinterlace", VLC_VAR_STRING);
++    var_SetString(p_playlist, "start-deinterlace", "");
 +    var_AddCallback( p2p_Get(p_playlist), "exit-fullscreen", P2PExitFullscreenCallback, p_playlist );
 +    p2p_SetCallback( p2p_Get(p_playlist), P2P_LOAD_CALLBACK, playlist_p2pLoadCallback, p_playlist );
 +    p2p_SetCallback( p2p_Get(p_playlist), P2P_PLAY_CALLBACK, playlist_p2p_play_callback, p_playlist );
@@ -330,7 +332,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
  }
  
  playlist_item_t * playlist_CurrentPlayingItem( playlist_t * p_playlist )
-@@ -529,3 +555,132 @@
+@@ -529,3 +557,133 @@
      return pl_priv(p_playlist)->status.i_status;
  }
  
@@ -351,7 +353,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +        if( p_load_item->p_input_item ) {
 +            input_item_t *p_input_item_copy = input_item_CopyFull( p_load_item->p_input_item );
 +        
-+            bool playlist_is_empty = p_playlist->items.i_size == 0;//playlist_IsEmpty(p_playlist);
++            bool playlist_is_empty = p_playlist->items.i_size == 0;
 +            if( playlist_is_empty ) {
 +                if( input_item_GetP2PQualitySize(p_input_item_copy) > 0 )
 +                    var_TriggerCallback( p_playlist, "playlist-item-show-appended-qualities" );
@@ -405,6 +407,7 @@ diff -ru vlc-2.1.2.orig/src/playlist/engine.c vlc-2.1.2/src/playlist/engine.c
 +                        p_play_item->play_content_type == P2P_PLAY_INTERRUPTABLE_AD,
 +                        p_play_item->play_content_type == P2P_PLAY_STREAM );
 +            var_SetFloat( p_playlist, "start-position", p_play_item->start_position );
++            var_SetString( p_playlist, "start-deinterlace", p_play_item->deinterlace );
 +            
 +            input_item_SetURI( p_input, p_play_item->url );
 +            pl_priv(p_playlist)->request.p_item->p_input=p_input;

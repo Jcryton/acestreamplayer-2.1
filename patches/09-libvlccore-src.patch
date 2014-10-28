@@ -233,7 +233,7 @@ diff -ru vlc-2.1.2.orig/include/vlc_config_cat.h vlc-2.1.2/include/vlc_config_ca
  };
 diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
 --- vlc-2.1.4.orig/src/libvlc-module.c	2014-02-21 16:00:00.000000000 +0200
-+++ vlc-2.1.4/src/libvlc-module.c	2014-04-11 12:33:19.054014852 +0300
++++ vlc-2.1.4/src/libvlc-module.c	2014-10-16 14:46:46.072107982 +0300
 @@ -37,6 +37,7 @@
  #include <vlc_plugin.h>
  #include <vlc_cpu.h>
@@ -294,17 +294,21 @@ diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
  
      add_module( "audio-resampler", "audio resampler", NULL,
                  AUDIO_RESAMPLER_TEXT, AUDIO_RESAMPLER_LONGTEXT, true )
-@@ -1712,6 +1730,9 @@
+@@ -1712,6 +1730,13 @@
      add_float( "run-time", 0,
                 RUN_TIME_TEXT, RUN_TIME_LONGTEXT, true )
          change_safe ()
 +    add_float( "start-position", 0,
 +               START_POSITION_TEXT, START_POSITION_LONGTEXT, true )
 +        change_volatile ()
++    add_string( "start-deinterlace", NULL,
++               N_("Deinterlace value from start ace command"), N_("Deinterlace value from start ace command"), 
++               true )
++        change_volatile ()
      add_bool( "input-fast-seek", false,
                INPUT_FAST_SEEK_TEXT, INPUT_FAST_SEEK_LONGTEXT, false )
          change_safe ()
-@@ -2098,6 +2119,25 @@
+@@ -2098,6 +2123,25 @@
      add_module_list_cat( "control", SUBCAT_INTERFACE_CONTROL, NULL,
                           CONTROL_TEXT, CONTROL_LONGTEXT, false )
  
@@ -330,7 +334,7 @@ diff -ru vlc-2.1.4.orig/src/libvlc-module.c vlc-2.1.4/src/libvlc-module.c
  /* Hotkey options*/
      set_subcategory( SUBCAT_INTERFACE_HOTKEYS )
      add_category_hint( N_("Hot keys"), HOTKEY_CAT_LONGTEXT , false )
-@@ -2694,6 +2734,10 @@
+@@ -2694,6 +2738,10 @@
          change_volatile ()
      add_string( "config", NULL, CONFIG_TEXT, "", false )
          change_volatile ()

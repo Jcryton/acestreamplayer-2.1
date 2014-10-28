@@ -280,6 +280,7 @@ play_in_msg *In::start( const string &msg )
     _msg->volume = 15;
     _msg->noadstext = "";
     _msg->adinfotext = "";
+    _msg->deinterlace_mode = "";
     
     string _base = msg.substr(6);
     vector<string> _options = In::split( _base, ' ');
@@ -319,6 +320,8 @@ play_in_msg *In::start( const string &msg )
                 _msg->noadstext.assign(decode_url(_options[i].substr(11)));
             else if( !_options[i].compare(0, 13, "ad_info_text=") )
                 _msg->adinfotext.assign(decode_url(_options[i].substr(13)));
+            else if( !_options[i].compare(0, 19, "deinterlacing_mode=") )
+                _msg->deinterlace_mode.assign(decode_url(_options[i].substr(19)));
             else if( _options[i].length() && !_msg->url.compare("") )
                 _msg->url.assign(decode_url(_options[i]));
         }

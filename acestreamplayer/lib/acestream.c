@@ -306,6 +306,7 @@ static int acestream_play_callback( p2p_object_t *p_p2p, void *p_callback_item, 
                         p_play_item->play_content_type == P2P_PLAY_STREAM );
 
                 var_SetFloat( p_mi, "start-position", p_play_item->start_position );
+                var_SetString( p_mi, "start-deinterlace", p_play_item->deinterlace );
                 input_item_SetURI( p_md->p_input_item, p_play_item->url );
             }
             libvlc_media_release(p_md);

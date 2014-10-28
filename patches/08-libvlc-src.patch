@@ -1881,7 +1881,7 @@ diff -ru vlc-2.1.2.orig/lib/media_list_player.c vlc-2.1.2/lib/media_list_player.
 +}
 diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
 --- vlc-2.1.4.orig/lib/media_player.c	2013-09-12 18:18:33.000000000 +0300
-+++ vlc-2.1.4/lib/media_player.c	2014-03-07 11:44:49.806787447 +0200
++++ vlc-2.1.4/lib/media_player.c	2014-10-16 11:57:13.097227339 +0300
 @@ -34,10 +34,14 @@
  #include <vlc_input.h>
  #include <vlc_vout.h>
@@ -1959,7 +1959,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
  
      var_Create (mp, "vbi-page", VLC_VAR_INTEGER);
  
-@@ -457,6 +487,13 @@
+@@ -457,6 +487,15 @@
      var_Create (mp, "amem-rate", VLC_VAR_INTEGER | VLC_VAR_DOINHERIT);
      var_Create (mp, "amem-channels", VLC_VAR_INTEGER | VLC_VAR_DOINHERIT);
  
@@ -1969,11 +1969,13 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
 +    
 +    var_Create (mp, "start-position", VLC_VAR_FLOAT);
 +    var_SetFloat(mp, "start-position", 0.0);
-+
++    var_Create (mp, "start-deinterlace", VLC_VAR_STRING);
++    var_SetString(mp, "start-deinterlace", "");
++    
      /* Video Title */
      var_Create (mp, "video-title-show", VLC_VAR_BOOL);
      var_Create (mp, "video-title-position", VLC_VAR_INTEGER);
-@@ -502,12 +539,15 @@
+@@ -502,12 +541,15 @@
      register_event(mp, PausableChanged);
  
      register_event(mp, Vout);
@@ -1989,7 +1991,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
      /* Attach a var callback to the global object to provide the glue between
       * vout_thread that generates the event and media_player that re-emits it
       * with its own event manager
-@@ -516,6 +556,7 @@
+@@ -516,6 +558,7 @@
       * want to expose it in such a limiting and ugly way.
       */
      var_AddCallback(mp->p_libvlc, "snapshot-file", snapshot_was_taken, mp);
@@ -1997,7 +1999,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
  
      libvlc_retain(instance);
      return mp;
-@@ -548,9 +589,16 @@
+@@ -548,9 +591,16 @@
  {
      assert( p_mi );
  
@@ -2014,7 +2016,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
  
      /* No need for lock_input() because no other threads knows us anymore */
      if( p_mi->input.p_thread )
-@@ -1234,6 +1282,9 @@
+@@ -1234,6 +1284,9 @@
          return 0;
      var_SetFloat( p_input_thread, "rate", rate );
      vlc_object_release( p_input_thread );
@@ -2024,7 +2026,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
      return 0;
  }
  
-@@ -1381,6 +1432,9 @@
+@@ -1381,6 +1434,9 @@
      if( p_input_thread != NULL )
      {
          var_TriggerCallback( p_input_thread, "frame-next" );
@@ -2034,7 +2036,7 @@ diff -ru vlc-2.1.4.orig/lib/media_player.c vlc-2.1.4/lib/media_player.c
          vlc_object_release( p_input_thread );
      }
  }
-@@ -1398,3 +1452,272 @@
+@@ -1398,3 +1454,272 @@
          var_SetBool( p_mi, "video-title-show", false );
      }
  }

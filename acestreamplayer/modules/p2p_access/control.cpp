@@ -175,6 +175,7 @@ void Control::processEngineMessage( base_in_message *in_msg )
                     p_item.url = play->url.c_str();
                     p_item.start_position = play->start_position;
                     p_item.play_content_type = play->play_type;
+                    p_item.deinterlace = play->deinterlace_mode.c_str();
 
                     var_SetString( m_vlcobj, "clickurl", play->clickurl.c_str() );
                     var_SetInteger( m_vlcobj, "advolume", play->volume );
