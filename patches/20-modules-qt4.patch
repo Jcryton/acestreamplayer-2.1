@@ -1538,9 +1538,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/open_panels.hpp vlc-2.1.2/mod
 +};
 +
  #endif
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/playlist_model.cpp vlc-2.1.2/modules/gui/qt4/components/playlist/playlist_model.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/components/playlist/playlist_model.cpp	2013-09-08 19:54:16.000000000 +0300
-+++ vlc-2.1.2/modules/gui/qt4/components/playlist/playlist_model.cpp	2014-01-20 11:51:37.068148872 +0200
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/components/playlist/playlist_model.cpp vlc-2.1.5/modules/gui/qt4/components/playlist/playlist_model.cpp
+--- vlc-2.1.5.orig/modules/gui/qt4/components/playlist/playlist_model.cpp	2013-09-08 19:54:16.000000000 +0300
++++ vlc-2.1.5/modules/gui/qt4/components/playlist/playlist_model.cpp	2014-11-17 11:49:43.367090877 +0200
 @@ -29,6 +29,7 @@
  
  #include "qt4.hpp"
@@ -1603,23 +1603,20 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/playlist_model.cpp v
  /* Seek from current index toward the top and see if index is one of parent nodes */
  bool PLModel::isParent( const QModelIndex &index, const QModelIndex &current ) const
  {
-@@ -450,6 +484,15 @@
+@@ -450,6 +484,12 @@
      return getItem( index )->inputItem() == THEMIM->currentInputItem();
  }
  
 +bool PLModel::isPlaylistStatusItem( const QModelIndex &index ) const
 +{
-+    playlist_item_t *p_playlist_item = playlist_CurrentPlayingItem( THEPL );
-+    bool ret = false;
-+    if( p_playlist_item )
-+        ret = p_playlist_item->i_id == getItem( index )->i_id;
-+	return ret;
++	int statusId = playlist_p2pGetStatusItemId(THEPL, pl_Unlocked);	
++	return getItem( index )->i_id == statusId;
 +}
 +
  int PLModel::itemId( const QModelIndex &index ) const
  {
      return getItem( index )->id();
-@@ -508,8 +551,12 @@
+@@ -508,8 +548,12 @@
  
      int meta_col = columnToMeta( section );
  
@@ -1633,7 +1630,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/playlist/playlist_model.cpp v
      return QVariant( qfu( psz_column_title( meta_col ) ) );
  }
  
-@@ -944,7 +991,25 @@
+@@ -944,7 +988,25 @@
      msg_Dbg( p_intf, "Sorting by column %i, order %i", column, order );
  
      int meta = columnToMeta( column );

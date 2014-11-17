@@ -18,13 +18,15 @@ diff -ru vlc-2.1.2.orig/include/vlc_playlist.h vlc-2.1.2/include/vlc_playlist.h
  #define playlist_Next(p) playlist_Control(p,PLAYLIST_SKIP, pl_Unlocked, 1)
  #define playlist_Prev(p) playlist_Control(p,PLAYLIST_SKIP, pl_Unlocked, -1)
  #define playlist_Skip(p,i) playlist_Control(p,PLAYLIST_SKIP, pl_Unlocked,  (i) )
-@@ -306,6 +307,10 @@
+@@ -306,6 +307,12 @@
  VLC_API playlist_item_t * playlist_CurrentPlayingItem( playlist_t * ) VLC_USED;
  VLC_API int playlist_Status( playlist_t * );
  
 +VLC_API playlist_item_t *playlist_LastPlayingItem( playlist_t* ) VLC_USED;
 +VLC_API input_item_t *playlist_GetFirstP2PIntupItem( playlist_t* ) VLC_USED;
 +VLC_API int playlist_p2pLoadCallback( p2p_object_t*, void*, void* );
++
++VLC_API int playlist_p2pGetStatusItemId(playlist_t *, bool);
 +
  /**
   * Export a node of the playlist to a certain type of playlistfile
@@ -332,7 +334,7 @@ diff -ru vlc-2.1.4.orig/src/playlist/engine.c vlc-2.1.4/src/playlist/engine.c
  }
  
  playlist_item_t * playlist_CurrentPlayingItem( playlist_t * p_playlist )
-@@ -529,3 +557,133 @@
+@@ -529,3 +557,144 @@
      return pl_priv(p_playlist)->status.i_status;
  }
  
@@ -465,6 +467,17 @@ diff -ru vlc-2.1.4.orig/src/playlist/engine.c vlc-2.1.4/src/playlist/engine.c
 +    }
 +    
 +    return VLC_SUCCESS;
++}
++
++int playlist_p2pGetStatusItemId(playlist_t *p_playlist, bool locked) 
++{
++	int ret = -1;
++	if (!locked) PL_LOCK;
++	if (pl_priv(p_playlist)->status.p_item) {
++		ret = pl_priv(p_playlist)->status.p_item->i_id;
++	}
++	if (!locked) PL_UNLOCK;
++	return ret;
 +}
 diff -ru vlc-2.1.2.orig/src/playlist/thread.c vlc-2.1.2/src/playlist/thread.c
 --- vlc-2.1.2.orig/src/playlist/thread.c	2013-12-03 11:12:35.000000000 +0200
