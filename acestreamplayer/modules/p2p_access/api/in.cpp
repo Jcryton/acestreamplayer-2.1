@@ -228,6 +228,13 @@ status_in_msg *In::status( const string &msg )
             _msg->value.assign( _("Starting...") );
         else if( !_options[0].compare("main:loading") )
             _msg->value.assign( _("Loading...") );
+        else if( !_options[0].compare("main:seek") ) {
+            _msg->value.assign( _("Seeking...") );
+        }
+        else if( !_options[0].compare("main:seekprebuf") ) {
+            _msg->value.assign( _("Seeking ") );
+            _msg->value.append( _options[1] ).append("%");
+        }
     }
     return _msg;
 }
@@ -261,6 +268,10 @@ info_in_msg *In::info( const string &msg )
             _msg->value.assign( _("Advertising video") );
         else if( _info_id == 3 )
             _msg->value.assign( _("Main content") );
+        else if( _info_id == 4 )
+            _msg->value.assign( _("Missing data, going to live") );
+        else if( _info_id == 5 )
+            _msg->value.assign( _("Missing data, going to the nearest position") );
     }
     
     return _msg;

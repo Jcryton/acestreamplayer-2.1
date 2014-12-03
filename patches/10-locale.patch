@@ -1,7 +1,7 @@
 diff -ru vlc-2.1.2.orig/po/acestreamplayer.pot vlc-2.1.2/po/acestreamplayer.pot
 --- vlc-2.1.2.orig/po/acestreamplayer.pot	2014-07-06 19:54:01.000000000 +0300
 +++ vlc-2.1.2/po/acestreamplayer.pot	2014-10-28 13:11:31.320150970 +0200
-@@ -27205,3 +27205,251 @@
+@@ -27205,3 +27205,267 @@
  #: modules/gui/qt4/ui/vlm.h:302
  msgid "Media Manager List"
  msgstr ""
@@ -253,6 +253,22 @@ diff -ru vlc-2.1.2.orig/po/acestreamplayer.pot vlc-2.1.2/po/acestreamplayer.pot
 +#: modules/p2p_access/control.cpp:146
 +msgid "Select none"
 +msgstr ""
++
++#: modules/p2p_access/control.cpp:148
++msgid "Seeking..."
++msgstr ""
++
++#: modules/p2p_access/control.cpp:150
++msgid "Seeking "
++msgstr ""
++
++#: modules/p2p_access/control.cpp:152
++msgid "Missing data, going to live"
++msgstr ""
++
++#: modules/p2p_access/control.cpp:154
++msgid "Missing data, going to the nearest position"
++msgstr ""
 
 diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
 --- vlc-2.1.2.orig/po/en_GB.po	2014-07-06 19:54:14.000000000 +0300
@@ -279,7 +295,7 @@ diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
  #~ msgid "Error!"
  #~ msgstr "Next file"
  
-@@ -35411,3 +35406,251 @@
+@@ -35411,3 +35406,267 @@
  #~ "if you choose to use SAP."
  #~ msgstr ""
  #~ "Allows you to modify the user name that will be used for the connection."
@@ -531,6 +547,22 @@ diff -ru vlc-2.1.2.orig/po/en_GB.po vlc-2.1.2/po/en_GB.po
 +#: modules/p2p_access/control.cpp:146
 +msgid "Select none"
 +msgstr ""
++
++#: modules/p2p_access/control.cpp:148
++msgid "Seeking..."
++msgstr "Seeking, please wait"
++
++#: modules/p2p_access/control.cpp:150
++msgid "Seeking "
++msgstr "Buffering "
++
++#: modules/p2p_access/control.cpp:152
++msgid "Missing data, going to live"
++msgstr ""
++
++#: modules/p2p_access/control.cpp:154
++msgid "Missing data, going to the nearest position"
++msgstr ""
 
 diff -ru vlc-2.1.2.orig/po/Makevars vlc-2.1.2/po/Makevars
 --- vlc-2.1.2.orig/po/Makevars	2013-06-24 21:00:39.000000000 +0300
@@ -611,7 +643,7 @@ diff -ru vlc-2.1.2.orig/po/ru.po vlc-2.1.2/po/ru.po
  #~ msgid "Error!"
  #~ msgstr "Ошибка"
  
-@@ -34750,3 +34746,255 @@
+@@ -34750,3 +34746,271 @@
  #, fuzzy
  #~ msgid "Automate picture coding mode"
  #~ msgstr "Режим кодирования изображения"
@@ -867,6 +899,22 @@ diff -ru vlc-2.1.2.orig/po/ru.po vlc-2.1.2/po/ru.po
 +#: modules/p2p_access/control.cpp:146
 +msgid "Select none"
 +msgstr "Отменить все"
++
++#: modules/p2p_access/control.cpp:148
++msgid "Seeking..."
++msgstr "Подождите, идет перемотка"
++
++#: modules/p2p_access/control.cpp:150
++msgid "Seeking "
++msgstr "Буферизация "
++
++#: modules/p2p_access/control.cpp:152
++msgid "Missing data, going to live"
++msgstr "Нет данных, переход на live"
++
++#: modules/p2p_access/control.cpp:154
++msgid "Missing data, going to the nearest position"
++msgstr "Нет данных, переход на ближайшую позицию"
 
 diff -ru vlc-2.1.2.orig/po/uk.po vlc-2.1.2/po/uk.po
 --- vlc-2.1.2.orig/po/uk.po	2013-12-07 18:18:16.000000000 +0200
@@ -891,7 +939,7 @@ diff -ru vlc-2.1.2.orig/po/uk.po vlc-2.1.2/po/uk.po
  #~ msgid "Left rear"
  #~ msgstr "Лівий"
  
-@@ -36308,3 +36304,255 @@
+@@ -36308,3 +36304,271 @@
  #, fuzzy
  #~ msgid "left"
  #~ msgstr "Задній лівий"
@@ -1147,3 +1195,19 @@ diff -ru vlc-2.1.2.orig/po/uk.po vlc-2.1.2/po/uk.po
 +#: modules/p2p_access/control.cpp:146
 +msgid "Select none"
 +msgstr "Відмінити все"
++
++#: modules/p2p_access/control.cpp:148
++msgid "Seeking..."
++msgstr "Зачекайте, йде перемотка"
++
++#: modules/p2p_access/control.cpp:150
++msgid "Seeking "
++msgstr "Буферизація "
++
++#: modules/p2p_access/control.cpp:152
++msgid "Missing data, going to live"
++msgstr "Немає даних, перехід на live"
++
++#: modules/p2p_access/control.cpp:154
++msgid "Missing data, going to the nearest position"
++msgstr "Немає даних, перехід на найближчу позицію"
