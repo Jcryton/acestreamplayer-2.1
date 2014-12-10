@@ -214,8 +214,12 @@ string Out::start( start_out_msg *msg )
 
 string Out::stop( stop_out_msg *msg )
 {
-    (void)msg;
-    return string( "STOP" );
+    stringstream _msg;
+    _msg << "STOP";
+    if(msg->is_in_fullscreen != -1) {
+        _msg << " fullscreen=" << msg->is_in_fullscreen;
+    }
+    return _msg.str();
 }
 
 string Out::duration( duration_out_msg *msg )
@@ -277,6 +281,9 @@ string Out::live_seek( live_seek_out_msg *msg )
 {
     stringstream _msg;
     _msg << "LIVESEEK" << " " << msg->pos;
+    if(msg->is_in_fullscreen != -1) {
+        _msg << " fullscreen=" << msg->is_in_fullscreen;
+    }
     return _msg.str();
 }
 

@@ -1,6 +1,6 @@
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/actions_manager.cpp vlc-2.1.2/modules/gui/qt4/actions_manager.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/actions_manager.cpp	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/actions_manager.cpp	2014-01-17 16:55:14.874992774 +0200
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/actions_manager.cpp vlc-2.1.5/modules/gui/qt4/actions_manager.cpp
+--- vlc-2.1.5.orig/modules/gui/qt4/actions_manager.cpp	2013-12-03 11:12:34.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/actions_manager.cpp	2014-12-10 16:37:33.354525279 +0200
 @@ -35,6 +35,9 @@
  #include "main_interface.hpp" /* Show playlist */
  #include "components/controller.hpp" /* Toggle FSC controller width */
@@ -53,9 +53,17 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/actions_manager.cpp vlc-2.1.2/modules/gu
          default:
              msg_Dbg( p_intf, "Action: %i", id_action );
              break;
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/actions_manager.hpp vlc-2.1.2/modules/gui/qt4/actions_manager.hpp
---- vlc-2.1.2.orig/modules/gui/qt4/actions_manager.hpp	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/modules/gui/qt4/actions_manager.hpp	2014-01-21 15:44:09.332755797 +0200
+@@ -122,6 +160,7 @@
+  */
+ void ActionsManager::fullscreen()
+ {
++    emit toggleFullscreenIfLiveSeek();
+     bool fs = var_ToggleBool( THEPL, "fullscreen" );
+     vout_thread_t *p_vout = THEMIM->getVout();
+     if( p_vout)
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/actions_manager.hpp vlc-2.1.5/modules/gui/qt4/actions_manager.hpp
+--- vlc-2.1.5.orig/modules/gui/qt4/actions_manager.hpp	2013-06-24 21:00:38.000000000 +0300
++++ vlc-2.1.5/modules/gui/qt4/actions_manager.hpp	2014-12-10 16:37:47.483456529 +0200
 @@ -56,6 +56,9 @@
      LOOP_ACTION,
      INFO_ACTION,
@@ -66,7 +74,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/actions_manager.hpp vlc-2.1.2/modules/gu
  } actionType_e;
  
  class ActionsManager : public QObject
-@@ -90,8 +93,9 @@
+@@ -90,13 +93,17 @@
      void record();
      void skipForward();
      void skipBackward();
@@ -77,6 +85,14 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/actions_manager.hpp vlc-2.1.2/modules/gu
      void snapshot();
      void playlist();
      void frame();
+ 
+     virtual void doAction( int );
++
++signals:
++    void toggleFullscreenIfLiveSeek();
+ };
+ 
+ #endif
 diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/complete_preferences.cpp vlc-2.1.2/modules/gui/qt4/components/complete_preferences.cpp
 --- vlc-2.1.2.orig/modules/gui/qt4/components/complete_preferences.cpp	2013-09-12 18:18:33.000000000 +0300
 +++ vlc-2.1.2/modules/gui/qt4/components/complete_preferences.cpp	2014-01-17 16:59:59.842993015 +0200
@@ -96,9 +112,9 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/complete_preferences.cpp vlc-
  
              /* Special cases: move the main subcategories to the parent cat*/
              if( data &&
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modules/gui/qt4/components/controller.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/components/controller.cpp	2014-03-04 18:15:23.453954948 +0200
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.5/modules/gui/qt4/components/controller.cpp
+--- vlc-2.1.5.orig/modules/gui/qt4/components/controller.cpp	2014-02-27 15:31:51.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/components/controller.cpp	2014-12-10 16:45:16.650747574 +0200
 @@ -66,6 +66,7 @@
  {
      p_intf = _p_i;
@@ -148,7 +164,25 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
  QWidget *AbstractController::createWidget( buttonType_e button, int options )
  {
      bool b_flat  = options & WIDGET_FLAT;
-@@ -354,6 +375,14 @@
+@@ -300,8 +321,15 @@
+     case FULLSCREEN_BUTTON:
+     case DEFULLSCREEN_BUTTON:
+         {
+-        NORMAL_BUTTON( FULLSCREEN );
+-        ENABLE_ON_VIDEO( FULLSCREENButton );
++        LiveSeekableButton *btn = new LiveSeekableButton;
++        setupButton( btn );
++        CONNECT_MAP_SET( btn, FULLSCREEN_ACTION );
++        BUTTON_SET_BAR( btn );
++        
++        CONNECT(THEMIM->getIM(), liveSeekOccured(), btn, setLiveStream());
++        CONNECT(THEMIM->getIM(), voutChanged(bool), btn, makeEnabled(bool));
++        btn->setEnabled(false);
++        widget = btn;
+         }
+         break;
+     case FULLWIDTH_BUTTON: {
+@@ -354,6 +382,14 @@
          /* Update the position when the IM has changed */
          CONNECT( THEMIM->getIM(), positionUpdated( float, int64_t, int ),
                  slider, setPosition( float, int64_t, int ) );
@@ -163,7 +197,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
          /* And update the IM, when the position has changed */
          CONNECT( slider, sliderDragged( float ),
                   THEMIM->getIM(), sliderUpdate( float ) );
-@@ -403,6 +432,25 @@
+@@ -403,6 +439,25 @@
              widget = advControls;
          }
          break;
@@ -189,7 +223,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      case REVERSE_BUTTON:{
          QToolButton *reverseButton = new QToolButton;
          setupButton( reverseButton );
-@@ -481,6 +529,105 @@
+@@ -481,6 +536,105 @@
      case TIME_LABEL_REMAINING:
          widget = new TimeLabel( p_intf, TimeLabel::Remaining );
          break;
@@ -295,7 +329,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      default:
          msg_Warn( p_intf, "This should not happen %i", button );
          break;
-@@ -647,31 +794,38 @@
+@@ -647,31 +801,38 @@
      RTL_UNAFFECTED_WIDGET
      /* advanced Controls handling */
      b_advancedVisible = b_advControls;
@@ -342,7 +376,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      controlLayout->addLayout( controlLayout1 );
      controlLayout->addLayout( controlLayout2 );
  }
-@@ -685,6 +839,30 @@
+@@ -685,6 +846,30 @@
      emit advancedControlsToggled( b_advancedVisible );
  }
  
@@ -373,7 +407,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
  AdvControlsWidget::AdvControlsWidget( intf_thread_t *_p_i, QWidget *_parent ) :
                                       AbstractController( _p_i, _parent )
  {
-@@ -702,6 +880,45 @@
+@@ -702,6 +887,45 @@
      parseAndCreate( line, controlLayout );
  }
  
@@ -419,19 +453,23 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
  InputControlsWidget::InputControlsWidget( intf_thread_t *_p_i, QWidget *_parent ) :
                                       AbstractController( _p_i, _parent )
  {
-@@ -735,6 +952,11 @@
+@@ -735,7 +959,14 @@
      b_fullscreen        = false;
      i_hide_timeout      = 1;
      i_screennumber      = -1;
+-
 +    b_advertisementVisible = false;
 +    
 +    b_can_hide = true;
 +    cachedPos = QPoint(-1,-1);
 +    i_context_y = -1;
- 
++    
++    b_liveSeek = false;
++    
      vout.clear();
  
-@@ -753,11 +975,25 @@
+     setWindowFlags( Qt::ToolTip );
+@@ -753,11 +984,25 @@
      InputControlsWidget *inputC = new InputControlsWidget( p_intf, this );
      controlLayout2->addWidget( inputC );
  
@@ -459,7 +497,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      /* hiding timer */
      p_hideTimer = new QTimer( this );
      p_hideTimer->setSingleShot( true );
-@@ -775,6 +1011,8 @@
+@@ -775,6 +1020,8 @@
      DCONNECT( THEMIM->getIM(), voutListChanged( vout_thread_t **, int ),
                this, setVoutList( vout_thread_t **, int ) );
  
@@ -468,7 +506,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      /* First Move */
      previousPosition = getSettings()->value( "FullScreen/pos" ).toPoint();
      screenRes = getSettings()->value( "FullScreen/screen" ).toRect();
-@@ -792,6 +1030,16 @@
+@@ -792,6 +1039,16 @@
      vlc_mutex_destroy( &lock );
  }
  
@@ -485,7 +523,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
  void FullscreenControllerWidget::restoreFSC()
  {
      if( !isWideFSC )
-@@ -835,10 +1083,38 @@
+@@ -835,10 +1092,38 @@
  
      /* screen has changed, calculate new position */
      QPoint pos = QPoint( currentRes.x() + (currentRes.width() / 2) - (width() / 2),
@@ -525,7 +563,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
  /**
   * Show fullscreen controller
   */
-@@ -879,26 +1155,28 @@
+@@ -879,26 +1164,28 @@
  void FullscreenControllerWidget::slowHideFSC()
  {
  #if HAVE_TRANSPARENCY
@@ -571,18 +609,97 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.cpp vlc-2.1.2/modu
      }
  #endif
  }
-@@ -970,7 +1248,7 @@
+@@ -970,7 +1257,8 @@
              break;
          /* Hide */
          case IMEvent::FullscreenControlHide:
 -            hideFSC();
++            qDebug() << "@@@hide event";
 +            hideFSC(true);
              break;
          default:
              break;
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.hpp vlc-2.1.2/modules/gui/qt4/components/controller.hpp
---- vlc-2.1.2.orig/modules/gui/qt4/components/controller.hpp	2013-12-05 18:39:06.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/components/controller.hpp	2014-03-04 18:14:46.193954152 +0200
+@@ -1066,7 +1354,6 @@
+ 
+     msg_Dbg( p_vout, "Qt: Fullscreen state changed" );
+     FullscreenControllerWidget *p_fs = (FullscreenControllerWidget *)data;
+-
+     p_fs->fullscreenChanged( p_vout, new_val.b_bool, var_GetInteger( p_vout, "mouse-hide-timeout" ) );
+ 
+     return VLC_SUCCESS;
+@@ -1115,7 +1402,9 @@
+         var_DelCallback( p_vout, "fullscreen",
+                          FullscreenControllerWidgetFullscreenChanged, this );
+         vlc_mutex_lock( &lock );
+-        fullscreenChanged( p_vout, false, 0 );
++        if (!b_liveSeek) {
++            fullscreenChanged( p_vout, false, 0 );
++        }
+         vout.removeAll( p_vout );
+         vlc_mutex_unlock( &lock );
+ 
+@@ -1139,10 +1428,22 @@
+         vout.append( p_vout );
+         var_AddCallback( p_vout, "fullscreen",
+                          FullscreenControllerWidgetFullscreenChanged, this );
++        
++        bool fullscreenChangedOnLiveSeek = b_liveSeek && !b_fullscreen;
+         /* I miss a add and fire */
+-        fullscreenChanged( p_vout, var_GetBool( p_vout, "fullscreen" ),
++        fullscreenChanged( p_vout, fullscreenChangedOnLiveSeek ? false : var_GetBool( p_vout, "fullscreen" ),
+                            var_GetInteger( p_vout, "mouse-hide-timeout" ) );
+         vlc_mutex_unlock( &lock );
++        if (fullscreenChangedOnLiveSeek) {
++            var_SetBool( p_vout, "fullscreen", false );
++        }
++        else if (b_liveSeek) {
++            var_AddCallback( p_vout, "mouse-moved", FullscreenControllerWidgetMouseMoved, this );
++        }
++        
++        if (b_liveSeek) {
++            b_liveSeek = false;
++        }
+     }
+ }
+ /**
+@@ -1169,9 +1470,7 @@
+         msg_Dbg( p_vout, "Qt: Quitting Fullscreen" );
+         b_fullscreen = false;
+         i_hide_timeout = i_timeout;
+-        var_DelCallback( p_vout, "mouse-moved",
+-                FullscreenControllerWidgetMouseMoved, this );
+-
++        var_DelCallback( p_vout, "mouse-moved", FullscreenControllerWidgetMouseMoved, this );
+         /* Force fs hiding */
+         IMEvent *eHide = new IMEvent( IMEvent::FullscreenControlHide, 0 );
+         QApplication::postEvent( this, eHide );
+@@ -1179,11 +1478,23 @@
+     vlc_mutex_unlock( &lock );
+ }
+ 
++void FullscreenControllerWidget::forceUnfullscreen()
++{
++    b_fullscreen = false;
++    /* Force fs hiding */
++    IMEvent *eHide = new IMEvent( IMEvent::FullscreenControlHide, 0 );
++    QApplication::postEvent( this, eHide );
++}
++
+ /**
+  * Mouse change callback (show/hide the controller on mouse movement)
+  */
+ void FullscreenControllerWidget::mouseChanged( vout_thread_t *, int i_mousex, int i_mousey )
+ {
++    if (!b_fullscreen) {
++        return;
++    }
++    
+     bool b_toShow;
+ 
+     /* FIXME - multiple vout (ie multiple mouse position ?) and thread safety if multiple vout ? */
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/components/controller.hpp vlc-2.1.5/modules/gui/qt4/components/controller.hpp
+--- vlc-2.1.5.orig/modules/gui/qt4/components/controller.hpp	2014-02-27 15:31:51.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/components/controller.hpp	2014-12-10 16:33:05.140706891 +0200
 @@ -34,11 +34,15 @@
  #include <QString>
  #include <QSizeGrip>
@@ -759,7 +876,16 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.hpp vlc-2.1.2/modu
  
  signals:
      void advancedControlsToggled( bool );
-@@ -274,6 +330,7 @@
+@@ -265,6 +321,8 @@
+     void toggleFullwidth();
+     void updateFullwidthGeometry( int number );
+     int targetScreen();
++    
++    void forceUnfullscreen();
+ 
+ signals:
+     void keyPressed( QKeyEvent * );
+@@ -274,6 +332,7 @@
  
  protected:
      friend class MainInterface;
@@ -767,7 +893,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.hpp vlc-2.1.2/modu
  
      virtual void mouseMoveEvent( QMouseEvent *event );
      virtual void mousePressEvent( QMouseEvent *event );
-@@ -284,13 +341,18 @@
+@@ -284,13 +343,19 @@
  
      virtual void customEvent( QEvent *event );
  
@@ -784,22 +910,25 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller.hpp vlc-2.1.2/modu
 +public slots:
 +    void enableHiding(bool val) { b_can_hide = val; if(!val) showFSC(); }
 +    void placeFsControls(int y, int height);
++    void setLiveSeek() { b_liveSeek = true; }
  
  private:
      QTimer *p_hideTimer;
-@@ -319,6 +381,9 @@
+@@ -319,6 +384,11 @@
      int i_mouse_last_move_y;
  
      bool isWideFSC;
 +    bool b_can_hide;
 +    QPoint cachedPos;
 +    int i_context_y;
++    
++    bool b_liveSeek;
  };
  
  #endif
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.cpp vlc-2.1.2/modules/gui/qt4/components/controller_widget.cpp
---- vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.cpp	2013-12-03 11:12:34.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/components/controller_widget.cpp	2014-01-17 17:08:41.230993693 +0200
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/components/controller_widget.cpp vlc-2.1.5/modules/gui/qt4/components/controller_widget.cpp
+--- vlc-2.1.5.orig/modules/gui/qt4/components/controller_widget.cpp	2014-02-14 19:40:50.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/components/controller_widget.cpp	2014-12-10 16:37:04.440989934 +0200
 @@ -38,6 +38,7 @@
  #include <QMenu>
  #include <QWidgetAction>
@@ -815,8 +944,8 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.cpp vlc-2.1
 +    CONNECT( this, clearCachedVolume( void ), THEMIM->getIM(), dropCachedVolume( void ) );
  }
  
- SoundWidget::~SoundWidget()
-@@ -154,6 +156,7 @@
+ void SoundWidget::refreshLabels()
+@@ -148,6 +150,7 @@
      setMuted( false );
      playlist_VolumeSet( THEPL, i_sliderVolume / 100.f );
      refreshLabels();
@@ -824,7 +953,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.cpp vlc-2.1
  }
  
  /* libvlc changed value event slot */
-@@ -296,3 +299,147 @@
+@@ -290,3 +293,166 @@
          vlc_object_release( p_vout );
  }
  
@@ -972,9 +1101,28 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.cpp vlc-2.1
 +    setVisible(val);
 +}
 +
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.hpp vlc-2.1.2/modules/gui/qt4/components/controller_widget.hpp
---- vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.hpp	2013-06-24 21:00:38.000000000 +0300
-+++ vlc-2.1.2/modules/gui/qt4/components/controller_widget.hpp	2014-01-17 18:01:49.326996199 +0200
++LiveSeekableButton::LiveSeekableButton() : QToolButton(), b_liveStream(false)
++{
++}
++
++void LiveSeekableButton::setLiveStream() 
++{ 
++    b_liveStream = true; 
++}
++
++void LiveSeekableButton::makeEnabled(bool b)
++{ 
++    if (b) { 
++        b_liveStream = false;
++        setEnabled(true);
++    }
++    else {
++        setEnabled(b_liveStream);
++    }
++}
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/components/controller_widget.hpp vlc-2.1.5/modules/gui/qt4/components/controller_widget.hpp
+--- vlc-2.1.5.orig/modules/gui/qt4/components/controller_widget.hpp	2014-02-14 19:40:50.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/components/controller_widget.hpp	2014-12-10 16:36:51.243592226 +0200
 @@ -35,11 +35,13 @@
  #include <QWidget>
  #include <QToolButton>
@@ -989,7 +1137,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.hpp vlc-2.1
  
  /**
   * SPECIAL Widgets that are a bit more than just a ToolButton
-@@ -125,6 +127,94 @@
+@@ -124,6 +126,108 @@
  
  signals:
      void valueReallyChanged( int );
@@ -1081,6 +1229,20 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/components/controller_widget.hpp vlc-2.1
 +    
 +private slots:
 +    void enableChanged(bool);
++};
++
++class LiveSeekableButton : public QToolButton
++{
++    Q_OBJECT
++public:
++    LiveSeekableButton();
++    
++public slots:
++    void setLiveStream();
++    void makeEnabled(bool);
++    
++private:
++    bool b_liveStream;
  };
  
  #endif
@@ -3812,9 +3974,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/input_manager.hpp vlc-2.1.4/modules/gui/
  };
  
  #endif
-diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui/qt4/main_interface.cpp
---- vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.4/modules/gui/qt4/main_interface.cpp	2014-08-05 14:27:55.229231494 +0300
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.5/modules/gui/qt4/main_interface.cpp
+--- vlc-2.1.5.orig/modules/gui/qt4/main_interface.cpp	2014-02-27 15:31:51.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/main_interface.cpp	2014-12-10 16:42:29.326456447 +0200
 @@ -41,12 +41,22 @@
  #include "components/playlist/playlist.hpp"     // plWidget
  #include "dialogs/firstrun.hpp"                 // First Run
@@ -3851,7 +4013,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
  // #define DEBUG_INTF
  
-@@ -75,6 +88,15 @@
+@@ -75,6 +88,18 @@
  static int IntfRaiseMainCB( vlc_object_t *p_this, const char *psz_variable,
                             vlc_value_t old_val, vlc_value_t new_val,
                             void *param );
@@ -3864,10 +4026,13 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +static int IntfShowMiningDialogCB( vlc_object_t *p_this, const char *psz_variable,
 +                           vlc_value_t old_val, vlc_value_t new_val,
 +                           void *param ); 
++static int IntfPlaylistFullscreen( vlc_object_t *p_this, const char *psz_variable,
++                           vlc_value_t old_val, vlc_value_t new_val,
++                           void *param ); 
  
  const QEvent::Type MainInterface::ToolbarsNeedRebuild =
          (QEvent::Type)QEvent::registerEventType();
-@@ -99,6 +121,19 @@
+@@ -99,6 +124,20 @@
      b_hasPausedWhenMinimized = false;
      i_kc_offset          = false;
  
@@ -3883,11 +4048,12 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +#endif
 +    mIeDeleteTimer = 0;
 +    m_last_webstat_play_id = "";
++    b_isLiveSeeking = false;
 +
      /* Ask for Privacy */
      FirstRun::CheckAndRun( this, p_intf );
  
-@@ -161,7 +196,7 @@
+@@ -161,7 +200,7 @@
       * Status Bar *
       **************/
      createStatusBar();
@@ -3896,7 +4062,16 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /********************
       * Input Manager    *
-@@ -214,11 +249,18 @@
+@@ -207,18 +246,26 @@
+              this, SLOT(releaseVideoSlot( void )),
+              Qt::BlockingQueuedConnection );
+     CONNECT( this, askVideoOnTop(bool), this, setVideoOnTop(bool));
+-
++    CONNECT( this, fullscreenLiveSeekToggling(), this, toggleFullscreenIfLiveSeek());
++    
+     if( videoWidget )
+     {
+         if( b_autoresize )
          {
              CONNECT( this, askVideoToResize( unsigned int, unsigned int ),
                       this, setVideoSize( unsigned int, unsigned int ) );
@@ -3917,7 +4092,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  
      CONNECT( THEDP, toolBarConfUpdated(), this, toolBarConfUpdated() );
-@@ -229,8 +271,29 @@
+@@ -229,8 +276,32 @@
      CONNECT( this, askBoss(), this, setBoss() );
      CONNECT( this, askRaise(), this, setRaise() );
  
@@ -3935,6 +4110,9 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    CONNECT( THEMIM->getIM(), enableQualitiesButton( QStringList, int ), this, updateMinWidth() );
 +    
 +    CONNECT( THEMIM->getIM(), inputIsAdvertisement(bool), this, toogleAdvertisementPanel(bool) );
++    
++    CONNECT( THEMIM->getIM(), liveSeekOccured(), this, setLiveSeeking() );
++    CONNECT( THEAM, toggleFullscreenIfLiveSeek(), this, toggleFullscreenIfLiveSeek() );
      /** END of CONNECTS**/
  
 +    browserManager = new AceWebBrowser::BrowserManager(this);
@@ -3947,17 +4125,20 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      /************
       * Callbacks
-@@ -242,6 +305,9 @@
+@@ -242,7 +313,11 @@
      /* Register callback for the intf-popupmenu variable */
      var_AddCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
+-
 +    var_AddCallback( THEP2P, "show-userdata-dialog", IntfShowUserDataCB, p_intf );
 +    var_AddCallback( THEP2P, "showdialog", IntfShowErrorDialogCB, p_intf );
 +    var_AddCallback( THEP2P, "showinfowindow", IntfShowMiningDialogCB, p_intf );
- 
++    var_AddCallback( THEPL, "fullscreen", IntfPlaylistFullscreen, p_intf );
++    
      /* Final Sizing, restoration and placement of the interface */
      if( settings->value( "MainWindow/playlist-visible", false ).toBool() )
-@@ -269,7 +335,17 @@
+         togglePlaylist();
+@@ -269,7 +344,17 @@
      if( videoWidget )
          releaseVideoSlot();
  
@@ -3975,14 +4156,15 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      if( himl )
          ImageList_Destroy( himl );
      if(p_taskbl)
-@@ -311,6 +387,14 @@
+@@ -311,6 +396,15 @@
      var_DelCallback( p_intf->p_libvlc, "intf-toggle-fscontrol", IntfShowCB, p_intf );
      var_DelCallback( p_intf->p_libvlc, "intf-popupmenu", PopupMenuCB, p_intf );
  
 +    var_DelCallback( THEP2P, "show-userdata-dialog", IntfShowUserDataCB, p_intf );
 +    var_DelCallback( THEP2P, "showdialog", IntfShowErrorDialogCB, p_intf );
 +    var_DelCallback( THEP2P, "showinfowindow", IntfShowMiningDialogCB, p_intf );
-+
++    var_DelCallback( THEPL, "fullscreen", IntfPlaylistFullscreen, p_intf );
++    
 +    if(browserManager) {
 +        delete browserManager;
 +    }
@@ -3990,23 +4172,25 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      p_intf->p_sys->p_mi = NULL;
  }
  
-@@ -342,9 +426,14 @@
+@@ -342,9 +436,14 @@
      if( fullscreenControls )
      {
          delete fullscreenControls;
 -        fullscreenControls = new FullscreenControllerWidget( p_intf, this );
+-        CONNECT( fullscreenControls, keyPressed( QKeyEvent * ),
+-                 this, handleKeyPress( QKeyEvent * ) );
 +        if( b_videoEmbedded )
 +            fullscreenControls = new FullscreenControllerWidget( p_intf, this );
 +        else
 +            fullscreenControls = new FullscreenControllerWidget( p_intf );
-         CONNECT( fullscreenControls, keyPressed( QKeyEvent * ),
-                  this, handleKeyPress( QKeyEvent * ) );
++        CONNECT( fullscreenControls, keyPressed( QKeyEvent * ), this, handleKeyPress( QKeyEvent * ) );
++        CONNECT( THEMIM->getIM(), liveSeekOccured(), fullscreenControls, setLiveSeek() );
 +        CONNECT( this, enableFsControlsHiding(bool), fullscreenControls, enableHiding(bool) );
 +        CONNECT( this, placeFsControls(int, int), fullscreenControls, placeFsControls(int, int) );
          THEMIM->requestVoutUpdate();
      }
  
-@@ -378,14 +467,14 @@
+@@ -378,14 +477,14 @@
      stackCentralW = new QVLCStackedWidget( main );
  
      /* Bg Cone */
@@ -4024,7 +4208,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  
      stackCentralW->addWidget( bgWidget );
      if ( !var_InheritBool( p_intf, "qt-bgcone" ) )
-@@ -395,11 +484,15 @@
+@@ -395,11 +494,15 @@
              bgWidget->setExpandstoHeight( true );
  
      /* And video Outputs */
@@ -4041,23 +4225,25 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      mainLayout->insertWidget( 1, stackCentralW );
  
      stackWidgetsSizes[bgWidget] =
-@@ -434,9 +527,14 @@
+@@ -434,9 +537,14 @@
          /* Create the FULLSCREEN CONTROLS Widget */
          if( var_InheritBool( p_intf, "qt-fs-controller" ) )
          {
 -            fullscreenControls = new FullscreenControllerWidget( p_intf, this );
+-            CONNECT( fullscreenControls, keyPressed( QKeyEvent * ),
+-                     this, handleKeyPress( QKeyEvent * ) );
 +            if( b_videoEmbedded )
 +                fullscreenControls = new FullscreenControllerWidget( p_intf, this );
 +            else
 +                fullscreenControls = new FullscreenControllerWidget( p_intf );
-             CONNECT( fullscreenControls, keyPressed( QKeyEvent * ),
-                      this, handleKeyPress( QKeyEvent * ) );
++            CONNECT( fullscreenControls, keyPressed( QKeyEvent * ), this, handleKeyPress( QKeyEvent * ) );
++            CONNECT( THEMIM->getIM(), liveSeekOccured(), fullscreenControls, setLiveSeek() );
 +            CONNECT( this, enableFsControlsHiding(bool), fullscreenControls, enableHiding(bool) );
 +            CONNECT( this, placeFsControls(int, int), fullscreenControls, placeFsControls(int, int) );
          }
  }
  
-@@ -535,7 +633,13 @@
+@@ -535,7 +643,13 @@
  #endif
  }
  
@@ -4072,7 +4258,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  inline void MainInterface::restoreStackOldWidget()
              { showTab( stackCentralOldWidget ); }
  
-@@ -549,42 +653,51 @@
+@@ -549,42 +663,51 @@
                   stackCentralW->indexOf( stackCentralOldWidget ) );
      msg_Dbg( p_intf, "ShowTab request for %s", widget->metaObject()->className() );
  #endif
@@ -4150,7 +4336,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          }
      }
  
-@@ -689,19 +802,27 @@
+@@ -689,19 +812,27 @@
      assert( videoWidget );
      videoWidget->release();
      setVideoOnTop( false );
@@ -4187,7 +4373,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  }
  
  void MainInterface::setVideoSize( unsigned int w, unsigned int h )
-@@ -719,6 +840,7 @@
+@@ -719,6 +850,7 @@
  void MainInterface::setVideoFullScreen( bool fs )
  {
      b_videoFullScreen = fs;
@@ -4195,7 +4381,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      if( fs )
      {
          int numscreen = var_InheritInteger( p_intf, "qt-fullscreen-screennumber" );
-@@ -746,15 +868,31 @@
+@@ -746,15 +878,31 @@
  
          /* */
          setMinimalView( true );
@@ -4229,7 +4415,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      videoWidget->sync();
  }
  
-@@ -1002,6 +1140,13 @@
+@@ -1002,6 +1150,13 @@
  void MainInterface::setName( const QString& name )
  {
      input_name = name; /* store it for the QSystray use */
@@ -4243,7 +4429,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      /* Display it in the status bar, but also as a Tooltip in case it doesn't
         fit in the label */
      nameLabel->setText( name );
-@@ -1016,11 +1161,11 @@
+@@ -1016,11 +1171,11 @@
  {
      if( aTitle.isEmpty() )
      {
@@ -4257,7 +4443,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
  }
  
-@@ -1059,9 +1204,9 @@
+@@ -1059,9 +1214,9 @@
      else
          iconVLC = QIcon::fromTheme( "vlc", QIcon( ":/logo/vlc256.png" ) );
      sysTray = new QSystemTrayIcon( iconVLC, this );
@@ -4269,7 +4455,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      systrayMenu->setIcon( iconVLC );
  
      VLCMenuBar::updateSystrayMenu( this, p_intf, true );
-@@ -1161,7 +1306,7 @@
+@@ -1161,7 +1316,7 @@
  #endif
              break;
          case QSystemTrayIcon::MiddleClick:
@@ -4278,7 +4464,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      qtr( "Control menu for the player" ),
                      QSystemTrayIcon::Information, 3000 );
              break;
-@@ -1178,7 +1323,7 @@
+@@ -1178,7 +1333,7 @@
  {
      if( name.isEmpty() )
      {
@@ -4287,7 +4473,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      else
      {
-@@ -1186,7 +1331,7 @@
+@@ -1186,7 +1341,7 @@
          if( ( i_notificationSetting == NOTIFICATION_ALWAYS ) ||
              ( i_notificationSetting == NOTIFICATION_MINIMIZED && (isMinimized() || isHidden()) ) )
          {
@@ -4296,7 +4482,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                      QSystemTrayIcon::NoIcon, 3000 );
          }
      }
-@@ -1209,7 +1354,7 @@
+@@ -1209,7 +1364,7 @@
          sysTray->setToolTip( input_name + " - " + qtr( "Paused") );
          break;
      default:
@@ -4305,7 +4491,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          break;
      }
      VLCMenuBar::updateSystrayMenu( this, p_intf );
-@@ -1308,9 +1453,18 @@
+@@ -1308,9 +1463,18 @@
              }
              if( mrl.length() > 0 )
              {
@@ -4327,7 +4513,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
                  first = false;
                  RecentsMRL::getInstance( p_intf )->addRecent( mrl );
              }
-@@ -1323,10 +1477,20 @@
+@@ -1323,10 +1487,20 @@
      if( !mimeData->hasUrls() && mimeData->hasText() &&
          QUrl(mimeData->text()).isValid() )
      {
@@ -4352,7 +4538,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
      }
      event->accept();
  }
-@@ -1351,7 +1515,7 @@
+@@ -1351,7 +1525,7 @@
      handleKeyPress( e );
  
      /* easter eggs sequence handling */
@@ -4361,7 +4547,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
          i_kc_offset++;
      else
          i_kc_offset = 0;
-@@ -1360,7 +1524,7 @@
+@@ -1360,7 +1534,7 @@
      {
          i_kc_offset = 0;
          emit kc_pressed();
@@ -4370,7 +4556,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  }
  
  void MainInterface::handleKeyPress( QKeyEvent *e )
-@@ -1375,7 +1539,16 @@
+@@ -1375,7 +1549,20 @@
      int i_vlck = qtEventToVLCKey( e );
      if( i_vlck > 0 )
      {
@@ -4382,13 +4568,17 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +        else if( action == ACTIONID_STOP ) {
 +            THEMIM->stop();
 +        }
++        else if( (action == ACTIONID_TOGGLE_FULLSCREEN || action == ACTIONID_LEAVE_FULLSCREEN) 
++                && b_isLiveSeeking ) {
++            toggleFullscreenIfLiveSeek();
++        }
 +        else {
 +            var_SetInteger( p_intf->p_libvlc, "key-pressed", i_vlck );
 +        }
          e->accept();
      }
      else
-@@ -1385,10 +1558,20 @@
+@@ -1385,10 +1572,20 @@
  void MainInterface::wheelEvent( QWheelEvent *e )
  {
      int i_vlckey = qtWheelEventToVLCKey( e );
@@ -4409,7 +4599,7 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
  void MainInterface::closeEvent( QCloseEvent *e )
  {
  //  hide();
-@@ -1455,6 +1638,618 @@
+@@ -1455,6 +1652,638 @@
      raise();
  }
  
@@ -5025,10 +5215,30 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    }
 +}
 +
++void MainInterface::toggleFullscreenIfLiveSeek()
++{
++    bool isFullscreen = false;
++    if (b_videoEmbedded)
++        isFullscreen = windowState() & Qt::WindowFullScreen;
++    else
++        isFullscreen = videoWidget->windowState() & Qt::WindowFullScreen;
++    if (b_isLiveSeeking && isFullscreen) {
++        setVideoFullScreen(false);
++        if (fullscreenControls) {
++            fullscreenControls->forceUnfullscreen();
++        }
++    }
++}
++
++void MainInterface::emitFullscreenLiveSeekToggling() 
++{
++    emit fullscreenLiveSeekToggling();
++}
++
  /*****************************************************************************
   * PopupMenuCB: callback triggered by the intf-popupmenu playlist variable.
   *  We don't show the menu directly here because we don't want the
-@@ -1521,3 +2316,72 @@
+@@ -1521,3 +2350,83 @@
  
      return VLC_SUCCESS;
  }
@@ -5101,9 +5311,20 @@ diff -ru vlc-2.1.4.orig/modules/gui/qt4/main_interface.cpp vlc-2.1.4/modules/gui
 +    
 +    return VLC_SUCCESS;
 +}
-diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui/qt4/main_interface.hpp
---- vlc-2.1.4.orig/modules/gui/qt4/main_interface.hpp	2014-02-21 15:59:56.000000000 +0200
-+++ vlc-2.1.2/modules/gui/qt4/main_interface.hpp	2014-08-05 14:29:26.501232900 +0300
++
++static int IntfPlaylistFullscreen( vlc_object_t *p_this, const char *psz_variable,
++                           vlc_value_t old_val, vlc_value_t new_val, void *param )
++{
++    VLC_UNUSED(p_this); VLC_UNUSED(psz_variable); VLC_UNUSED(old_val); VLC_UNUSED(new_val);
++    intf_thread_t *p_intf = (intf_thread_t *)param;
++    if (p_intf) {
++        p_intf->p_sys->p_mi->emitFullscreenLiveSeekToggling();
++    }
++    return VLC_SUCCESS;
++}
+diff -ru vlc-2.1.5.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.5/modules/gui/qt4/main_interface.hpp
+--- vlc-2.1.5.orig/modules/gui/qt4/main_interface.hpp	2014-02-27 15:31:51.000000000 +0200
++++ vlc-2.1.5/modules/gui/qt4/main_interface.hpp	2014-12-10 16:38:52.474942722 +0200
 @@ -31,8 +31,12 @@
  
  #ifdef _WIN32
@@ -5145,7 +5366,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
  
  public slots:
      void dockPlaylist( bool b_docked = true );
-@@ -266,6 +277,86 @@
+@@ -266,6 +277,92 @@
      void askBoss();
      void askRaise();
      void kc_pressed(); /* easter eggs */
@@ -5158,6 +5379,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    void p2pUpdateStatus(const QString&);
 +    void p2pUpdateError(const QString&);
 +    void updateMinWidth();
++    void emitFullscreenLiveSeekToggling();
 +
 +private slots:
 +    void showUserData();
@@ -5202,6 +5424,8 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    void handleUserPauseAction();
 +    void handleUserStopAction();
 +    void handleInputState(int, bool);
++    void setLiveSeeking() { b_isLiveSeeking = true; }
++    void toggleFullscreenIfLiveSeek();
 +
 +signals:
 +    void askUserData();
@@ -5215,6 +5439,7 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    void enableFsControlsHiding(bool);
 +    void placeFsControls(int, int);
 +    void notifyPauseClicked();
++    void fullscreenLiveSeekToggling();
 +
 +private:
 +    BrowserHolder *browserPlaceholder;
@@ -5229,6 +5454,8 @@ diff -ru vlc-2.1.2.orig/modules/gui/qt4/main_interface.hpp vlc-2.1.2/modules/gui
 +    bool m_link_2_open_aceweb;
 +    QString m_link_2_open_args;
 +    bool m_status_bar_visible_cached;
++    
++    bool b_isLiveSeeking;
  };
  
  #endif

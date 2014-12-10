@@ -99,8 +99,10 @@ struct start_out_msg : base_out_message {
 };
 
 struct stop_out_msg : base_out_message {
+    int is_in_fullscreen;
     stop_out_msg() : base_out_message() {
         type = OUT_MSG_STOP;
+        is_in_fullscreen = -1;
     }
 };
 
@@ -168,9 +170,11 @@ struct get_ad_url_out_msg : base_out_message {
 
 struct live_seek_out_msg : base_out_message {
     int pos;
+    int is_in_fullscreen;
     
     live_seek_out_msg() : base_out_message() {
         type = OUT_MSG_LIVE_SEEK;
+        is_in_fullscreen = -1;
     }
 };
 

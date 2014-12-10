@@ -459,6 +459,7 @@ bool Stop( p2p_object_t *vlc_obj )
         return false;
 
     stop_out_msg _msg;
+    _msg.is_in_fullscreen = var_GetBool(vlc_obj, "vout-display-fullscreen") ? 1 : 0;
     bool _send = p_sys->p_control->send( &_msg );
     if( !_send ) {
         msg_Err( vlc_obj, "Cannot send stop message to engine" );
@@ -630,6 +631,7 @@ bool LiveSeek(p2p_object_t *vlc_obj, int position)
         
     live_seek_out_msg _msg;
     _msg.pos = position;
+    _msg.is_in_fullscreen = var_GetBool(vlc_obj, "vout-display-fullscreen") ? 1 : 0;
     
     bool _send = p_sys->p_control->send( &_msg );
     if( !_send ) {
