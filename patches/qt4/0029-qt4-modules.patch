@@ -1,0 +1,105 @@
+--- vlc-2.1.2.orig/modules/gui/qt4/dialogs/open.cpp	2013-06-24 21:00:38.000000000 +0300
++++ vlc-2.1.2/modules/gui/qt4/dialogs/open.cpp	2014-01-17 14:24:51.734985079 +0200
+@@ -84,6 +84,7 @@
+     discOpenPanel    = new DiscOpenPanel( this, p_intf );
+     netOpenPanel     = new NetOpenPanel( this, p_intf );
+     captureOpenPanel = new CaptureOpenPanel( this, p_intf );
++    cidOpenPanel = new ContentIdOpenPanel( this, p_intf );
+ 
+     /* Insert the tabs */
+     ui.Tab->insertTab( OPEN_FILE_TAB, fileOpenPanel, QIcon( ":/type/file-asym" ),
+@@ -94,6 +95,8 @@
+                        qtr( "&Network" ) );
+     ui.Tab->insertTab( OPEN_CAPTURE_TAB, captureOpenPanel,
+                        QIcon( ":/type/capture-card" ), qtr( "Capture &Device" ) );
++    ui.Tab->insertTab( OPEN_CONTENT_ID_TAB, cidOpenPanel,
++                       QIcon( ":/type/acestream" ), qtr( P2P_PRODUCT_NAME ) );
+ 
+     /* Hide the Slave input widgets */
+     ui.slaveLabel->hide();
+@@ -141,6 +144,8 @@
+              this, updateMRL( const QStringList&, const QString& ) );
+     CONNECT( captureOpenPanel, mrlUpdated( const QStringList&, const QString& ),
+              this, updateMRL( const QStringList&, const QString& ) );
++    CONNECT( cidOpenPanel, mrlUpdated( const QStringList&, const QString& ),
++             this, updateMRL( const QStringList&, const QString& ) );
+ 
+     CONNECT( fileOpenPanel, methodChanged( const QString& ),
+              this, newCachingMethod( const QString& ) );
+@@ -150,6 +155,8 @@
+              this, newCachingMethod( const QString& ) );
+     CONNECT( captureOpenPanel, methodChanged( const QString& ),
+              this, newCachingMethod( const QString& ) );
++    CONNECT( cidOpenPanel, methodChanged( const QString& ),
++             this, newCachingMethod( const QString& ) );
+ 
+     /* Advanced frame Connects */
+     CONNECT( ui.slaveCheckbox, toggled( bool ), this, updateMRL() );
+@@ -368,35 +375,46 @@
+     {
+         bool b_start = !i && !b_enqueue;
+ 
+-        input_item_t *p_input_item;
+-        p_input_item = input_item_New( qtu( itemsMRL[i] ), NULL );
++        QString optstr = ui.advancedLineInput->text();
++        p2p_uri_id_type_t p2p_uri_type = p2p_GetIdTypeWithOptString(qtu(itemsMRL[i]), qtu(optstr));
++        if( p2p_uri_type != P2P_TYPE_UNSUPPORT ) {
++            p2p_LoadWithOptString( THEP2P, qtu(itemsMRL[i]), NULL, p2p_uri_type, p2p_LoadAsync, qtu(optstr), 
++                        PLAYLIST_APPEND, p2p_LoadAddInput, NULL, 
++                        b_pl ? true : false, b_start, P2P_DEV, P2P_AFF, P2P_ZONE, pl_Unlocked );
++            QString recent_url = ( p2p_uri_type == P2P_TYPE_PLAYER && itemsMRL[i].indexOf("acestream://") ==-1 ) ? "acestream://" + itemsMRL[i] : itemsMRL[i];
++            RecentsMRL::getInstance( p_intf )->addRecent( recent_url );
++        }
++        else {
++            input_item_t *p_input_item;
++            p_input_item = input_item_New( qtu( itemsMRL[i] ), NULL );
+ 
+-        /* Take options from the UI, not from what we stored */
+-        QStringList optionsList = getOptions().split( " :" );
++            /* Take options from the UI, not from what we stored */
++            QStringList optionsList = getOptions().split( " :" );
+ 
+-        /* Insert options */
+-        for( int j = 0; j < optionsList.count(); j++ )
+-        {
+-            QString qs = colon_unescape( optionsList[j] );
+-            if( !qs.isEmpty() )
++            /* Insert options */
++            for( int j = 0; j < optionsList.count(); j++ )
+             {
+-                input_item_AddOption( p_input_item, qtu( qs ),
+-                                      VLC_INPUT_OPTION_TRUSTED );
++                QString qs = colon_unescape( optionsList[j] );
++                if( !qs.isEmpty() )
++                {
++                    input_item_AddOption( p_input_item, qtu( qs ),
++                                          VLC_INPUT_OPTION_TRUSTED );
+ #ifdef DEBUG_QT
+-                msg_Warn( p_intf, "Input option: %s", qtu( qs ) );
++                    msg_Warn( p_intf, "Input option: %s", qtu( qs ) );
+ #endif
++                }
+             }
+-        }
+ 
+-        /* Switch between enqueuing and starting the item */
+-        /* FIXME: playlist_AddInput() can fail */
+-        playlist_AddInput( THEPL, p_input_item,
+-                PLAYLIST_APPEND | ( b_start ? PLAYLIST_GO : PLAYLIST_PREPARSE ),
+-                PLAYLIST_END, b_pl ? true : false, pl_Unlocked );
+-        vlc_gc_decref( p_input_item );
++            /* Switch between enqueuing and starting the item */
++            /* FIXME: playlist_AddInput() can fail */
++            playlist_AddInput( THEPL, p_input_item,
++                    PLAYLIST_APPEND | ( b_start ? PLAYLIST_GO : PLAYLIST_PREPARSE ),
++                    PLAYLIST_END, b_pl ? true : false, pl_Unlocked );
++            vlc_gc_decref( p_input_item );
+ 
+-        /* Do not add the current MRL if playlist_AddInput fail */
+-        RecentsMRL::getInstance( p_intf )->addRecent( itemsMRL[i] );
++            /* Do not add the current MRL if playlist_AddInput fail */
++            RecentsMRL::getInstance( p_intf )->addRecent( itemsMRL[i] );
++        }
+     }
+ }
+ 

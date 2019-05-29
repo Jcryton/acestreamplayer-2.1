@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export QT_SELECT=qt4
+
 PWD_DIR=$(readlink -f $(dirname $0))
 . "${PWD_DIR}/config.sh"
 . "${PWD_DIR}/functions.sh"
@@ -39,9 +41,18 @@ elif [ ${LINUX} = "1" ]; then
     mkdir -p ${PWD_DIR}/build-ace
     cd ${PWD_DIR}/build-ace
     
-    ${PWD_DIR}/vlc-${VLC_VERSION}/configure \
-        --prefix=${PWD_DIR}/build-ace/vlc-${VLC_VERSION} \
+    #${PWD_DIR}/vlc-${VLC_VERSION}/configure \
+    #    --prefix=${PWD_DIR}/build-ace/vlc-${VLC_VERSION} \
+    #    --disable-gtk \
+     
+    cp -vfr ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/acestreamplayer.png ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/vlc.png
+    cp -vfr ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/acestreamplayer.xpm ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/vlc.xpm
+    cp -vfr ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/acestreamplayer-xmas.xpm ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/vlc-xmas.xpm
+   
+     ${PWD_DIR}/vlc-${VLC_VERSION}/configure \
+        --prefix=/usr \
         --disable-gtk \
+        --disable-bluray \
         --enable-nls \
         --enable-sdl \
         --enable-ffmpeg \

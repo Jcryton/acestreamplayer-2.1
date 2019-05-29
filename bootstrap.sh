@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export QT_SELECT=qt4
+
 PWD_DIR=$(readlink -f $(dirname $0))
 . "${PWD_DIR}/config.sh"
 . "${PWD_DIR}/functions.sh"
@@ -26,11 +28,16 @@ if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION} ]; then
     cd ${PWD_DIR}
     
     if [ ! -f ${PWD_DIR}/vlc-${VLC_VERSION}.tar.* ]; then
-        info "Downloading vlc"
-        download ${VLC_URL} || error "Failed to download vlc"
-    fi
+        info "Downloading vlc"       
+        if [ ${VLC_VERSION} != "2.1"  ]; then
+           download ${VLC_URL} || error "Failed to download vlc"
+           unpack ${PWD_DIR}/vlc-${VLC_VERSION}.tar.*
+        else
+           git clone https://git.videolan.org/git/vlc/vlc-2.1.git
+        fi
 
-    unpack ${PWD_DIR}/vlc-${VLC_VERSION}.tar.*
+    fi
+    #unpack ${PWD_DIR}/vlc-${VLC_VERSION}.tar.*
 fi
 
 if [ ! -f ${PWD_DIR}/._prepare ]; then
@@ -76,12 +83,37 @@ check_and_patch()
 }
 
 for i in `seq 1 24`; do
-    if [ "$i" -lt "10" ]; then 
-        check_and_patch ${PWD_DIR}/patches/0$i-*.patch
+    if [ "$i" -eq "20" ]; then 
+       for i in `seq 1 47`; do
+           if [ "$i" -lt "10" ]; then 
+               check_and_patch ${PWD_DIR}/patches/qt4/000$i-qt4-modules.patch
+           else
+               check_and_patch ${PWD_DIR}/patches/qt4/00$i-qt4-modules.patch
+           fi
+       done   
     else
-        check_and_patch ${PWD_DIR}/patches/$i-*.patch
+       if [ "$i" -lt "10" ]; then 
+           check_and_patch ${PWD_DIR}/patches/common/0$i-*.patch
+       else
+           if [ "$i" -eq "12" ]; then 
+              check_and_patch ${PWD_DIR}/patches/${VLC_VERSION}/12-root.patch
+           else  
+              check_and_patch ${PWD_DIR}/patches/common/$i-*.patch
+           fi
+       fi
     fi
 done
+
+# gentoo patch
+
+cd ${PWD_DIR}/vlc-${VLC_VERSION}
+
+apply_patch ${PWD_DIR}/patches/gentoo/0001-vlc-2.1.0-newer-rdp.patch
+apply_patch ${PWD_DIR}/patches/gentoo/0002-vlc-2.1.0-libva-1.2.1-compat.patch
+apply_patch ${PWD_DIR}/patches/gentoo/0003-vlc-2.1.0-TomWij-bisected-PA-broken-underflow.patch
+apply_patch ${PWD_DIR}/patches/gentoo/0004-opencv-3.0.0.patch
+
+cd ${PWD_DIR}
 
 if [ ${WINDOWS} = "1" ]; then
     # prebuilt contribs

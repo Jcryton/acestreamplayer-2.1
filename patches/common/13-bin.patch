@@ -23,7 +23,7 @@ diff -dur vlc-2.1.4.orig/bin/vlc.c vlc-2.1.4/bin/vlc.c
 +#ifdef KEY_HEADER
 +#include "key.h"
 +#else
-+static const char dev_key[] = "kjYX790gTytRaXV04IvC-xZH3A18sj5b1Tf3I-J5XVS1xsj-j0797KwxxLpBl26HPvWMm";
++static const char dev_key[] = "1mcXu2Ujtsjy9z7k-elucnH-384lvH4E-munn1LrXVEt2bSnHO7VaEa";
 +#endif
 +
  extern void vlc_enable_override (void);

@@ -1,31 +1,12 @@
 Ace Stream Player
 -----------------
 
-Tested with VLC version **2.1.4**
+Tested with VLC version *2.1.4  2.1.5  2.1.6  2.1.git*
 
-**Cross compile for Windows:**
-
-Reqiured:
-
-mingw-w64 gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-tools lua5.1 libtool automake autoconf autopoint make gettext pkg-config qt4-dev-tools
-
-`./bootstrap.sh`
-
-`./configure.sh` or `./configure.sh ts` for torrentstream
-
-`cd build-ace` or `cd build-ts` for torrentstream
-
-`make`
-
-`make install package-win-strip`
-
-Known problems:
-
-*Error: "Failed to download contribs"* - [download] contribs manually and put into vlc-{version}/contrib folder.
+Depends: libgcrypt < 1.6, ffmpeg < 2.0
+Optimal: libgcrypt-1.5.4[5,6] ffmpeg-1.2.12
 
 **Compile for Linux:** 
-
-*Tested only on Ubuntu*
 
 Install build tools *libtool*, *build-essential*, *pkg-config*, *autoconf*
 
@@ -45,5 +26,4 @@ Edit config.sh, set HOST="", to build for your system.
 
 `make install`
 
-[download]:https://bitbucket.org/AceStream/acestreamplayer/downloads/i686-w64-mingw32.tar.gz
 [libraries]:https://wiki.videolan.org/Contrib_Status/
