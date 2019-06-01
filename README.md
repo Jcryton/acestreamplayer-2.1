@@ -1,7 +1,7 @@
 Ace Stream Player
 -----------------
 
-Tested with VLC version *2.1.4  2.1.5  2.1.6  2.1.git*
+Tested with VLC version *2.1.4   2.1.5   2.1.6   2.1.6-git*
 
 Depends: libgcrypt < 1.6, ffmpeg < 2.0
 Optimal: libgcrypt-1.5.4[5,6] ffmpeg-1.2.12
@@ -14,7 +14,8 @@ Checkout all required [libraries] to build vlc
 
 Also install *libqt4-webkit*, *openssl*, *sqlite3*
 
-Edit config.sh, set HOST="", to build for your system.
+Edit config.sh, set VLC_VERSION="2.1.4", "2.1.5". "2.1.6" to build this release,
+ or "2.1" to build last 2.1.6-git version
 
 `./bootstrap.sh`
 
