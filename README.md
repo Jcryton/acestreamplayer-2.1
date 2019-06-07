@@ -21,10 +21,18 @@ Edit config.sh, set VLC_VERSION="2.1.4", "2.1.5". "2.1.6" to build this release,
 
 `./configure.sh`
 
+`./make.sh`
+
+`su`
+
+`./pre-install.sh`
+
 `cd build-ace`
 
-`make`
-
 `make install`
+
+`cd ..`
+
+`./post-install.sh`
 
 [libraries]:https://wiki.videolan.org/Contrib_Status/
