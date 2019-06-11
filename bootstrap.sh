@@ -104,6 +104,8 @@ for i in `seq 1 24`; do
     fi
 done
 
+check_and_patch ${PWD_DIR}/patches/qt4/0048-qt4-remove-debug-assert-in-inputmanager.patch
+
 # gentoo patch
 
 cd ${PWD_DIR}/vlc-${VLC_VERSION}

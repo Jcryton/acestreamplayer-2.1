@@ -1,6 +1,8 @@
 Ace Stream Player
 -----------------
 
+![]https://o9.icdn.ru/j/jcryton/9/64309749PrO.jpg)
+
 Tested with VLC version *2.1.4   2.1.5   2.1.6   2.1.6-git*
 
 Depends: acestreamengine, libgcrypt < 1.6, ffmpeg < 2.0
