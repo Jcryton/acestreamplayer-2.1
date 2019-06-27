@@ -1,0 +1,18 @@
+--- a/extras/package/win32/package.mak	2019-06-20 04:03:38.482891267 +0300
++++ b/extras/package/win32/package.mak.new	2019-06-20 04:05:21.263399105 +0300
+@@ -40,13 +40,13 @@
+ 		do cp "$(srcdir)/$$file" "$(win32_destdir)/$${file}.txt"; \
+ 	done
+ 
+-	cp $(srcdir)/share/icons/vlc.ico $(win32_destdir)
++	cp $(srcdir)/share/icons/appicon.ico $(win32_destdir)
+ 	cp -r $(prefix)/lib/acestreamplayer/plugins $(win32_destdir)
+ 	cp -r $(prefix)/share/locale $(win32_destdir)
+ 
+ if BUILD_LUA
+ 	mkdir -p $(win32_destdir)/lua/
+-	cp -r $(prefix)/lib/acestreamplayer/lua/* $(prefix)/share/vlc/lua/* $(win32_destdir)/lua/
++	cp -r $(prefix)/lib/acestreamplayer/lua/* $(prefix)/share/acestreamplayer/lua/* $(win32_destdir)/lua/
+ endif
+ 
+ if BUILD_SKINS

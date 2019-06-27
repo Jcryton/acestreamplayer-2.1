@@ -1,0 +1,30 @@
+--- a/modules/access/dshow/dshow.cpp	2019-06-26 18:18:56.460398359 +0300
++++ b/modules/access/dshow/dshow.cpp.new	2019-06-25 06:46:00.394142000 +0300
+@@ -52,6 +52,7 @@
+ #include "access.h"
+ #include "filter.h"
+ 
++
+ #define INSTANCEDATA_OF_PROPERTY_PTR(x) ((PKSPROPERTY((x))) + 1)
+ #define INSTANCEDATA_OF_PROPERTY_SIZE(x) (sizeof((x)) - sizeof(KSPROPERTY))
+ 
+@@ -1000,6 +1001,8 @@
+ 
+ #define MAX_MEDIA_TYPES 32
+ 
++DEFINE_GUID(MEDIASUBTYPE_I420,0x30323449,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
++
+ static int OpenDevice( vlc_object_t *p_this, access_sys_t *p_sys,
+                        string devicename, bool b_audio )
+ {
+@@ -1727,8 +1730,9 @@
+                     // output format for 'Hauppauge WinTV PVR PCI II Capture'
+                     // try I420 as an input format
+                     i_current_fourcc = VLC_CODEC_I420;
++
+                     if( !i_fourcc || i_fourcc == i_current_fourcc )
+-                    {
++                    {         
+                         // return alternative media type
+                         AM_MEDIA_TYPE mtr;
+                         VIDEOINFOHEADER vh;

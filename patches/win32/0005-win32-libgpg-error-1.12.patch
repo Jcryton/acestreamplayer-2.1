@@ -1,0 +1,40 @@
+diff -aurN a/contrib/src/gpg-error/rules.mak b/contrib/src/gpg-error/rules.mak
+--- a/contrib/src/gpg-error/rules.mak	2019-06-26 18:18:56.310397000 +0300
++++ b/contrib/src/gpg-error/rules.mak	2019-06-27 15:11:15.408992037 +0300
+@@ -11,6 +11,7 @@
+ 	$(UNPACK)
+ ifdef HAVE_WIN32
+ 	$(APPLY) $(SRC)/gpg-error/windres-make.patch
++	$(APPLY) $(SRC)/gpg-error/win32-libgpg-error-1.12.patch
+ endif
+ 	$(MOVE)
+ 
+diff -aurN a/contrib/src/gpg-error/win32-libgpg-error-1.12.patch b/contrib/src/gpg-error/win32-libgpg-error-1.12.patch
+--- a/contrib/src/gpg-error/win32-libgpg-error-1.12.patch	1970-01-01 03:00:00.000000000 +0300
++++ b/contrib/src/gpg-error/win32-libgpg-error-1.12.patch	2019-06-24 19:25:45.090391000 +0300
+@@ -0,0 +1,25 @@
++sta@sta-U270:~/openwrt/buildroot/openwrt$ cat ./feeds/packages/libs/libgpg-error/patches/gcc5.2.patch 
++diff -r -U 3 ./a ./b > libgpg.diff
++--- a/src/Makefile.am	2015-09-12 20:15:03.707121022 +0300
+++++ b/src/Makefile.am	2015-09-12 20:03:05.000000000 +0300
++@@ -140,7 +140,7 @@
++ # It is correct to use $(CPP).  We want the host's idea of the error codes.
++ mkerrcodes.h: Makefile mkerrcodes.awk $(gpg_extra_headers)
++ 	$(AWK) -f $(srcdir)/mkerrcodes1.awk $(srcdir)/errnos.in >_$@
++-	$(CPP) $(CPPFLAGS) $(extra_cppflags) _$@ | grep GPG_ERR_ | \
+++	$(CPP) $(CPPFLAGS) $(extra_cppflags) -P _$@ | grep GPG_ERR_ | \
++                $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
++ 	-rm _$@
++ 
++--- a/src/Makefile.in	2015-09-12 20:15:16.858120992 +0300
+++++ b/src/Makefile.in	2015-09-12 20:11:52.000000000 +0300
++@@ -979,7 +979,7 @@
++ # It is correct to use $(CPP).  We want the host's idea of the error codes.
++ mkerrcodes.h: Makefile mkerrcodes.awk $(gpg_extra_headers)
++ 	$(AWK) -f $(srcdir)/mkerrcodes1.awk $(srcdir)/errnos.in >_$@
++-	$(CPP) $(CPPFLAGS) $(extra_cppflags) _$@ | grep GPG_ERR_ | \
+++	$(CPP) $(CPPFLAGS) $(extra_cppflags) -P _$@ | grep GPG_ERR_ | \
++                $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
++ 	-rm _$@
++ 
++

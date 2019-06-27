@@ -1,0 +1,25 @@
+diff -aurN a/contrib/src/lame/rules.mak b/contrib/src/lame/rules.mak
+--- a/contrib/src/lame/rules.mak	2019-06-26 18:18:56.310397000 +0300
++++ b/contrib/src/lame/rules.mak	2019-06-27 15:47:29.695956197 +0300
+@@ -11,6 +11,7 @@
+ lame: lame-$(LAME_VERSION).tar.gz .sum-lame
+ 	$(UNPACK)
+ 	$(APPLY) $(SRC)/lame/lame-forceinline.patch
++	$(APPLY) $(SRC)/lame/win32-i686-fix.patch
+ 	$(UPDATE_AUTOCONFIG)
+ 	$(MOVE)
+ 
+diff -aurN a/contrib/src/lame/win32-i686-fix.patch b/contrib/src/lame/win32-i686-fix.patch
+--- a/contrib/src/lame/win32-i686-fix.patch	1970-01-01 03:00:00.000000000 +0300
++++ b/contrib/src/lame/win32-i686-fix.patch	2019-06-27 15:44:58.594889000 +0300
+@@ -0,0 +1,10 @@
++--- lame/configure	2019-06-24 18:21:49.150512000 +0300
+++++ lame/configure.new	2019-06-27 15:36:50.771090000 +0300
++@@ -11918,7 +11918,6 @@
++  check_xmmintrin=
++  ;;
++ *)
++- check_xmmintrin="xmmintrin.h"
++  ;;
++ esac
++ 

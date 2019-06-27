@@ -17,14 +17,50 @@ case "${HOST}" in
   ;;
 esac
 
+if [ ${WINDOWS} = "1" ]; then
+    echo "For compile AcestreamPlayer for windows"
+    echo "Use sripts:"
+    echo "win32prepare.sh win32compile.sh"
+    exit
+fi
 
 if [ ${WINDOWS} = "1" ]; then
     PARAMS="
-          --host=${HOST}
-          --disable-projectm
-          --disable-skins2
-          --disable-update-check
-          --enable-sqlite"
+        --host=${HOST}
+        --disable-projectm
+        --enable-skins2
+        --enable-qt  
+        --disable-update-check
+        --enable-debug
+        --enable-sqlite
+        --enable-update-check
+        --enable-lua
+        --enable-faad
+        --enable-flac
+        --enable-theora
+        --enable-twolame
+        --enable-quicktime
+        --enable-avcodec 
+        --enable-merge-ffmpeg
+        --enable-dca
+        --enable-mpc
+        --enable-libass
+        --enable-x264
+        --enable-schroedinger
+        --enable-realrtsp
+        --enable-live555
+        --enable-dvdread
+        --enable-shout
+        --enable-goom
+        --enable-caca
+        --disable-portaudio
+        --disable-sdl
+        --enable-sse 
+        --enable-mmx
+        --enable-libcddb
+        --enable-zvbi 
+        --disable-telx
+        --disable-dirac"
 
     if [ "$1" = "ts" ]; then
         PARAMS="${PARAMS} --enable-torrentstream"
@@ -50,7 +86,7 @@ elif [ ${LINUX} = "1" ]; then
     cp -vfr ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/acestreamplayer-xmas.xpm ${PWD_DIR}/vlc-${VLC_VERSION}/share/icons/32x32/vlc-xmas.xpm
    
      ${PWD_DIR}/vlc-${VLC_VERSION}/configure \
-        --prefix=/usr \
+        --prefix=${PWD_DIR}/build-ace/vlc-${VLC_VERSION} \
         --disable-gtk \
         --disable-bluray \
         --enable-nls \
@@ -86,7 +122,10 @@ elif [ ${LINUX} = "1" ]; then
         --disable-telx \
         --disable-libass \
         --disable-projectm \
-        --enable-libva \
+	--disable-dvdread \
+	--enable-skins2 \
+	--enable-qt4 \       
+	--enable-libva \
         --enable-sqlite
 else
     error "Unknown host arch"

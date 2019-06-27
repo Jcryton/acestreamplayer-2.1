@@ -1,7 +1,5 @@
 #!/bin/sh
 
-export QT_SELECT=qt4
-
 PWD_DIR=$(readlink -f $(dirname $0))
 . "${PWD_DIR}/config.sh"
 . "${PWD_DIR}/functions.sh"
@@ -16,14 +14,6 @@ case "${HOST}" in
     LINUX="1"
   ;;
 esac
-
-if [ ${WINDOWS} = "1" ]; then
-    echo "For compile AcestreamPlayer for windows"
-    echo "Use sripts:"
-    echo "win32prepare.sh win32compile.sh"
-    exit
-fi
-
 
 if [ ${WINDOWS} = "1" ]; then
     echo check_required_package mingw-w64
@@ -114,49 +104,23 @@ done
 
 check_and_patch ${PWD_DIR}/patches/qt4/0048-qt4-remove-debug-assert-in-inputmanager.patch
 
-# gentoo patch
-
-cd ${PWD_DIR}/vlc-${VLC_VERSION}
-
-apply_patch ${PWD_DIR}/patches/gentoo/0001-vlc-2.1.0-newer-rdp.patch
-apply_patch ${PWD_DIR}/patches/gentoo/0002-vlc-2.1.0-libva-1.2.1-compat.patch
-apply_patch ${PWD_DIR}/patches/gentoo/0003-vlc-2.1.0-TomWij-bisected-PA-broken-underflow.patch
-apply_patch ${PWD_DIR}/patches/gentoo/0004-opencv-3.0.0.patch
-
-cd ${PWD_DIR}
-
-if [ ${WINDOWS} = "1" ]; then
-    # prebuilt contribs
-    if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST} ]; then
-        cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib
-        
-        if [ ! -f ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.* ]; then
-            info "Downloading contribs"
-            # TODO
-            download ${CONTRIBS_URL} || error "Failed to download contribs"
-        fi
-        
-        unpack ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}.tar.*
-        cd ${PWD_DIR}/vlc-${VLC_VERSION}/contrib/${HOST}
-        ./change_prefix.sh
-        
-        cd ${PWD_DIR}
-    fi
-fi
-
 if [ ${WINDOWS} = "1" ]; then
     check_and_patch ${PWD_DIR}/patches/win32/0001-win32-remove-npapi.patch
     check_and_patch ${PWD_DIR}/patches/win32/0002-win32-remove-npapi.patch
     check_and_patch ${PWD_DIR}/patches/win32/0003-win32-fix-tsplayer-name.patch
     check_and_patch ${PWD_DIR}/patches/win32/0004-win32-fix-tsplayer-name.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0005-win32-libgpg-error-1.12.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0006-win32-iconv.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0007-win32-update-broken-gmp-version.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0008-win32-lame-i686-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
 fi
 
 # private directory
 if [ -d  ${PWD_DIR}/private/vlc ]; then
     cp -rf ${PWD_DIR}/private/vlc/* ${PWD_DIR}/vlc-${VLC_VERSION}
 fi
-
-# bootstraping vlc
-${PWD_DIR}/vlc-${VLC_VERSION}/bootstrap
 
 info "Ok"

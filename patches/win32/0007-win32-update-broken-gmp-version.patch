@@ -1,0 +1,38 @@
+diff -aurN a/contrib/src/gmp/rules.mak b/contrib/src/gmp/rules.mak
+--- a/contrib/src/gmp/rules.mak	2019-06-26 18:18:56.310397000 +0300
++++ b/contrib/src/gmp/rules.mak	2019-06-24 22:45:29.682294000 +0300
+@@ -1,10 +1,12 @@
+ # GNU Multiple Precision Arithmetic
+ 
++GMP_VERSION := 6.0.0
++GMP_URL := https://download.videolan.org/contrib/gmp/gmp-6.0.0.tar.bz2
+ #GMP_VERSION := 5.0.2
+ #GMP_URL := ftp://ftp.gmplib.org/pub/gmp-$(GMP_VERSION)/gmp-$(GMP_VERSION).tar.bz2
+ # last LGPLv2 version:
+-GMP_VERSION := 4.2.1
+-GMP_URL := ftp://ftp.gnu.org/pub/gnu/gmp/gmp-$(GMP_VERSION).tar.bz2
++#GMP_VERSION := 4.2.1
++#GMP_URL := ftp://ftp.gnu.org/pub/gnu/gmp/gmp-$(GMP_VERSION).tar.bz2
+ 
+ $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
+ 	$(call download,$(GMP_URL))
+@@ -13,9 +15,9 @@
+ 
+ gmp: gmp-$(GMP_VERSION).tar.bz2 .sum-gmp
+ 	$(UNPACK)
+-	$(APPLY) $(SRC)/gmp/inline.diff
+-	$(APPLY) $(SRC)/gmp/ansitest.diff
+-	$(APPLY) $(SRC)/gmp/ansi2knr.diff
++	#$(APPLY) $(SRC)/gmp/inline.diff
++	#$(APPLY) $(SRC)/gmp/ansitest.diff
++	#$(APPLY) $(SRC)/gmp/ansi2knr.diff
+ 	$(MOVE)
+ 
+ .gmp: gmp
+diff -aurN a/contrib/src/gmp/SHA512SUMS b/contrib/src/gmp/SHA512SUMS
+--- a/contrib/src/gmp/SHA512SUMS	2019-06-26 18:18:56.310397000 +0300
++++ b/contrib/src/gmp/SHA512SUMS	2019-06-24 22:46:23.902804000 +0300
+@@ -1 +1,2 @@
+-30545b690aa49b6c3479f2811d257d2501eb72eee7968cd0190601ead37522e9565b033e751067116d3f89f2207d0d96167546a6e12153d96dcadd5cd32c0f0e  gmp-4.2.1.tar.bz2
++06bdd312146f77bd23d1447e60b02bfea2f1e6d00798b073879e8a50a6cf7264bdbf6f31a8347dd3a0889c7a9dee2d24051b74542fc4f9f07ba2d0f744e092ad gmp-6.0.0.tar.bz2
++

@@ -1,0 +1,41 @@
+--- a/extras/package/win32/package.mak	2019-06-19 06:29:58.781417367 +0300
++++ b/extras/package/win32/package2.mak	2019-06-19 06:47:26.861325431 +0300
+@@ -41,17 +41,17 @@
+ 	done
+ 
+ 	cp $(srcdir)/share/icons/vlc.ico $(win32_destdir)
+-	cp -r $(prefix)/lib/vlc/plugins $(win32_destdir)
+-	-cp -r $(prefix)/share/locale $(win32_destdir)
++	cp -r $(prefix)/lib/acestreamplayer/plugins $(win32_destdir)
++	cp -r $(prefix)/share/locale $(win32_destdir)
+ 
+ if BUILD_LUA
+ 	mkdir -p $(win32_destdir)/lua/
+-	cp -r $(prefix)/lib/vlc/lua/* $(prefix)/share/vlc/lua/* $(win32_destdir)/lua/
++	cp -r $(prefix)/lib/acestreamplayer/lua/* $(prefix)/share/vlc/lua/* $(win32_destdir)/lua/
+ endif
+ 
+ if BUILD_SKINS
+ 	rm -fr $(win32_destdir)/skins
+-	cp -r $(prefix)/share/vlc/skins2 $(win32_destdir)/skins
++	cp -r $(prefix)/share/acestreamplayer/skins2 $(win32_destdir)/skins
+ endif
+ 
+ 	#cp "$(top_builddir)/npapi-vlc/activex/axvlc.dll.manifest" "$(win32_destdir)/"
+@@ -77,11 +77,11 @@
+ 	mkdir -p "$(win32_destdir)/sdk/lib/"
+ 	cp -r $(prefix)/include "$(win32_destdir)/sdk"
+ 	cp -r $(prefix)/lib/pkgconfig "$(win32_destdir)/sdk/lib"
+-	cd $(prefix)/lib && cp -rv libvlc.la libvlccore.la "$(win32_destdir)/sdk/lib/"
+-	cd $(prefix)/lib && cp -rv libvlc.dll.a "$(win32_destdir)/sdk/lib/libvlc.lib"
+-	cd $(prefix)/lib && cp -rv libvlccore.dll.a "$(win32_destdir)/sdk/lib/libvlccore.lib"
+-	$(DLLTOOL) -D libvlc.dll -l "$(win32_destdir)/sdk/lib/libvlc.lib" -d "$(top_builddir)/lib/.libs/libvlc.dll.def" "$(prefix)/bin/libvlc.dll"
+-	$(DLLTOOL) -D libvlccore.dll -l "$(win32_destdir)/sdk/lib/libvlccore.lib" -d "$(top_builddir)/src/.libs/libvlccore.dll.def" "$(prefix)/bin/libvlccore.dll"
++	cd $(prefix)/lib && cp -rv libtsplayer.la libtsplayercore.la "$(win32_destdir)/sdk/lib/"
++	cd $(prefix)/lib && cp -rv libtsplayer.dll.a "$(win32_destdir)/sdk/lib/libtsplayer.lib"
++	cd $(prefix)/lib && cp -rv libtsplayercore.dll.a "$(win32_destdir)/sdk/lib/libtsplayercore.lib"
++	$(DLLTOOL) -D libtsplayer.dll -l "$(win32_destdir)/sdk/lib/libtsplayer.lib" -d "$(top_builddir)/lib/.libs/libtsplayer.dll.def" "$(prefix)/bin/libtsplayer.dll"
++	$(DLLTOOL) -D libtsplayercore.dll -l "$(win32_destdir)/sdk/lib/libtsplayercore.lib" -d "$(top_builddir)/src/.libs/libtsplayercore.dll.def" "$(prefix)/bin/libtsplayercore.dll"
+ 
+ 	mkdir -p "$(win32_destdir)/sdk/activex/"
+ 	#cd $(top_builddir)/npapi-vlc && cp activex/README.TXT share/test/test.html $(win32_destdir)/sdk/activex/

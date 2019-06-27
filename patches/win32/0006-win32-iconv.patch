@@ -1,0 +1,33 @@
+diff -aurN a/contrib/src/iconv/rules.mak b/contrib/src/iconv/rules.mak
+--- a/contrib/src/iconv/rules.mak	2019-06-26 18:18:56.310397000 +0300
++++ b/contrib/src/iconv/rules.mak	2019-06-27 15:20:30.223518398 +0300
+@@ -29,6 +29,7 @@
+ ifdef HAVE_IOS
+ 	$(APPLY) $(SRC)/iconv/libiconv-android-ios.patch
+ endif
++	$(APPLY) $(SRC)/iconv/win32-iconv.patch
+ 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub build-aux
+ 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub libcharset/build-aux
+ 	$(MOVE)
+diff -aurN a/contrib/src/iconv/win32-iconv.patch b/contrib/src/iconv/win32-iconv.patch
+--- a/contrib/src/iconv/win32-iconv.patch	1970-01-01 03:00:00.000000000 +0300
++++ b/contrib/src/iconv/win32-iconv.patch	2019-06-24 19:43:14.229225000 +0300
+@@ -0,0 +1,18 @@
++diff --git a/lib/iconv.c b/lib/iconv.c
++index 5a1a325..31853a7 100644 (file)
++--- a/lib/iconv.c
+++++ b/lib/iconv.c
++@@ -178,8 +178,12 @@ static const struct alias sysdep_aliases[] = {
++ };
++ #ifdef __GNUC__
++ __inline
+++#else
+++#ifdef __cplusplus
+++inline
+++#endif
++ #endif
++-const struct alias *
+++static const struct alias *
++ aliases2_lookup (register const char *str)
++ {
++   const struct alias * ptr;

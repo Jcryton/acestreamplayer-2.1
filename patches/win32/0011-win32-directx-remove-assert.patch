@@ -1,0 +1,11 @@
+--- a/modules/audio_output/directx.c	2019-06-26 18:18:56.550399026 +0300
++++ b/modules/audio_output/directx.c.new	2019-06-27 16:03:58.212459327 +0300
+@@ -366,7 +366,7 @@
+     LONG mb = lroundf( 6000.f * log10f( __MIN( volume, 1.f ) ));
+ 
+     /* Clamp to allowed DirectSound range */
+-    static_assert( DSBVOLUME_MIN < DSBVOLUME_MAX, "DSBVOLUME_* confused" );
++    //static_assert( DSBVOLUME_MIN < DSBVOLUME_MAX, "DSBVOLUME_* confused" );
+     if( mb > DSBVOLUME_MAX )
+     {
+         mb = DSBVOLUME_MAX;

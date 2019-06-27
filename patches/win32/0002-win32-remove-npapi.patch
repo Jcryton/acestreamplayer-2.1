@@ -1,0 +1,59 @@
+--- a/extras/package/win32/package.mak	2015-01-22 16:27:37.000000000 +0300
++++ b/extras/package/win32/package.mak.new	2019-06-20 01:34:59.974209100 +0300
+@@ -11,7 +11,7 @@
+ 
+ 
+ if HAVE_WIN32
+-include extras/package/npapi.am
++#include extras/package/npapi.am
+ endif
+ 
+ if HAVE_WIN64
+@@ -25,7 +25,7 @@
+ 	touch $@
+ 
+ 
+-package-win-common: package-win-install build-npapi
++package-win-common: package-win-install
+ 	mkdir -p "$(win32_destdir)"/
+ 
+ # Executables, major libs+manifests
+@@ -54,11 +54,6 @@
+ 	cp -r $(prefix)/share/vlc/skins2 $(win32_destdir)/skins
+ endif
+ 
+-	cp "$(top_builddir)/npapi-vlc/activex/axvlc.dll.manifest" "$(win32_destdir)/"
+-	cp "$(top_builddir)/npapi-vlc/installed/lib/axvlc.dll" "$(win32_destdir)/"
+-	cp "$(top_builddir)/npapi-vlc/npapi/package/npvlc.dll.manifest" "$(win32_destdir)/"
+-	cp "$(top_builddir)/npapi-vlc/installed/lib/npvlc.dll" "$(win32_destdir)/"
+-
+ # Compiler shared DLLs, when using compilers built with --enable-shared
+ # The shared DLLs may not necessarily be in the first LIBRARY_PATH, we
+ # should check them all.
+@@ -84,7 +79,6 @@
+ 	$(DLLTOOL) -D libvlccore.dll -l "$(win32_destdir)/sdk/lib/libvlccore.lib" -d "$(top_builddir)/src/.libs/libvlccore.dll.def" "$(prefix)/bin/libvlccore.dll"
+ 
+ 	mkdir -p "$(win32_destdir)/sdk/activex/"
+-	cd $(top_builddir)/npapi-vlc && cp activex/README.TXT share/test/test.html $(win32_destdir)/sdk/activex/
+ 
+ # Convert to DOS line endings
+ 	find $(win32_destdir) -type f \( -name "*xml" -or -name "*html" -or -name '*js' -or -name '*css' -or -name '*hosts' -or -iname '*txt' -or -name '*.cfg' -or -name '*.lua' \) -exec $(U2D) {} \;
+@@ -108,18 +102,15 @@
+ 	mkdir -p "$(win32_xpi_destdir)/"
+ 	cp -r $(win32_destdir)/plugins/ "$(win32_xpi_destdir)/"
+ 	find $(prefix) -maxdepth 4 -name "*$(LIBEXT)" -exec cp {} "$(win32_xpi_destdir)/" \;
+-	cp $(top_builddir)/npapi-vlc/npapi/package/npvlc.dll.manifest "$(win32_xpi_destdir)/plugins/"
+ 	cp "$(top_srcdir)/extras/package/win32/libvlc.dll.manifest" "$(win32_xpi_destdir)/plugins/"
+ 	rm -rf "$(win32_xpi_destdir)/plugins/gui/"
+ 
+ 
+ package-win32-xpi: package-win32-webplugin-common
+-	cp $(top_builddir)/npapi-vlc/npapi/package/install.rdf "$(win32_xpi_destdir)/"
+ 	cd $(win32_xpi_destdir) && zip -r -9 "../vlc-$(VERSION).xpi" install.rdf plugins
+ 
+ 
+ package-win32-crx: package-win32-webplugin-common
+-	cp $(top_builddir)/npapi-vlc/npapi/package/manifest.json "$(win32_xpi_destdir)/"
+ 	crxmake --pack-extension "$(win32_xpi_destdir)" \
+ 		--extension-output "$(win32_destdir)/vlc-$(VERSION).crx" --ignore-file install.rdf
+ 

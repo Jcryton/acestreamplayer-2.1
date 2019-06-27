@@ -1,0 +1,11 @@
+--- a/modules/access/dshow/filter.cpp	2019-06-26 18:18:56.460398359 +0300
++++ b/modules/access/dshow/filter.cpp.new	2019-06-25 06:45:45.794016000 +0300
+@@ -95,6 +95,8 @@
+     return S_OK;
+ }
+ 
++DEFINE_GUID(MEDIASUBTYPE_I420,0x30323449,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
++
+ int GetFourCCFromMediaType( const AM_MEDIA_TYPE &media_type )
+ {
+     int i_fourcc = 0;

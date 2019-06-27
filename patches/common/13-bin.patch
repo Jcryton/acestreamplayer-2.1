@@ -118,7 +118,7 @@ diff -ru vlc-2.1.2.orig/bin/winvlc.c vlc-2.1.2/bin/winvlc.c
 +#ifdef KEY_HEADER
 +#include "key.h"
 +#else
-+static const char dev_key[] = "kjYX790gTytRaXV04IvC-xZH3A18sj5b1Tf3I-J5XVS1xsj-j0797KwxxLpBl26HPvWMm";
++static const char dev_key[] = "1mcXu2Ujtsjy9z7k-elucnH-384lvH4E-munn1LrXVEt2bSnHO7VaEa";
 +#endif
 +
  static char *FromWide (const wchar_t *wide)
