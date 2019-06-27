@@ -116,6 +116,9 @@ if [ ${WINDOWS} = "1" ]; then
     check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
     check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
     check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0012-win32-qt4.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0013-win32-opensll.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0014-win32-sqlite.patch
 fi
 
 # private directory
