@@ -31,22 +31,23 @@ mkdir -p contrib/win32 && cd contrib/win32
 #make prebuilt
 make
 
+### steps after build contrib:
 # remove the 64 bit binaries
-rm -f ../i686-w64-mingw32/bin/moc ../i686-w64-mingw32/bin/uic ../i686-w64-mingw32/bin/rcc
+#rm -f ../i686-w64-mingw32/bin/moc ../i686-w64-mingw32/bin/uic ../i686-w64-mingw32/bin/rcc
 
 # go back and run the bootstrap
-cd ${PWD_DIR}/vlc-${VLC_VERSION}
-./bootstrap
+#cd ${PWD_DIR}/vlc-${VLC_VERSION}
+#./bootstrap
 
 # create the dir we'll be compiling in
-mkdir win32 && cd win32
+#mkdir win32 && cd win32
 
 # tell the system where to find the pkgconfig dir
-export PKG_CONFIG_LIBDIR=${PWD_DIR}/vlc-${VLC_VERSION}/contrib/i686-w64-mingw32/lib/pkgconfig
+#export PKG_CONFIG_LIBDIR=${PWD_DIR}/vlc-${VLC_VERSION}/contrib/i686-w64-mingw32/lib/pkgconfig
 
 # run configure
-../extras/package/win32/configure.sh --host=i686-w64-mingw32 --enable-sqlite --disable-bluray
+#../extras/package/win32/configure.sh --host=i686-w64-mingw32 --enable-sqlite --disable-bluray
 
 # compile
-make
+#make
 
