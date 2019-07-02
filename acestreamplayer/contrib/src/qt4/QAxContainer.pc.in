@@ -1,0 +1,10 @@
+prefix=@@PREFIX@@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/qt4/ActiveQt
+
+Name: QAxContainer
+Description: QAxContainer Library
+Version: 4.8.5
+Libs: -Wl,--subsystem,windows -mwindows -L${libdir} -lQAxContainer -lQtGui -lgdi32 -lcomdlg32 -loleaut32 -limm32 -lwinmm -lwinspool -lmsimg32 -lQtCore -lole32 -luuid -lws2_32 -ladvapi32 -lshell32 -luser32 -lkernel32
+Cflags:  -I${prefix}/include/qt4 -I${includedir} -DQT_NODLL

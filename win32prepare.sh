@@ -112,14 +112,14 @@ if [ ${WINDOWS} = "1" ]; then
     check_and_patch ${PWD_DIR}/patches/win32/0005-win32-libgpg-error-1.12.patch
     check_and_patch ${PWD_DIR}/patches/win32/0006-win32-iconv.patch
     check_and_patch ${PWD_DIR}/patches/win32/0007-win32-update-broken-gmp-version.patch
-    echo "Patches for new version mingw"
-    echo check_and_patch ${PWD_DIR}/patches/win32/0008-win32-lame-i686-fix.patch
-    echo check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
-    echo check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
-    echo check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0008-win32-lame-i686-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
     check_and_patch ${PWD_DIR}/patches/win32/0012-win32-qt4.patch
     check_and_patch ${PWD_DIR}/patches/win32/0013-win32-opensll.patch
     check_and_patch ${PWD_DIR}/patches/win32/0014-win32-sqlite.patch
+    check_and_patch ${PWD_DIR}/patches/win32/0015-win32-qt-4.8.6.patch
 fi
 
 # private directory
