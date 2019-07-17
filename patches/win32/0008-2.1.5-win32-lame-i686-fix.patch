@@ -13,13 +13,13 @@ diff -aurN a/contrib/src/lame/win32-i686-fix.patch b/contrib/src/lame/win32-i686
 --- a/contrib/src/lame/win32-i686-fix.patch	1970-01-01 03:00:00.000000000 +0300
 +++ b/contrib/src/lame/win32-i686-fix.patch	2019-06-27 15:44:58.594889000 +0300
 @@ -0,0 +1,10 @@
-+--- lame/configure	2019-07-03 04:31:19.000000000 +0300
-++++ lame/configure	2019-07-03 04:31:02.000000000 +0300
-+@@ -11922,7 +11922,6 @@
-+ 		 sys/soundcard.h \
-+ 		 sys/time.h \
-+ 		 unistd.h \
-+-		 xmmintrin.h \
-+ 		 linux/soundcard.h
-+ do :
-+   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
++--- lame/configure	2019-06-24 18:21:49.150512000 +0300
+++++ lame/configure.new	2019-06-27 15:36:50.771090000 +0300
++@@ -11918,7 +11918,6 @@
++  check_xmmintrin=
++  ;;
++ *)
++- check_xmmintrin="xmmintrin.h"
++  ;;
++ esac
++ 

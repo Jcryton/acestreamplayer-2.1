@@ -27,11 +27,13 @@ if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION} ]; then
     
     if [ ! -f ${PWD_DIR}/vlc-${VLC_VERSION}.tar.* ]; then
         info "Downloading vlc"       
-        if [ ${VLC_VERSION} != "2.1"  ]; then
+        if [ ${VLC_VERSION} = "2.1"  ]; then
+           git clone https://git.videolan.org/git/vlc/vlc-2.1.git
+        elif [ ${VLC_VERSION} = "2.1.5-libde265"  ]; then
+           git clone https://github.com/strukturag/vlc-2.1.git 2.1.5-libde265
+        else
            download ${VLC_URL} || error "Failed to download vlc"
            unpack ${PWD_DIR}/vlc-${VLC_VERSION}.tar.*
-        else
-           git clone https://git.videolan.org/git/vlc/vlc-2.1.git
         fi
 
     fi
@@ -113,14 +115,19 @@ if [ ${WINDOWS} = "1" ]; then
     check_and_patch ${PWD_DIR}/patches/win32/0006-win32-iconv.patch
     check_and_patch ${PWD_DIR}/patches/win32/0007-win32-update-broken-gmp-version.patch
     check_and_patch ${PWD_DIR}/patches/win32/0008-${VLC_VERSION}-win32-lame-i686-fix.patch
-    check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
-    check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
-    check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
+    if [ ${UBUNTU} = "1604" ]; then
+        check_and_patch ${PWD_DIR}/patches/win32/0009-win32-dshow-define-fix.patch
+        check_and_patch ${PWD_DIR}/patches/win32/0010-win32-dshow_filter-define-fix.patch
+        check_and_patch ${PWD_DIR}/patches/win32/0011-win32-directx-remove-assert.patch
+    fi
     check_and_patch ${PWD_DIR}/patches/win32/0012-win32-qt4.patch
     check_and_patch ${PWD_DIR}/patches/win32/0013-win32-opensll.patch
     check_and_patch ${PWD_DIR}/patches/win32/0014-win32-sqlite.patch
     check_and_patch ${PWD_DIR}/patches/win32/0015-win32-qt-4.8.6.patch
     check_and_patch ${PWD_DIR}/patches/win32/0016-win32-qt4-before-phtreads.patch
+    if [ ${QT_VERSION} = "4.8.5" ]; then
+        check_and_patch ${PWD_DIR}/patches/win32/0017-comeback-to-qt-4.8.5.patch
+    fi
 fi
 
 # private directory

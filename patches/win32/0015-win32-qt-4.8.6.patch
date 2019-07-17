@@ -110,7 +110,7 @@ diff -aurN a/contrib/src/qt4/rules.mak b/contrib/src/qt4/rules.mak
  	$(APPLY) $(SRC)/qt4/imageformats.patch
 -	$(APPLY) $(SRC)/qt4/win64.patch
 +	# only fo 4.8.5
-+    #$(APPLY) $(SRC)/qt4/win64.patch
++	#$(APPLY) $(SRC)/qt4/win64.patch
  	$(APPLY) $(SRC)/qt4/webkit_3rdparty.patch
 +	$(APPLY) $(SRC)/qt4/4.8.2-javascriptcore-x32.patch
 +	# only fo 4.8.5
@@ -127,7 +127,7 @@ diff -aurN a/contrib/src/qt4/rules.mak b/contrib/src/qt4/rules.mak
  	rm -r qt-$(QT4_VERSION)/src/3rdparty/webkit/Source/WebKit2
  	$(MOVE)
  
-+DEPS_qt4 = openssl $(DEPS_openssl) zlib $(DEPS_zlib) sqlite $(DEPS_sqlite)
++DEPS_qt4 = openssl $(DEPS_openssl) sqlite $(DEPS_sqlite)
 +
  ifdef HAVE_MACOSX
  QT_PLATFORM := -platform darwin-g++
@@ -137,7 +137,7 @@ diff -aurN a/contrib/src/qt4/rules.mak b/contrib/src/qt4/rules.mak
  endif
  
 -.qt4: qt4 .openssl
-+.qt4: qt4 .openssl .zlib .sqlite
++.qt4: qt4 .openssl .sqlite
  	cd $< && ./configure $(QT_PLATFORM) -v -static -release -fast \
  	-no-exceptions \
  	-no-qt3support \
@@ -146,7 +146,7 @@ diff -aurN a/contrib/src/qt4/rules.mak b/contrib/src/qt4/rules.mak
  	-accessibility \
  	-webkit \
 -	-openssl \
-+	-openssl -openssl-linked -no-3dnow -qt-zlib \
++	-openssl -openssl-linked \
  	-I $(PREFIX)/include \
  	-L $(PREFIX)/lib
  	cd $< && $(MAKE) sub-src
