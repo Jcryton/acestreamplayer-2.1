@@ -146,7 +146,7 @@ diff -aurN a/contrib/src/qt4/rules.mak b/contrib/src/qt4/rules.mak
  	-accessibility \
  	-webkit \
 -	-openssl \
-+	-openssl -openssl-linked \
++	-openssl -openssl-linked -qt-zlib \
  	-I $(PREFIX)/include \
  	-L $(PREFIX)/lib
  	cd $< && $(MAKE) sub-src

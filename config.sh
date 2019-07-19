@@ -1,4 +1,4 @@
-# VLC_VERSION = "2.1.4" "2.1.5" "2.1.6" "2.1"(git version) "2.1.5-libde265" (strukturag libde265 version)
+# VLC_VERSION = "2.1.4" "2.1.5" "2.1.6" "2.1"(git version)
 VLC_VERSION="2.1.4"
 
 VLC_URL="http://download.videolan.org/pub/videolan/vlc/${VLC_VERSION}/vlc-${VLC_VERSION}.tar.xz"
