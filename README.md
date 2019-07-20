@@ -45,33 +45,34 @@ For Ubuntu 13.10 change [source.list]
 
 
 ***Ubuntu 13.10:***
-`apt-get install -y \
-gcc-mingw-w64-i686 \
-g++-mingw-w64-i686 \
-mingw-w64-tools \
-build-essential \
-lua5.2 \
-libtool \
-automake \
-autoconf \
-autopoint \
-make \
-gettext \
-pkg-config \
-qt4-dev-tools \
-git \
-subversion \
-cmake \
-cvs \
-wine-dev \
-zip \
-p7zip-full \
-nsis \
-bzip2 \
-vim-gnome \
-vim-gui-common \
-vim-runtime \
-yasm`
+
+`apt-get install -y \`
+`gcc-mingw-w64-i686 \`
+`g++-mingw-w64-i686 \`
+`mingw-w64-tools \`
+`build-essential \`
+`lua5.2 \`
+`libtool \`
+`automake \`
+`autoconf \`
+`autopoint \`
+`make \`
+`gettext \`
+`pkg-config \`
+`qt4-dev-tools \`
+`git \`
+`subversion \`
+`cmake \`
+`cvs \`
+`wine-dev \`
+`zip \`
+`p7zip-full \`
+`nsis \`
+`bzip2 \`
+`vim-gnome \`
+`vim-gui-common \`
+`vim-runtime \`
+`yasm`
 
 `git clone https://github.com/Jcryton/acestreamplayer-2.1.git`
 
@@ -84,14 +85,20 @@ edit config.sh (set ubuntu qt and vlc version)
 `./win32build.sh`
 
 ***Ubuntu 16.04:***
-`apt-get install -y \
-build-essential \
-qt4-dev-tools qt4-default git \
-subversion cmake cvs \
-zip p7zip nsis \
-yasm cvs cmake ragel autopoint \
-ant default-jdk protobuf-compiler \
-dos2unix`
+
+`apt-get install -y \`
+`gcc-mingw-w64-i686 \`
+`g++-mingw-w64-i686 \`
+`mingw-w64-tools \`
+`mingw-w64-i686-dev \`
+`mingw-w64-common \`
+`build-essential \`
+`qt4-dev-tools qt4-default git \`
+`subversion cmake cvs \`
+`zip p7zip nsis bzip2 \`
+`yasm cvs cmake ragel autopoint \`
+`ant default-jdk protobuf-compiler \`
+`dos2unix`
 
 `git clone https://github.com/Jcryton/acestreamplayer-2.1.git`
 
