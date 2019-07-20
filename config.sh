@@ -6,7 +6,7 @@ VLC_URL_LIBDE265="https://github.com/strukturag/vlc-2.1.git"
 
 HOST="i686-w64-mingw32"
 
-# FOR CROSSCOMPILE: UBUNTU "1310" "1404" "1604"
+# FOR CROSSCOMPILE: UBUNTU "1310" "1604"
 UBUNTU="1310"
 
 # QT VERSION "4.8.5" "4.8.6"

@@ -29,8 +29,6 @@ if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION} ]; then
         info "Downloading vlc"       
         if [ ${VLC_VERSION} = "2.1"  ]; then
            git clone https://git.videolan.org/git/vlc/vlc-2.1.git
-        elif [ ${VLC_VERSION} = "2.1.5-libde265"  ]; then
-           git clone https://github.com/strukturag/vlc-2.1.git 2.1.5-libde265
         else
            download ${VLC_URL} || error "Failed to download vlc"
            unpack ${PWD_DIR}/vlc-${VLC_VERSION}.tar.*

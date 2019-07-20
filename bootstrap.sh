@@ -20,7 +20,7 @@ esac
 if [ ${WINDOWS} = "1" ]; then
     echo "For compile AcestreamPlayer for windows"
     echo "Use sripts:"
-    echo "win32prepare.sh win32compile.sh"
+    echo "win32prepare.sh win32build.sh"
     exit
 fi
 
