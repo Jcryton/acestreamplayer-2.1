@@ -25,7 +25,7 @@ fi
 
 if [ ! -f ${PWD_DIR}/._prepare ]; then
 	echo "#################################################"
-	echo "### RUN: win32compile.sh before win32build.sh ###"
+	echo "### RUN: win32prepare.sh before win32build.sh ###"
 	echo "#################################################"
     exit
 fi
