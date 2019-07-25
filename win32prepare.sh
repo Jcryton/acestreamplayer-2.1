@@ -126,6 +126,7 @@ if [ ${WINDOWS} = "1" ]; then
     if [ ${QT_VERSION} = "4.8.5" ]; then
         check_and_patch ${PWD_DIR}/patches/win32/0017-comeback-to-qt-4.8.5.patch
     fi
+    check_and_patch ${PWD_DIR}/patches/win32/0018-win32-compile-libqjpeg-before-libjpeg.patch
 fi
 
 # private directory
