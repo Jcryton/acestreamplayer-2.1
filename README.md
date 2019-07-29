@@ -48,57 +48,23 @@ For Ubuntu 13.10 change [source.list]
 
 `apt-get install -y \`
 
-`gcc-mingw-w64-i686 \`
+`gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-tools \`
 
-`g++-mingw-w64-i686 \`
+`build-essential lua5.2 libtool \`
 
-`mingw-w64-tools \`
+`automake autoconf autopoint make \`
 
-`build-essential \`
+`gettext pkg-config qt4-dev-tools git \`
 
-`lua5.2 \`
+`subversion cmake cvs wine-dev zip \`
 
-`libtool \`
+`p7zip-full nsis bzip2 vim-gnome vim-gui-common \`
 
-`automake \`
+`vim-runtime yasm cvs ragel autopoint \`
 
-`autoconf \`
+`ant default-jdk protobuf-compiler \`
 
-`autopoint \`
-
-`make \`
-
-`gettext \`
-
-`pkg-config \`
-
-`qt4-dev-tools \`
-
-`git \`
-
-`subversion \`
-
-`cmake \`
-
-`cvs \`
-
-`wine-dev \`
-
-`zip \`
-
-`p7zip-full \`
-
-`nsis \`
-
-`bzip2 \`
-
-`vim-gnome \`
-
-`vim-gui-common \`
-
-`vim-runtime \`
-
-`yasm`
+`dos2unix`
 
 `git clone https://github.com/Jcryton/acestreamplayer-2.1.git`
 
@@ -114,23 +80,13 @@ edit config.sh (set ubuntu qt and vlc version)
 
 `apt-get install -y \`
 
-`gcc-mingw-w64-i686 \`
+`gcc-mingw-w64-i686 g++-mingw-w64-i686 mingw-w64-tools \`
 
-`g++-mingw-w64-i686 \`
+`mingw-w64-i686-dev mingw-w64-common build-essential \`
 
-`mingw-w64-tools \`
+`qt4-dev-tools qt4-default git subversion \`
 
-`mingw-w64-i686-dev \`
-
-`mingw-w64-common \`
-
-`build-essential \`
-
-`qt4-dev-tools qt4-default git \`
-
-`subversion cmake cvs \`
-
-`zip p7zip nsis bzip2 \`
+`cmake cvs zip p7zip nsis bzip2 \`
 
 `yasm cvs cmake ragel autopoint \`
 
@@ -147,6 +103,17 @@ edit config.sh (set ubuntu qt and vlc version)
 `./win32prepare.sh`
 
 `./win32build.sh`
+
+***Manual build contrib:***
+
+`./win32prepare.sh`
+
+`./win32tarballs.sh`
+
+`./win32compile.sh`
+
+
+**Recomended version Ubuntu for compile and build v2.1.x - 13.10-amd64**
 
 [libraries]:https://wiki.videolan.org/Contrib_Status/
 [ubuntu-13.10-desktop-amd64.iso]:http://old-releases.ubuntu.com/releases/13.10/ubuntu-13.10-desktop-amd64.iso

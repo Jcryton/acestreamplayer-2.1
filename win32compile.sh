@@ -4,6 +4,31 @@ PWD_DIR=$(readlink -f $(dirname $0))
 . "${PWD_DIR}/config.sh"
 . "${PWD_DIR}/functions.sh"
 
+LINUX="0"
+WINDOWS="0"
+case "${HOST}" in
+  *mingw32*)
+    WINDOWS="1"
+  ;;
+  *)
+    LINUX="1"
+  ;;
+esac
+
+if [ ${WINDOWS} = "0" ]; then
+    echo "For compile AcestreamPlayer for linux"
+    echo "Use sripts:"
+    echo "bootstrap.sh configure.sh"
+    exit
+fi
+
+
+if [ ! -f ${PWD_DIR}/._prepare ]; then
+    echo "#################################################"
+    echo "### RUN: win32prepare.sh and win32tarballs.sh ###"
+    echo "#################################################"
+    exit
+fi
 
 # change into vlc dir
 cd ${PWD_DIR}/vlc-${VLC_VERSION}
@@ -29,7 +54,7 @@ echo "### create the dir we'll be compiling in"
 echo "mkdir win32 && cd win32"
 echo " "
 echo "### tell the system where to find the pkgconfig dir"
-echo "xport PKG_CONFIG_LIBDIR=${PWD_DIR}/vlc-${VLC_VERSION}/contrib/i686-w64-mingw32/lib/pkgconfig"
+echo "export PKG_CONFIG_LIBDIR=${PWD_DIR}/vlc-${VLC_VERSION}/contrib/i686-w64-mingw32/lib/pkgconfig"
 echo " "
 echo "### run configure"
 echo "../extras/package/win32/configure.sh --host=i686-w64-mingw32 --enable-sqlite --disable-bluray"
@@ -39,5 +64,31 @@ echo "make"
 
 read -p "Press key to continue.. " -n1 -s
 
+echo "build contrib"
 make
 
+echo "### remove the 64 bit binaries"
+rm -f ../i686-w64-mingw32/bin/moc ../i686-w64-mingw32/bin/uic ../i686-w64-mingw32/bin/rcc
+
+echo "### go back and run the bootstrap"
+cd ${PWD_DIR}/vlc-${VLC_VERSION}
+./bootstrap
+
+echo "### create the dir we'll be compiling in"
+mkdir win32 && cd win32
+
+echo "### tell the system where to find the pkgconfig dir"
+export PKG_CONFIG_LIBDIR=${PWD_DIR}/vlc-${VLC_VERSION}/contrib/i686-w64-mingw32/lib/pkgconfig
+
+### run configure
+if [ ${UBUNTU} = "1604" ]; then
+../extras/package/win32/configure.sh --host=i686-w64-mingw32 --enable-sqlite --disable-bluray
+else
+../extras/package/win32/configure.sh --host=i686-w64-mingw32 --enable-sqlite
+fi
+
+echo "### compile"
+make
+
+echo "build package"
+make package-win32-zip
