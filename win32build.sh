@@ -75,7 +75,12 @@ make
 ####create the package
 make package-win32-zip
 
-cp ${PWD_DIR}/vlc-${VLC_VERSION}/win32/vlc-${VLC_VERSION}-win32.zip ${PWD_DIR}/acestreamplyaer-${VLC_VERSION}-win32.zip 
+### copy archive to PWD dir
+if [ ${VLC_VERSION} = "2.1"  ]; then
+   cp ${PWD_DIR}/vlc-${VLC_VERSION}/win32/vlc-2.1.6-win32.zip ${PWD_DIR}/acestreamplyaer-2.1.6-win32.zip 
+else
+   cp ${PWD_DIR}/vlc-${VLC_VERSION}/win32/vlc-${VLC_VERSION}-win32.zip ${PWD_DIR}/acestreamplyaer-${VLC_VERSION}-win32.zip 
+fi
 
 echo "#################################################################"
 echo "### Finally: acestreamplyaer-${VLC_VERSION}-win32.zip is ready###"

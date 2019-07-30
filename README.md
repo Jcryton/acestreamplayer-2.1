@@ -84,6 +84,8 @@ edit config.sh (set ubuntu qt and vlc version)
 
 `mingw-w64-i686-dev mingw-w64-common build-essential \`
 
+`wine64-development-tools libwine-development libwine-development-dev \`
+
 `qt4-dev-tools qt4-default git subversion \`
 
 `cmake cvs zip p7zip nsis bzip2 \`
