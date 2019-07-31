@@ -86,11 +86,11 @@ edit config.sh (set ubuntu qt and vlc version)
 
 `wine64-development-tools libwine-development libwine-development-dev \`
 
-`qt4-dev-tools qt4-default git subversion \`
+`qt4-dev-tools qt4-default git subversion make gettext \`
 
-`cmake cvs zip p7zip nsis bzip2 \`
+`cmake cvs zip p7zip nsis bzip2 lua5.2 libtool pkg-config \`
 
-`yasm cvs cmake ragel autopoint \`
+`yasm cvs cmake ragel autopoint automake autoconf \`
 
 `ant default-jdk protobuf-compiler \`
 
