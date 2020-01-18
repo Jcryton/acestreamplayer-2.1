@@ -19,6 +19,8 @@ Also install *libqt4-webkit*, *openssl*, *sqlite3*
 Edit config.sh, set VLC_VERSION="2.1.4", "2.1.5". "2.1.6" to build this release,
  or "2.1" to build last 2.1.6-git version
 
+`export QT_SELECT=qt4`
+
 `./bootstrap.sh`
 
 `./configure.sh`

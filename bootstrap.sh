@@ -24,13 +24,6 @@ if [ ${WINDOWS} = "1" ]; then
     exit
 fi
 
-
-if [ ${WINDOWS} = "1" ]; then
-    echo check_required_package mingw-w64
-    echo check_required_package mingw-w64-dev
-    echo check_required_package mingw-w64-tools
-fi
-
 # download and unpack
 if [ ! -d ${PWD_DIR}/vlc-${VLC_VERSION} ]; then
     cd ${PWD_DIR}
